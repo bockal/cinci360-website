@@ -1,6 +1,7 @@
 "use client";
 
 import "./reviews.css";
+import "./brand.css";
 import Image from "next/image";
 import LottieModule from "lottie-react";
 import { FormEvent, useEffect, useState } from "react";
@@ -33,23 +34,26 @@ const logos = [
 ];
 const Lottie = (LottieModule as unknown as { default: typeof LottieModule }).default;
 
-function SocialIcon({ name }: { name: "instagram" | "linkedin" | "youtube" }) {
+function SocialIcon({ name }: { name: "instagram" | "linkedin" | "youtube" | "matterport" | "github" }) {
   if (name === "instagram") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.8" r=".8" className="icon-fill"/></svg>;
   if (name === "linkedin") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><circle cx="8" cy="8" r="1" className="icon-fill"/><path d="M8 11v6M12 17v-6m0 2.5c.7-1.7 4-2 4 1V17"/></svg>;
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9 5 3-5 3Z"/></svg>;
+  if (name === "youtube") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9 5 3-5 3Z"/></svg>;
+  if (name === "matterport") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/><circle cx="12" cy="12" r="2.2" className="icon-fill"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 19.5c-4.2 1.3-4.2-2.1-5.9-2.6M14.5 21v-3.3c0-1 .1-1.5-.5-2.1 3.1-.3 6.4-1.5 6.4-6.8a5.3 5.3 0 0 0-1.4-3.7 4.9 4.9 0 0 0-.1-3.7s-1.1-.4-3.8 1.4a12.7 12.7 0 0 0-6.8 0C5.7 1 4.6 1.4 4.6 1.4a4.9 4.9 0 0 0-.1 3.7 5.3 5.3 0 0 0-1.4 3.7c0 5.3 3.2 6.5 6.4 6.8-.5.5-.6 1.1-.6 2.1V21"/></svg>;
 }
 
 export default function Home() {
   const [desktop, setDesktop] = useState<object>();
   const [mobile, setMobile] = useState<object>();
+  const [logo, setLogo] = useState<object>();
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     const loadAnimation = (url: string) => fetch(url).then(r => r.json()).then(data => typeof data === "string" ? JSON.parse(data) : data);
-    Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json")]).then(([d,m])=>{setDesktop(d);setMobile(m)});
+    Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json"), loadAnimation("/assets/lottie/cinci360-mark.json")]).then(([d,m,l])=>{setDesktop(d);setMobile(m);setLogo(l)});
   }, []);
   function whatsapp(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const d=new FormData(e.currentTarget); const msg=`Hi Cinci360! I’m ${d.get("name")} from ${d.get("company")||"my organization"}.\n\nProject: ${d.get("project")}\nEmail: ${d.get("email")}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank","noopener,noreferrer"); }
   return <main>
-    <header className="site-header"><a className="brand" href="#top"><span>Cinci</span><strong>360</strong></a><button className="menu-button" aria-label="Toggle navigation" onClick={()=>setMenu(!menu)}><span/><span/></button><nav className={menu?"open":""}>{["Services","Projects","Team","Reviews"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenu(false)}>{x}</a>)}<a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement ↗</a><span className="social-links"><a href="https://www.instagram.com/cinci360/" target="_blank" rel="noreferrer" aria-label="Cinci360 on Instagram"><SocialIcon name="instagram"/></a><a href="http://linkedin.com/in/aubrey" target="_blank" rel="noreferrer" aria-label="Aubrey Backscheider on LinkedIn"><SocialIcon name="linkedin"/></a><a href="https://www.youtube.com/@cinci360" target="_blank" rel="noreferrer" aria-label="Cinci360 on YouTube"><SocialIcon name="youtube"/></a></span></nav><a className="header-cta" href="#contact">Start a project</a></header>
+    <header className="site-header"><a className="brand animated-brand" href="#top" aria-label="Cinci360 home">{logo&&<span className="brand-mark"><Lottie animationData={logo} loop/></span>}<span>Cinci</span><strong>360</strong></a><button className="menu-button" aria-label="Toggle navigation" onClick={()=>setMenu(!menu)}><span/><span/></button><nav className={menu?"open":""}>{["Services","Projects","Team","Reviews"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenu(false)}>{x}</a>)}<a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement ↗</a><span className="social-links"><a href="https://www.instagram.com/cinci360/" target="_blank" rel="noreferrer" aria-label="Cinci360 on Instagram"><SocialIcon name="instagram"/></a><a href="http://linkedin.com/in/aubrey" target="_blank" rel="noreferrer" aria-label="Aubrey Backscheider on LinkedIn"><SocialIcon name="linkedin"/></a><a href="https://www.youtube.com/@cinci360" target="_blank" rel="noreferrer" aria-label="Cinci360 on YouTube"><SocialIcon name="youtube"/></a><a href="https://discover.matterport.com/account/jyfRo6mvuYG" target="_blank" rel="noreferrer" aria-label="Cinci360 on Matterport Discover"><SocialIcon name="matterport"/></a><a href="https://github.com/Cinci360-LLC" target="_blank" rel="noreferrer" aria-label="Cinci360 on GitHub"><SocialIcon name="github"/></a></span></nav><a className="header-cta" href="#contact">Start a project</a></header>
     <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow">Reality, captured. Possibility, modeled.</p><h1>We make the<br/><em>built world</em><br/>work smarter.</h1><p className="hero-intro">Cincinnati-based reality capture, LiDAR surveying and scan-to-BIM—delivered across the Midwest and nationwide.</p><div className="hero-actions"><a className="button button-gold" href="#contact">Tell us about your site</a><a className="text-link" href="#projects">Explore recent work ↓</a></div></div><div className="hero-visual"><div className="scan-orbit"><i/><i/><i/><span/></div>{desktop&&<div className="lottie desktop-lottie"><Lottie animationData={desktop} loop/></div>}{mobile&&<div className="lottie mobile-lottie"><Lottie animationData={mobile} loop/></div>}<div className="scan-caption"><b/> Live capture / Cincinnati, OH</div></div><div className="hero-index">39.1031° N&nbsp;&nbsp; 84.5120° W</div></section>
     <section className="intro-band"><p>One field visit.</p><h2>A precise digital foundation for every decision that follows.</h2><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Download our capability statement <span>↗</span></a></section>
     <section id="services" className="section services"><div className="section-heading"><p className="eyebrow">What we do</p><h2>From real space<br/>to useful data.</h2><p>Clear deliverables, responsive communication and enough experience to know what your next team will need.</p></div><div>{services.map(s=><article className="service-card" key={s[0]}><span>{s[0]}</span><div><h3>{s[1]}</h3><p>{s[2]}</p><small>{s[3]}</small></div><b>↗</b></article>)}</div></section>

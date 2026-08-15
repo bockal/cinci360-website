@@ -1,0 +1,3 @@
+.animated-brand{display:inline-flex;align-items:center}
+.brand-mark{display:inline-block;width:42px;height:42px;margin-right:8px;flex:0 0 auto}
+@media(max-width:900px){.brand-mark{width:36px;height:36px;margin-right:6px}}
