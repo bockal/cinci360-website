@@ -71,6 +71,21 @@
   letter-spacing: .05em;
 }
 
+.social-links svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.social-links .icon-fill {
+  fill: currentColor;
+  stroke: none;
+}
+
 .social-links a:hover,
 .social-links a:focus-visible {
   border-color: var(--gold);
