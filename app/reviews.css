@@ -1,0 +1,27 @@
+.review-nav button {
+  cursor: pointer;
+}
+
+.review-nav button:hover,
+.review-nav button:focus-visible {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.google-reviews-link {
+  display: inline-block;
+  margin-top: 28px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #596062;
+  color: #d9dcda;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.google-reviews-link:hover,
+.google-reviews-link:focus-visible {
+  color: var(--gold);
+  border-color: var(--gold);
+}
