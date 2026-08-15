@@ -1,2 +1,2 @@
 .visitor-counter{font-variant-numeric:tabular-nums;color:#aeb3b2}
-.throwback img{background:transparent!important;opacity:.78}
+.throwback .train-lottie{display:block;width:min(560px,48vw);height:86px;flex:0 0 auto;opacity:.94}.throwback .train-lottie svg{overflow:visible}.throwback>span:last-child{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#aeb3b2}@media(max-width:900px){.throwback .train-lottie{width:100%;height:auto;max-width:620px}}
