@@ -84,11 +84,16 @@
 }
 
 .matterport-feature {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(260px, .65fr);
+  display: block;
   margin-bottom: 18px;
   background: var(--ink);
   color: white;
+}
+
+.matterport-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .matterport-frame {
@@ -104,8 +109,7 @@
 }
 
 .matterport-caption {
-  align-self: end;
-  padding: 42px;
+  padding: 32px 36px 38px;
 }
 
 .matterport-caption span {
@@ -138,7 +142,7 @@
 }
 
 @media (max-width: 900px) {
-  .matterport-feature {
+  .matterport-gallery {
     grid-template-columns: 1fr;
   }
 
