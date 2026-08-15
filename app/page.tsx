@@ -4,8 +4,7 @@ import "./reviews.css";
 import "./brand.css";
 import "./site-updates.css";
 import Image from "next/image";
-import LottieModule from "lottie-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 const services = [
   ["01", "LiDAR surveying", "Accurate existing-condition surveys, point clouds, Matterport digital twins and site documentation—captured once and ready for every stakeholder.", "Reality capture · Matterport · E57"],
@@ -33,7 +32,35 @@ const logos = [
   ["lithco-restoration.jpg", "Lithco Restoration"], ["livful.png", "LivFul"], ["pad.jpg", "PAD"],
   ["ppl.png", "PPL"], ["vts.png", "VTS"], ["women-empowered.png", "Women Empowered"], ["1628.png", "1628"],
 ];
-const Lottie = (LottieModule as unknown as { default: typeof LottieModule }).default;
+function Lottie({ animationData, loop = true }: { animationData: object; loop?: boolean }) {
+  const container = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let animation: { destroy: () => void } | undefined;
+
+    import("lottie-web/build/player/lottie_light").then(module => {
+      if (cancelled || !container.current) return;
+      const lottie = (module.default ?? module) as unknown as {
+        loadAnimation: (options: object) => { destroy: () => void };
+      };
+      animation = lottie.loadAnimation({
+        container: container.current,
+        renderer: "svg",
+        loop,
+        autoplay: true,
+        animationData,
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      animation?.destroy();
+    };
+  }, [animationData, loop]);
+
+  return <span ref={container} className="lottie-player" aria-hidden="true" />;
+}
 
 function createVisitorId() {
   const bytes = new Uint8Array(16);
@@ -56,12 +83,11 @@ export default function Home() {
   const [desktop, setDesktop] = useState<object>();
   const [mobile, setMobile] = useState<object>();
   const [logo, setLogo] = useState<object>();
-  const [train, setTrain] = useState<object>();
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     const loadAnimation = (url: string) => fetch(url).then(r => r.json()).then(data => typeof data === "string" ? JSON.parse(data) : data);
-    Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json"), loadAnimation("/assets/lottie/cinci360-mark.json"), loadAnimation("/assets/lottie/cinci360-train.json")]).then(([d,m,l,t])=>{setDesktop(d);setMobile(m);setLogo(l);setTrain(t)});
+    Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json"), loadAnimation("/assets/lottie/cinci360-mark.json")]).then(([d,m,l])=>{setDesktop(d);setMobile(m);setLogo(l)});
     const storageKey = "cinci360-visitor-id";
     let visitorId = window.localStorage.getItem(storageKey);
     if (!visitorId) {
@@ -84,6 +110,6 @@ export default function Home() {
     <section id="team" className="section team"><div className="team-copy"><p className="eyebrow">Better field coverage than Roy Kent</p><h2>National reach.<br/>Field-proven expertise.</h2><p>Our experienced LiDAR specialists bring national coverage, disciplined capture standards and hands-on knowledge across architecture, construction, insurance and manufacturing.</p></div><div className="team-grid">{people.map(p=><article key={p[0]}><div className="portrait">{p[2]?<Image src={p[2]} alt={p[0]} fill sizes="300px"/>:<span>SB</span>}</div><h3>{p[0]}</h3><p>{p[1]}</p></article>)}</div></section>
     <section id="reviews" className="reviews"><div className="quote">“</div><div className="review-track" aria-label="Google customer reviews">{reviews.map((item,index)=><article className="review-slide" key={item.name}><blockquote>“{item.quote}”</blockquote><div className="review-meta"><span aria-label="5 out of 5 stars">★★★★★</span><p>{item.name} · Google review</p></div><small>{String(index+1).padStart(2,"0")} / {String(reviews.length).padStart(2,"0")}</small></article>)}</div><p className="review-hint">Scroll to read more reviews →</p><a className="google-reviews-link" href="https://maps.app.goo.gl/mYDW7y2nWVpwUXXT9Yeah" target="_blank" rel="noreferrer">See all reviews on Google Maps ↗</a></section>
     <section id="contact" className="contact"><div><p className="eyebrow">Let’s capture what’s next</p><h2>Have a building<br/>in mind?</h2><p>Share a few details and continue the conversation directly in WhatsApp. Plans, photos and addresses are welcome.</p><a href="mailto:support@cinci360.com">support@cinci360.com ↗</a></div><form onSubmit={whatsapp}><label>Your name<input name="name" required placeholder="Jane Smith"/></label><label>Email address<input name="email" type="email" required placeholder="jane@company.com"/></label><label>Company <span>Optional</span><input name="company" placeholder="Organization"/></label><label>Tell us about the project<textarea name="project" required placeholder="Building type, location, approximate size and deliverables…"/></label><button className="button button-gold">Continue in WhatsApp ↗</button><small>WhatsApp will open with your project details ready to send.</small></form></section>
-    <footer><div className="footer-main"><a className="brand" href="#top"><span>Cinci</span><strong>360</strong></a><p>Reality capture · CAD + Revit · Small-business technology</p><div><a href="#services">Services</a><a href="#projects">Projects</a><a href="#team">Team</a><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement</a></div></div><a className="throwback" href="https://web.archive.org/web/20010624120530/http://www.purdue.edu/odos/" target="_blank" rel="noreferrer"><span className="train-lottie" aria-label="Animated Cinci360 locomotive">{train&&<Lottie animationData={train} loop/>}</span><span>Since 2001: technology work spanning three decades. See where the journey began ↗</span></a><div className="footer-bottom"><span>© 2026 Cinci360. Cincinnati, Ohio.</span><span className="visitor-counter">{visitorCount === null ? "Counting visits" : `Visitor ${String(visitorCount).padStart(6,"0")}`} · Cinci360.com online since 2017</span><span>Built for the real world.</span></div></footer>
+    <footer><div className="footer-main"><a className="brand" href="#top"><span>Cinci</span><strong>360</strong></a><p>Reality capture · CAD + Revit · Small-business technology</p><div><a href="#services">Services</a><a href="#projects">Projects</a><a href="#team">Team</a><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement</a></div></div><a className="throwback" href="https://web.archive.org/web/20010624120530/http://www.purdue.edu/odos/" target="_blank" rel="noreferrer"><span>Since 2001: technology work spanning three decades. See where the journey began ↗</span></a><div className="footer-bottom"><span>© 2026 Cinci360. Cincinnati, Ohio.</span><span className="visitor-counter">{visitorCount === null ? "Counting visits" : `Visitor ${String(visitorCount).padStart(6,"0")}`} · Cinci360.com online since 2017</span><span>Built for the real world.</span></div></footer>
   </main>;
 }
