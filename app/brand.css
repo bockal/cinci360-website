@@ -1,3 +1,4 @@
 .animated-brand{display:inline-flex;align-items:center}
-.brand-mark{display:inline-block;width:42px;height:42px;margin-right:8px;flex:0 0 auto}
-@media(max-width:900px){.brand-mark{width:36px;height:36px;margin-right:6px}}
+.brand-360{display:inline-block;width:1.62em;height:1em;margin-left:.04em;flex:0 0 auto;overflow:hidden}
+.brand-360 .lottie-player{display:block;width:100%;height:100%;transform:scale(1.16);transform-origin:center}
+@media(max-width:900px){.brand-360{width:1.58em}}
