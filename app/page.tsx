@@ -101,15 +101,6 @@ function makeBlack(animation: object) {
   return copy;
 }
 
-function createVisitorId() {
-  const bytes = new Uint8Array(16);
-  window.crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = [...bytes].map(value => value.toString(16).padStart(2, "0"));
-  return `${hex.slice(0,4).join("")}-${hex.slice(4,6).join("")}-${hex.slice(6,8).join("")}-${hex.slice(8,10).join("")}-${hex.slice(10).join("")}`;
-}
-
 function SocialIcon({ name }: { name: "instagram" | "linkedin" | "youtube" | "matterport" | "github" }) {
   if (name === "instagram") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.8" r=".8" className="icon-fill"/></svg>;
   if (name === "linkedin") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><circle cx="8" cy="8" r="1" className="icon-fill"/><path d="M8 11v6M12 17v-6m0 2.5c.7-1.7 4-2 4 1V17"/></svg>;
@@ -122,21 +113,10 @@ export default function Home() {
   const [desktop, setDesktop] = useState<object>();
   const [mobile, setMobile] = useState<object>();
   const [skyscraper, setSkyscraper] = useState<object>();
-  const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     const loadAnimation = (url: string) => fetch(url).then(r => r.json()).then(data => typeof data === "string" ? JSON.parse(data) : data);
     Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json"), loadAnimation("/assets/lottie/skyscraper-construction-timelapse.json")]).then(([d,m,s])=>{setDesktop(d);setMobile(m);setSkyscraper(makeBlack(s))});
-    const storageKey = "cinci360-visitor-id";
-    let visitorId = window.localStorage.getItem(storageKey);
-    if (!visitorId) {
-      visitorId = createVisitorId();
-      window.localStorage.setItem(storageKey, visitorId);
-    }
-    fetch("/api/visitors", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ visitorId }) })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (typeof data?.count === "number") setVisitorCount(data.count); })
-      .catch(() => undefined);
   }, []);
   function whatsapp(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const d=new FormData(e.currentTarget); const msg=`Hi Cinci360! I’m ${d.get("name")} from ${d.get("company")||"my organization"}.\n\nProject: ${d.get("project")}\nEmail: ${d.get("email")}`; window.open(`https://wa.me/cinci360?text=${encodeURIComponent(msg)}`,"_blank","noopener,noreferrer"); }
   return <main>
@@ -149,6 +129,6 @@ export default function Home() {
     <section id="team" className="section team"><div className="team-copy"><p className="eyebrow">Better field coverage than Roy Kent</p><h2>National reach.<br/>Field-proven expertise.</h2><p>Our experienced LiDAR specialists bring national coverage, disciplined capture standards and hands-on knowledge across architecture, construction, insurance and manufacturing.</p></div><div className="team-grid">{people.map(p=><article key={p[0]}><div className="portrait">{p[2]?<Image src={p[2]} alt={p[0]} fill sizes="300px"/>:<span>SB</span>}</div><h3>{p[0]}</h3><p>{p[1]}</p></article>)}</div></section>
     <section id="reviews" className="reviews"><div className="quote">“</div><div className="review-track" aria-label="Google customer reviews">{reviews.map((item,index)=><article className="review-slide" key={item.name}><blockquote>“{item.quote}”</blockquote><div className="review-meta"><span aria-label="5 out of 5 stars">★★★★★</span><p>{item.name} · Google review</p></div><small>{String(index+1).padStart(2,"0")} / {String(reviews.length).padStart(2,"0")}</small></article>)}</div><p className="review-hint">Scroll to read more reviews →</p><a className="google-reviews-link" href="https://maps.app.goo.gl/mYDW7y2nWVpwUXXT9Yeah" target="_blank" rel="noreferrer">See all reviews on Google Maps ↗</a></section>
     <section id="contact" className="contact"><div><p className="eyebrow">Let’s capture what’s next</p><h2>Have a building<br/>in mind?</h2><p>Share a few details and continue the conversation directly in WhatsApp. Plans, photos and addresses are welcome.</p><a href="mailto:support@cinci360.com">support@cinci360.com ↗</a></div><form onSubmit={whatsapp}><label>Your name<input name="name" required placeholder="Jane Smith"/></label><label>Email address<input name="email" type="email" required placeholder="jane@company.com"/></label><label>Company <span>Optional</span><input name="company" placeholder="Organization"/></label><label>Tell us about the project<textarea name="project" required placeholder="Building type, location, approximate size and deliverables…"/></label><button className="button button-gold">Continue in WhatsApp ↗</button><small>WhatsApp will open with your project details ready to send.</small></form></section>
-    <footer><div className="footer-main"><a className="brand" href="#top"><span>Cinci</span><strong>360</strong></a><p>Reality capture · CAD + Revit · Small-business technology</p><div><a href="#services">Services</a><a href="#projects">Projects</a><a href="#team">Team</a><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement</a></div></div><a className="throwback" href="https://web.archive.org/web/20010624120530/http://www.purdue.edu/odos/" target="_blank" rel="noreferrer"><span>Since 2001: technology work spanning three decades. See where the journey began ↗</span></a><div className="footer-bottom"><span>© 2026 Cinci360. Cincinnati, Ohio.</span><span className="visitor-counter">{visitorCount === null ? "Counting visits" : `Visitor ${String(visitorCount).padStart(6,"0")}`} · Cinci360.com online since 2017</span><span>Built for the real world.</span></div></footer>
+    <footer><div className="footer-main"><a className="brand" href="#top"><span>Cinci</span><strong>360</strong></a><p>Reality capture · CAD + Revit · Small-business technology</p><div><a href="#services">Services</a><a href="#projects">Projects</a><a href="#team">Team</a><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement</a></div></div><a className="throwback" href="https://web.archive.org/web/20010624120530/http://www.purdue.edu/odos/" target="_blank" rel="noreferrer"><span>Since 2001: technology work spanning three decades. See where the journey began ↗</span></a><div className="footer-bottom"><span>© 2026 Cinci360. Cincinnati, Ohio.</span><span>Cinci360.com online since 2017</span><span>Built for the real world.</span></div></footer>
   </main>;
 }
