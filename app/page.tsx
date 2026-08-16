@@ -32,14 +32,23 @@ const logos = [
   ["lithco-restoration.jpg", "Lithco Restoration"], ["livful.png", "LivFul"], ["pad.jpg", "PAD"],
   ["ppl.png", "PPL"], ["vts.png", "VTS"], ["women-empowered.png", "Women Empowered"], ["1628.png", "1628"],
 ];
-type LottieAnimation = { destroy: () => void; setSpeed: (speed: number) => void };
+type LottieAnimation = {
+  destroy: () => void;
+  setSpeed: (speed: number) => void;
+  setDirection: (direction: 1 | -1) => void;
+  play: () => void;
+  addEventListener: (event: "complete", handler: () => void) => void;
+  removeEventListener: (event: "complete", handler: () => void) => void;
+};
 
-function Lottie({ animationData, loop = true, speed = 1 }: { animationData: object; loop?: boolean; speed?: number }) {
+function Lottie({ animationData, loop = true, speed = 1, pingPong = false }: { animationData: object; loop?: boolean; speed?: number; pingPong?: boolean }) {
   const container = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     let animation: LottieAnimation | undefined;
+
+    let onComplete: (() => void) | undefined;
 
     import("lottie-web/build/player/lottie_light").then(module => {
       if (cancelled || !container.current) return;
@@ -49,18 +58,29 @@ function Lottie({ animationData, loop = true, speed = 1 }: { animationData: obje
       animation = lottie.loadAnimation({
         container: container.current,
         renderer: "svg",
-        loop,
+        loop: pingPong ? false : loop,
         autoplay: true,
         animationData,
       });
       animation.setSpeed(speed);
+      if (pingPong) {
+        let direction: 1 | -1 = 1;
+        onComplete = () => {
+          if (!animation) return;
+          direction = direction === 1 ? -1 : 1;
+          animation.setDirection(direction);
+          animation.play();
+        };
+        animation.addEventListener("complete", onComplete);
+      }
     });
 
     return () => {
       cancelled = true;
+      if (animation && onComplete) animation.removeEventListener("complete", onComplete);
       animation?.destroy();
     };
-  }, [animationData, loop, speed]);
+  }, [animationData, loop, speed, pingPong]);
 
   return <span ref={container} className="lottie-player" aria-hidden="true" />;
 }
@@ -118,12 +138,12 @@ export default function Home() {
       .then(data => { if (typeof data?.count === "number") setVisitorCount(data.count); })
       .catch(() => undefined);
   }, []);
-  function whatsapp(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const d=new FormData(e.currentTarget); const msg=`Hi Cinci360! I’m ${d.get("name")} from ${d.get("company")||"my organization"}.\n\nProject: ${d.get("project")}\nEmail: ${d.get("email")}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank","noopener,noreferrer"); }
+  function whatsapp(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const d=new FormData(e.currentTarget); const msg=`Hi Cinci360! I’m ${d.get("name")} from ${d.get("company")||"my organization"}.\n\nProject: ${d.get("project")}\nEmail: ${d.get("email")}`; window.open(`https://wa.me/cinci360?text=${encodeURIComponent(msg)}`,"_blank","noopener,noreferrer"); }
   return <main>
     <header className="site-header"><a className="brand" href="#top" aria-label="Cinci360 home"><span>Cinci</span><strong>360</strong></a><button className="menu-button" aria-label="Toggle navigation" onClick={()=>setMenu(!menu)}><span/><span/></button><nav className={menu?"open":""}>{["Services","Projects","Team","Reviews"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenu(false)}>{x}</a>)}<a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement ↗</a><span className="social-links"><a href="https://discover.matterport.com/account/jyfRo6mvuYG" target="_blank" rel="noreferrer" aria-label="Cinci360 on Matterport Discover"><SocialIcon name="matterport"/></a><a href="https://github.com/Cinci360-LLC" target="_blank" rel="noreferrer" aria-label="Cinci360 on GitHub"><SocialIcon name="github"/></a><a href="http://linkedin.com/in/aubrey" target="_blank" rel="noreferrer" aria-label="Aubrey Backscheider on LinkedIn"><SocialIcon name="linkedin"/></a><a href="https://www.youtube.com/@cinci360" target="_blank" rel="noreferrer" aria-label="Cinci360 on YouTube"><SocialIcon name="youtube"/></a><a href="https://www.instagram.com/cinci360/" target="_blank" rel="noreferrer" aria-label="Cinci360 on Instagram"><SocialIcon name="instagram"/></a></span></nav><a className="header-cta" href="#contact">Start a project</a></header>
-    <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow">Reality, captured. Possibility, modeled.</p><h1>We make the<br/><em>built world</em><br/>work smarter.</h1><p className="hero-intro">Cincinnati-based reality capture, LiDAR surveying and scan-to-BIM—delivered across the Midwest and nationwide.</p><div className="hero-actions"><a className="button button-gold" href="#contact">Tell us about your site</a><a className="text-link" href="#projects">Explore recent work ↓</a></div></div><div className="hero-visual"><div className="scan-orbit"><i/><i/><i/><span/></div>{desktop&&<div className="lottie desktop-lottie"><Lottie animationData={desktop} loop={false}/></div>}{mobile&&<div className="lottie mobile-lottie"><Lottie animationData={mobile} loop={false}/></div>}<div className="scan-caption"><b/> Live capture / Cincinnati, OH</div></div><div className="hero-index">39.1031° N&nbsp;&nbsp; 84.5120° W</div></section>
+    <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow">Reality, captured. Possibility, modeled.</p><h1>We make the<br/><em>built world</em><br/>work smarter.</h1><p className="hero-intro">Cincinnati-based reality capture, LiDAR surveying and scan-to-BIM—delivered across the Midwest and nationwide.</p><div className="hero-actions"><a className="button button-gold" href="#contact">Tell us about your site</a><a className="text-link" href="#projects">Explore recent work ↓</a></div></div><div className="hero-visual"><div className="scan-orbit"><i/><i/><i/><span/></div>{desktop&&<div className="lottie desktop-lottie"><Lottie animationData={desktop} pingPong/></div>}{mobile&&<div className="lottie mobile-lottie"><Lottie animationData={mobile} pingPong/></div>}<div className="scan-caption"><b/> Live capture / Cincinnati, OH</div></div><div className="hero-index">39.1031° N&nbsp;&nbsp; 84.5120° W</div></section>
     <section className="intro-band"><p>One field visit.</p><h2>A precise digital foundation for every decision that follows.</h2><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Download our capability statement <span>↗</span></a></section>
-    <section id="services" className="section services"><div className="section-heading"><p className="eyebrow">What we do</p><h2>From real space<br/>to useful data.</h2><p>Clear deliverables, responsive communication and enough experience to know what your next team will need.</p>{skyscraper&&<div className="service-lottie"><Lottie animationData={skyscraper} loop/></div>}</div><div>{services.map(s=><article className="service-card" key={s[0]}><span>{s[0]}</span><div><h3>{s[1]}</h3><p>{s[2]}</p><small>{s[3]}</small></div><b>↗</b></article>)}</div></section>
+    <section id="services" className="section services"><div className="section-heading"><p className="eyebrow">What we do</p><h2>From real space<br/>to useful data.</h2><p>Clear deliverables, responsive communication and enough experience to know what your next team will need.</p>{skyscraper&&<div className="service-lottie"><Lottie animationData={skyscraper} pingPong/></div>}</div><div>{services.map(s=><article className="service-card" key={s[0]}><span>{s[0]}</span><div><h3>{s[1]}</h3><p>{s[2]}</p><small>{s[3]}</small></div><b>↗</b></article>)}</div></section>
     <section id="projects" className="section projects"><div className="project-heading"><div><p className="eyebrow">Selected work</p><h2>Step inside<br/>the work.</h2></div><p>Explore two recent digital twins captured and delivered by Cinci360.</p></div><div className="matterport-gallery"><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=RRUh81GAFtt&amp;play=1&amp;qs=1" title="Bell Event Centre Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Cincinnati, Ohio</span><h3>Bell Event Centre</h3><p>Explore two floors and more than 18,000 square feet of this historic Cincinnati landmark in an immersive digital twin.</p></div></article><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=Zsm68ghVsMh&amp;play=1&amp;qs=1" title="Recent Cinci360 Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Recent project</span><h3>Featured Digital Twin</h3><p>Move through the space, switch viewpoints and experience the detail captured in a Cinci360 site survey.</p></div></article></div></section>
     <section className="clients"><p className="eyebrow">Trusted across Cincinnati and beyond</p><div className="logo-window"><div className="logo-track">{[...logos,...logos].map(([file,name],i)=><div className="logo-item" key={`${file}-${i}`}><img src={`/assets/logos/${file}`} alt={name} decoding="async"/></div>)}</div></div></section>
     <section id="team" className="section team"><div className="team-copy"><p className="eyebrow">Better field coverage than Roy Kent</p><h2>National reach.<br/>Field-proven expertise.</h2><p>Our experienced LiDAR specialists bring national coverage, disciplined capture standards and hands-on knowledge across architecture, construction, insurance and manufacturing.</p></div><div className="team-grid">{people.map(p=><article key={p[0]}><div className="portrait">{p[2]?<Image src={p[2]} alt={p[0]} fill sizes="300px"/>:<span>SB</span>}</div><h3>{p[0]}</h3><p>{p[1]}</p></article>)}</div></section>
