@@ -1,2 +1,22 @@
 .visitor-counter{font-variant-numeric:tabular-nums;color:#aeb3b2}
 .throwback>span{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#aeb3b2}
+.projects-lottie {
+  width: min(360px, 78vw);
+  height: 220px;
+  margin: -72px auto 28px;
+  overflow: hidden;
+}
+
+.projects-lottie .lottie-player {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  .projects-lottie {
+    width: min(300px, 82vw);
+    height: 185px;
+    margin-top: -48px;
+  }
+}

@@ -32,7 +32,7 @@ const logos = [
   ["lithco-restoration.jpg", "Lithco Restoration"], ["livful.png", "LivFul"], ["pad.jpg", "PAD"],
   ["ppl.png", "PPL"], ["vts.png", "VTS"], ["women-empowered.png", "Women Empowered"], ["1628.png", "1628"],
 ];
-type LottieAnimation = { destroy: () => void; setSpeed: (speed: number) => void; goToAndStop: (frame: number, isFrame: boolean) => void; totalFrames: number };
+type LottieAnimation = { destroy: () => void; setSpeed: (speed: number) => void };
 
 function Lottie({ animationData, loop = true, speed = 1 }: { animationData: object; loop?: boolean; speed?: number }) {
   const container = useRef<HTMLSpanElement>(null);
@@ -65,57 +65,6 @@ function Lottie({ animationData, loop = true, speed = 1 }: { animationData: obje
   return <span ref={container} className="lottie-player" aria-hidden="true" />;
 }
 
-function ScrollLottie({ animationData }: { animationData: object }) {
-  const container = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    let animation: LottieAnimation | undefined;
-    let raf = 0;
-    const draw = () => {
-      raf = 0;
-      if (!animation) return;
-      const progress = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * .72)));
-      animation.goToAndStop(progress * Math.max(0, animation.totalFrames - 1), true);
-    };
-    const onScroll = () => { if (!raf) raf = window.requestAnimationFrame(draw); };
-
-    import("lottie-web/build/player/lottie_light").then(module => {
-      if (cancelled || !container.current) return;
-      const lottie = (module.default ?? module) as unknown as { loadAnimation: (options: object) => LottieAnimation };
-      animation = lottie.loadAnimation({ container: container.current, renderer: "svg", loop: false, autoplay: false, animationData });
-      draw();
-      window.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("resize", onScroll);
-    });
-
-    return () => {
-      cancelled = true;
-      if (raf) window.cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      animation?.destroy();
-    };
-  }, [animationData]);
-
-  return <span ref={container} className="lottie-player" aria-hidden="true" />;
-}
-
-function makePurdueGold(animation: object) {
-  const copy = structuredClone(animation) as Record<string, unknown>;
-  const visit = (value: unknown) => {
-    if (!value || typeof value !== "object") return;
-    const node = value as Record<string, unknown>;
-    if ((node.ty === "st" || node.ty === "fl") && node.c && typeof node.c === "object") {
-      const color = node.c as { a?: number; k?: unknown };
-      if (color.a === 0 && Array.isArray(color.k)) color.k = [0.788, 0.643, 0.31, 1];
-    }
-    Object.values(node).forEach(visit);
-  };
-  visit(copy);
-  return copy;
-}
-
 function createVisitorId() {
   const bytes = new Uint8Array(16);
   window.crypto.getRandomValues(bytes);
@@ -136,12 +85,12 @@ function SocialIcon({ name }: { name: "instagram" | "linkedin" | "youtube" | "ma
 export default function Home() {
   const [desktop, setDesktop] = useState<object>();
   const [mobile, setMobile] = useState<object>();
-  const [header360, setHeader360] = useState<object>();
+  const [skyscraper, setSkyscraper] = useState<object>();
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     const loadAnimation = (url: string) => fetch(url).then(r => r.json()).then(data => typeof data === "string" ? JSON.parse(data) : data);
-    Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json"), loadAnimation("/assets/lottie/header-360.json")]).then(([d,m,h])=>{setDesktop(d);setMobile(m);setHeader360(makePurdueGold(h))});
+    Promise.all([loadAnimation("/assets/lottie/cincinnati-desktop.json"), loadAnimation("/assets/lottie/cincinnati-mobile.json"), loadAnimation("/assets/lottie/skyscraper-construction-timelapse.json")]).then(([d,m,s])=>{setDesktop(d);setMobile(m);setSkyscraper(s)});
     const storageKey = "cinci360-visitor-id";
     let visitorId = window.localStorage.getItem(storageKey);
     if (!visitorId) {
@@ -155,11 +104,11 @@ export default function Home() {
   }, []);
   function whatsapp(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const d=new FormData(e.currentTarget); const msg=`Hi Cinci360! I’m ${d.get("name")} from ${d.get("company")||"my organization"}.\n\nProject: ${d.get("project")}\nEmail: ${d.get("email")}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank","noopener,noreferrer"); }
   return <main>
-    <header className="site-header"><a className="brand animated-brand" href="#top" aria-label="Cinci360 home"><span>Cinci</span>{header360?<span className="brand-360"><Lottie animationData={header360} loop={false} speed={.55}/></span>:<strong>360</strong>}</a><button className="menu-button" aria-label="Toggle navigation" onClick={()=>setMenu(!menu)}><span/><span/></button><nav className={menu?"open":""}>{["Services","Projects","Team","Reviews"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenu(false)}>{x}</a>)}<a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement ↗</a><span className="social-links"><a href="https://discover.matterport.com/account/jyfRo6mvuYG" target="_blank" rel="noreferrer" aria-label="Cinci360 on Matterport Discover"><SocialIcon name="matterport"/></a><a href="https://github.com/Cinci360-LLC" target="_blank" rel="noreferrer" aria-label="Cinci360 on GitHub"><SocialIcon name="github"/></a><a href="http://linkedin.com/in/aubrey" target="_blank" rel="noreferrer" aria-label="Aubrey Backscheider on LinkedIn"><SocialIcon name="linkedin"/></a><a href="https://www.youtube.com/@cinci360" target="_blank" rel="noreferrer" aria-label="Cinci360 on YouTube"><SocialIcon name="youtube"/></a><a href="https://www.instagram.com/cinci360/" target="_blank" rel="noreferrer" aria-label="Cinci360 on Instagram"><SocialIcon name="instagram"/></a></span></nav><a className="header-cta" href="#contact">Start a project</a></header>
-    <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow">Reality, captured. Possibility, modeled.</p><h1>We make the<br/><em>built world</em><br/>work smarter.</h1><p className="hero-intro">Cincinnati-based reality capture, LiDAR surveying and scan-to-BIM—delivered across the Midwest and nationwide.</p><div className="hero-actions"><a className="button button-gold" href="#contact">Tell us about your site</a><a className="text-link" href="#projects">Explore recent work ↓</a></div></div><div className="hero-visual"><div className="scan-orbit"><i/><i/><i/><span/></div>{desktop&&<div className="lottie desktop-lottie"><ScrollLottie animationData={desktop}/></div>}{mobile&&<div className="lottie mobile-lottie"><ScrollLottie animationData={mobile}/></div>}<div className="scan-caption"><b/> Scroll-linked capture / Cincinnati, OH</div></div><div className="hero-index">39.1031° N&nbsp;&nbsp; 84.5120° W</div></section>
+    <header className="site-header"><a className="brand" href="#top" aria-label="Cinci360 home"><span>Cinci</span><strong>360</strong></a><button className="menu-button" aria-label="Toggle navigation" onClick={()=>setMenu(!menu)}><span/><span/></button><nav className={menu?"open":""}>{["Services","Projects","Team","Reviews"].map(x=><a key={x} href={`#${x.toLowerCase()}`} onClick={()=>setMenu(false)}>{x}</a>)}<a href="/Cinci360-Capability-Statement.pdf" target="_blank">Capability statement ↗</a><span className="social-links"><a href="https://discover.matterport.com/account/jyfRo6mvuYG" target="_blank" rel="noreferrer" aria-label="Cinci360 on Matterport Discover"><SocialIcon name="matterport"/></a><a href="https://github.com/Cinci360-LLC" target="_blank" rel="noreferrer" aria-label="Cinci360 on GitHub"><SocialIcon name="github"/></a><a href="http://linkedin.com/in/aubrey" target="_blank" rel="noreferrer" aria-label="Aubrey Backscheider on LinkedIn"><SocialIcon name="linkedin"/></a><a href="https://www.youtube.com/@cinci360" target="_blank" rel="noreferrer" aria-label="Cinci360 on YouTube"><SocialIcon name="youtube"/></a><a href="https://www.instagram.com/cinci360/" target="_blank" rel="noreferrer" aria-label="Cinci360 on Instagram"><SocialIcon name="instagram"/></a></span></nav><a className="header-cta" href="#contact">Start a project</a></header>
+    <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow">Reality, captured. Possibility, modeled.</p><h1>We make the<br/><em>built world</em><br/>work smarter.</h1><p className="hero-intro">Cincinnati-based reality capture, LiDAR surveying and scan-to-BIM—delivered across the Midwest and nationwide.</p><div className="hero-actions"><a className="button button-gold" href="#contact">Tell us about your site</a><a className="text-link" href="#projects">Explore recent work ↓</a></div></div><div className="hero-visual"><div className="scan-orbit"><i/><i/><i/><span/></div>{desktop&&<div className="lottie desktop-lottie"><Lottie animationData={desktop} loop={false}/></div>}{mobile&&<div className="lottie mobile-lottie"><Lottie animationData={mobile} loop={false}/></div>}<div className="scan-caption"><b/> Live capture / Cincinnati, OH</div></div><div className="hero-index">39.1031° N&nbsp;&nbsp; 84.5120° W</div></section>
     <section className="intro-band"><p>One field visit.</p><h2>A precise digital foundation for every decision that follows.</h2><a href="/Cinci360-Capability-Statement.pdf" target="_blank">Download our capability statement <span>↗</span></a></section>
     <section id="services" className="section services"><div className="section-heading"><p className="eyebrow">What we do</p><h2>From real space<br/>to useful data.</h2><p>Clear deliverables, responsive communication and enough experience to know what your next team will need.</p></div><div>{services.map(s=><article className="service-card" key={s[0]}><span>{s[0]}</span><div><h3>{s[1]}</h3><p>{s[2]}</p><small>{s[3]}</small></div><b>↗</b></article>)}</div></section>
-    <section id="projects" className="section projects"><div className="project-heading"><div><p className="eyebrow">Selected work</p><h2>Step inside<br/>the work.</h2></div><p>Explore two recent digital twins captured and delivered by Cinci360.</p></div><div className="matterport-gallery"><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=RRUh81GAFtt" title="Bell Event Centre Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Cincinnati, Ohio</span><h3>Bell Event Centre</h3><p>Explore two floors and more than 18,000 square feet of this historic Cincinnati landmark in an immersive digital twin.</p></div></article><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=Zsm68ghVsMh" title="Recent Cinci360 Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Recent project</span><h3>Featured Digital Twin</h3><p>Move through the space, switch viewpoints and experience the detail captured in a Cinci360 site survey.</p></div></article></div></section>
+    <section id="projects" className="section projects">{skyscraper&&<div className="projects-lottie"><Lottie animationData={skyscraper} loop={false}/></div>}<div className="project-heading"><div><p className="eyebrow">Selected work</p><h2>Step inside<br/>the work.</h2></div><p>Explore two recent digital twins captured and delivered by Cinci360.</p></div><div className="matterport-gallery"><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=RRUh81GAFtt&amp;play=1&amp;qs=1" title="Bell Event Centre Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Cincinnati, Ohio</span><h3>Bell Event Centre</h3><p>Explore two floors and more than 18,000 square feet of this historic Cincinnati landmark in an immersive digital twin.</p></div></article><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=Zsm68ghVsMh&amp;play=1&amp;qs=1" title="Recent Cinci360 Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Recent project</span><h3>Featured Digital Twin</h3><p>Move through the space, switch viewpoints and experience the detail captured in a Cinci360 site survey.</p></div></article></div></section>
     <section className="clients"><p className="eyebrow">Trusted across Cincinnati and beyond</p><div className="logo-window"><div className="logo-track">{[...logos,...logos].map(([file,name],i)=><div className="logo-item" key={`${file}-${i}`}><img src={`/assets/logos/${file}`} alt={name} decoding="async"/></div>)}</div></div></section>
     <section id="team" className="section team"><div className="team-copy"><p className="eyebrow">Better field coverage than Roy Kent</p><h2>National reach.<br/>Field-proven expertise.</h2><p>Our experienced LiDAR specialists bring national coverage, disciplined capture standards and hands-on knowledge across architecture, construction, insurance and manufacturing.</p></div><div className="team-grid">{people.map(p=><article key={p[0]}><div className="portrait">{p[2]?<Image src={p[2]} alt={p[0]} fill sizes="300px"/>:<span>SB</span>}</div><h3>{p[0]}</h3><p>{p[1]}</p></article>)}</div></section>
     <section id="reviews" className="reviews"><div className="quote">“</div><div className="review-track" aria-label="Google customer reviews">{reviews.map((item,index)=><article className="review-slide" key={item.name}><blockquote>“{item.quote}”</blockquote><div className="review-meta"><span aria-label="5 out of 5 stars">★★★★★</span><p>{item.name} · Google review</p></div><small>{String(index+1).padStart(2,"0")} / {String(reviews.length).padStart(2,"0")}</small></article>)}</div><p className="review-hint">Scroll to read more reviews →</p><a className="google-reviews-link" href="https://maps.app.goo.gl/mYDW7y2nWVpwUXXT9Yeah" target="_blank" rel="noreferrer">See all reviews on Google Maps ↗</a></section>
