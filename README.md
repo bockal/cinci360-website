@@ -1,5 +1,11 @@
 # vinext-starter
 
+## GitHub Pages
+
+`npm run build:pages` uses Next.js static export to generate `out/index.html`
+and the rest of the deployable site. The GitHub Pages workflow publishes that
+directory automatically on every push to `main`.
+
 A clean full-stack starter running on
 [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
 Drizzle support.
