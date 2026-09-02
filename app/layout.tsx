@@ -38,6 +38,24 @@ export const metadata: Metadata = {
   },
 };
 
+const businessSchema = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "@id": "https://cinci360.com/#localbusiness",
+  name: "Cinci360",
+  url: "https://cinci360.com/",
+  email: "support@cinci360.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "1116 Fuller Street",
+    addressLocality: "Cincinnati",
+    addressRegion: "OH",
+    postalCode: "45202",
+    addressCountry: "US",
+  },
+  areaServed: ["Cincinnati", "Ohio", "Kentucky", "Indiana", "Midwest United States", "United States"],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,7 +63,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema).replace(/</g, "\\u003c") }} />
+        {children}
+      </body>
     </html>
   );
 }
