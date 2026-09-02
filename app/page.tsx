@@ -25,8 +25,8 @@ const reviews = [
 const reviewPhotos = [
   { src: "/assets/reviews/field-review-1.jpg", alt: "Cinci360 project team with a survey camera at an Estée Lauder facility", caption: "Project team · Cinci360", position: "center" },
   { src: "/assets/reviews/field-review-2.jpg", alt: "Cinci360 technician operating a Matterport camera outside a Kia dealership", caption: "Retail capture · Cinci360", position: "center" },
-  { src: "/assets/reviews/field-review-3.jpg", alt: "Reality-capture survey of the Dayton Art Institute", caption: "Dayton Art Institute · Cinci360", position: "center" },
-  { src: "/assets/reviews/field-review-4.jpg", alt: "Reality-capture survey of Nippert Stadium in Cincinnati", caption: "Nippert Stadium · Cinci360", position: "center" },
+  { src: "/assets/reviews/field-review-dayton.jpg", alt: "Reality-capture survey of the Dayton Art Institute", caption: "Dayton Art Institute · Cinci360", position: "center" },
+  { src: "/assets/reviews/field-review-nippert.jpg", alt: "Reality-capture survey of Nippert Stadium in Cincinnati", caption: "Nippert Stadium · Cinci360", position: "center" },
 ];
 const homeSchema = [
   {
