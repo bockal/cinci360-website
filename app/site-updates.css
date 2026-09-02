@@ -19,3 +19,4 @@
     margin: 30px auto 0;
   }
 }
+.service-keyword-link{display:inline-flex;align-items:center;gap:12px;border:1px solid var(--line);padding:10px 12px;margin-top:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;transition:background-color .2s ease,border-color .2s ease,color .2s ease}.service-keyword-link span{font-size:12px}.service-keyword-link:hover,.service-keyword-link:focus-visible{background:var(--gold);border-color:var(--gold);color:#171b1e;outline:none}
