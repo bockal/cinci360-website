@@ -1,0 +1,31 @@
+.form-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+.contact-confirmation {
+  align-self: center;
+  border-top: 2px solid var(--gold);
+  padding: 34px 0;
+}
+
+.contact-confirmation h3 {
+  font-family: Georgia, serif;
+  font-size: clamp(34px, 4vw, 56px);
+  font-weight: 400;
+  letter-spacing: -.04em;
+  margin: 18px 0;
+}
+
+.contact-confirmation > p:last-child {
+  max-width: 520px;
+  line-height: 1.7;
+  color: #5f6563;
+}
+
+.contact-confirmation a {
+  border-bottom: 1px solid;
+}

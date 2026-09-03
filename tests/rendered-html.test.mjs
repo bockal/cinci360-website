@@ -29,5 +29,8 @@ test("renders development preview metadata", async () => {
     response.headers.get("content-type") ?? "",
     /^text\/html\b/i,
   );
-  assert.match(await response.text(), developmentPreviewMeta);
+  const html = await response.text();
+  assert.match(html, developmentPreviewMeta);
+  assert.match(html, /<form[^>]+action=["']https:\/\/formsubmit\.co\/aubrey@cinci360\.com["'][^>]+method=["']POST["']/i);
+  assert.match(html, /<source[^>]+srcSet=["']\/images\/workflows\/cinci360-tenure-hero-mobile\.webp["']/i);
 });
