@@ -28,5 +28,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: "https://cinci360.com/answers",
+      lastModified: new Date("2026-09-04"),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: "https://cinci360.com/projects/trek-waterloo",
+      lastModified: new Date("2026-09-04"),
+      changeFrequency: "yearly",
+      priority: 0.8,
+    },
   ];
 }
