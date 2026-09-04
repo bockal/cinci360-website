@@ -47,7 +47,7 @@ test("renders the Estée Lauder case study without Trek content", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Asian clean-room manufacturing standards/);
-  assert.match(html, /estee-lauder-facility-plan\.webp/);
+  assert.match(html, /estee-lauder-facility-plan-v2\.webp/);
   assert.match(html, /my\.matterport\.com\/show\/\?m=QtjFgkR1NsT/);
   assert.doesNotMatch(html, /Trek Bicycle|Waterloo, Wisconsin|autode\.sk/);
 });
