@@ -34,16 +34,11 @@ const schema = [
   },
   {
     "@context": "https://schema.org",
-    "@type": "VideoObject",
-    "@id": "https://cinci360.com/projects/trek-waterloo#video",
-    name: "Trek Headquarters Waterloo, WI",
-    description: "A look at Cinci360's full-facility reality-capture work for Trek with ChangeUp.",
-    thumbnailUrl: "https://i.ytimg.com/vi/ojA0V17TJ94/hqdefault.jpg",
-    embedUrl: "https://www.youtube-nocookie.com/embed/ojA0V17TJ94",
-    uploadDate: "2022-06-16T06:42:07-07:00",
-    duration: "PT4M19S",
-    publisher: { "@id": "https://cinci360.com/#organization" },
-    mainEntityOfPage: "https://cinci360.com/projects/trek-waterloo",
+    "@type": "3DModel",
+    "@id": "https://cinci360.com/projects/trek-waterloo#trek-revit-model",
+    name: "Trek Bicycle headquarters Revit model",
+    description: "Interactive Autodesk Viewer presentation of the Revit model associated with Cinci360's full-facility reality-capture work at Trek Bicycle headquarters for ChangeUp.",
+    encoding: { "@type": "MediaObject", embedUrl: "https://viewer.autodesk.com/id/dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODg1NDYwNjFfNGExNjFmYjItY2NjMC00Y2ZmLWE0NzYtM2I4M2ZlYWJhNTE2LnJ2dA?sheetId=ZmEwOTY1ZmQtNDI2MC00NWUzLTQ1NDEtMDVlMTJiMWNjMWZi" },
   },
   {
     "@context": "https://schema.org",
@@ -52,6 +47,16 @@ const schema = [
     name: "Estée Lauder plant Matterport digital twin",
     description: "Interactive Matterport digital twin from Cinci360's full-facility survey of an Estée Lauder plant for BHDP on Long Island, New York.",
     encoding: { "@type": "MediaObject", embedUrl: "https://my.matterport.com/show/?m=QtjFgkR1NsT", contentUrl: "https://my.matterport.com/show/?m=QtjFgkR1NsT" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    "@id": "https://cinci360.com/projects/trek-waterloo#estee-lauder-plan",
+    name: "Annotated Estée Lauder plant facility plan",
+    description: "An annotated first-floor facility plan from BHDP showing operating zones and circulation across the Estée Lauder plant documented by Cinci360.",
+    contentUrl: "https://cinci360.com/images/case-studies/estee-lauder-facility-plan.webp",
+    width: 1769,
+    height: 1189,
   },
   {
     "@context": "https://schema.org",
@@ -69,10 +74,11 @@ export default function TrekCaseStudy() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
     <header className="service-nav"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><nav><Link href="/answers">Answers</Link><Link href="/#contact">Start a project</Link></nav></header>
     <section className="trek-hero"><p className="eyebrow">Case study · Large-facility reality capture</p><h1>Two complete facilities. One dependable record of each.</h1><div className="trek-summary"><p>Trek Bicycle headquarters and an Estée Lauder plant are Cinci360’s two largest full-facility reality-capture projects to date.</p><dl><div><dt>Project teams</dt><dd>ChangeUp · BHDP</dd></div><div><dt>Scope</dt><dd>Two complete facilities</dd></div><div><dt>Service</dt><dd>Reality capture</dd></div><div><dt>Locations</dt><dd>Wisconsin · New York</dd></div></dl></div></section>
-    <section className="trek-film"><div><p className="eyebrow">Trek · Waterloo, Wisconsin</p><h2>Headquarters captured for ChangeUp.</h2><p>Cinci360 surveyed the entire Trek Bicycle headquarters facility for ChangeUp. The project video provides a direct visual record of the environment and shows why a coordinated survey is valuable at this scale.</p></div><div className="case-video"><iframe src="https://www.youtube-nocookie.com/embed/ojA0V17TJ94" title="Cinci360 reality-capture project at Trek Bicycle headquarters in Waterloo, Wisconsin" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/></div></section>
+    <section className="trek-film"><div><p className="eyebrow">Trek · Waterloo, Wisconsin</p><h2>Headquarters captured for ChangeUp.</h2><p>Cinci360 surveyed the entire Trek Bicycle headquarters facility for ChangeUp. Open the resulting Revit model in Autodesk Viewer to inspect the BIM deliverable directly.</p><a className="viewer-link" href="https://autode.sk/4iN1k8r" target="_blank" rel="noreferrer">Open the Trek model full screen ↗</a></div><div className="viewer-frame"><iframe src="https://viewer.autodesk.com/id/dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODg1NDYwNjFfNGExNjFmYjItY2NjMC00Y2ZmLWE0NzYtM2I4M2ZlYWJhNTE2LnJ2dA?sheetId=ZmEwOTY1ZmQtNDI2MC00NWUzLTQ1NDEtMDVlMTJiMWNjMWZi" title="Trek Bicycle headquarters Revit model in Autodesk Viewer" loading="lazy" allow="fullscreen" allowFullScreen/></div></section>
+    <figure className="facility-plan"><img src="/images/case-studies/estee-lauder-facility-plan.webp" width="1769" height="1189" alt="Annotated first-floor plan of the Estée Lauder plant showing filling, assembly, laboratory, storage and circulation zones"/><figcaption><span>BHDP · Estée Lauder plant</span><p>A facility-scale plan makes the complexity visible: production zones, laboratories, storage, circulation and operating constraints coordinated across one building.</p></figcaption></figure>
     <section className="estee-model"><div><p className="eyebrow">Estée Lauder · Long Island, New York</p><h2>An entire plant captured for BHDP.</h2><p>Cinci360 scanned the complete Estée Lauder facility for BHDP. Explore the Matterport digital twin to move through the documented plant directly in the browser.</p></div><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=QtjFgkR1NsT" title="Estée Lauder plant Matterport digital twin captured by Cinci360" loading="lazy" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowFullScreen/></div></section>
     <section className="trek-story"><div><p className="eyebrow">The shared challenge</p><h2>One coordinated record of each complex facility.</h2></div><article><span>01 · The setting</span><h3>Large operating environments</h3><p>Facilities of this scale create a coordination problem: many spaces, many stakeholders and many downstream decisions. Complete capture gives the project team a shared spatial reference.</p></article><article><span>02 · The field work</span><h3>Facility-wide coverage</h3><p>Planning each assignment at building scale supported consistent coverage and a more useful handoff than teams could obtain from isolated site measurements.</p></article><article><span>03 · The value</span><h3>Buildings teams can revisit</h3><p>Reality-capture data preserves context after the field team leaves so stakeholders can return to the documented environment while planning and coordinating.</p></article></section>
-    <section className="model-proof"><div><p className="eyebrow">Beyond the video</p><h2>The strongest proof is the model itself.</h2></div><div><p>Cinci360 produces project data that can be reviewed alongside the story of the work. Selected OBJ and Revit examples can be published through Autodesk Viewer so prospective clients can inspect real BIM geometry in the browser—not just read a list of deliverables.</p><Link className="button button-gold" href="/#contact">Request a project sample</Link></div></section>
+    <section className="model-proof"><div><p className="eyebrow">More than a project list</p><h2>The strongest proof is the work itself.</h2></div><div><p>The annotated facility plan, live Matterport tour and inspectable Revit model show three different ways captured building data supports downstream teams—from remote visual context to detailed BIM review.</p><Link className="button button-gold" href="/#contact">Discuss your deliverables</Link></div></section>
     <section className="service-fit"><div><p className="eyebrow">Planning a large facility?</p><h2>Define the handoff before the first scan.</h2></div><p>Share the location, approximate area, access conditions and the files your architects or facilities team expects to use.</p><Link className="button button-gold" href="/#contact">Discuss a facility survey</Link></section>
     <footer className="service-footer"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><p>Reality capture · Existing conditions · BIM-ready documentation</p><span>© 2026 Cinci360 · Cincinnati, Ohio</span></footer>
   </main>;
