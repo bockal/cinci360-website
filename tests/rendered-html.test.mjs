@@ -33,6 +33,9 @@ test("renders production SEO metadata", async () => {
   assert.doesNotMatch(html, developmentPreviewMeta);
   assert.match(html, /<form[^>]+action=["']https:\/\/formsubmit\.co\/aubrey@cinci360\.com["'][^>]+method=["']POST["']/i);
   assert.match(html, /<source[^>]+srcSet=["']\/images\/workflows\/cinci360-tenure-hero-mobile\.webp["']/i);
+  assert.match(html, /href=["']\/projects\/estee-lauder-plant["'][^>]*>Case Study<\/a>/i);
+  assert.match(html, /href=["']\/answers["'][^>]*>FAQ<\/a>/i);
+  assert.doesNotMatch(html, /Cinci360-Capability-Statement\.pdf|Capability statement/i);
 });
 
 test("renders the Estée Lauder case study without Trek content", async () => {
@@ -47,6 +50,7 @@ test("renders the Estée Lauder case study without Trek content", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Asian clean-room manufacturing standards/);
+  assert.match(html, /estee-lauder-scan-to-revit-poster\.png/);
   assert.match(html, /estee-lauder-facility-plan-v2\.webp/);
   assert.match(html, /my\.matterport\.com\/show\/\?m=QtjFgkR1NsT/);
   assert.doesNotMatch(html, /Trek Bicycle|Waterloo, Wisconsin|autode\.sk/);

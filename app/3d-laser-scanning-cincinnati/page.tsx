@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./service-page.css";
+import "../service-nav.css";
 
 export const metadata: Metadata = {
   title: "3D Laser Scanning Cincinnati, OH",
@@ -48,7 +49,7 @@ const serviceSchema = [
 export default function CincinnatiLaserScanning() {
   return <main className="service-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema).replace(/</g, "\\u003c") }} />
-    <header className="service-nav"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><Link href="/answers">Answers</Link><Link href="/#contact">Start a project</Link></header>
+    <header className="service-nav"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><nav><Link href="/projects/estee-lauder-plant">Case Study</Link><Link href="/answers">FAQ</Link><Link href="/#contact">Start a project</Link></nav></header>
     <section className="workflow-poster" aria-label="3D laser scanning workflow"><picture><source media="(max-width: 560px)" srcSet="/images/workflows/laser-scanning-workflow-mobile.webp"/><img src="/images/workflows/laser-scanning-workflow.webp" alt="A field technician scans an existing building, producing a point cloud and a precise digital building model"/></picture><div><span><b>01</b> Plan the site</span><span><b>02</b> Capture reality</span><span><b>03</b> Register the data</span><span><b>04</b> Deliver usable files</span></div></section>
     <section className="service-hero"><div><p className="eyebrow">Cincinnati, Ohio · Reality capture</p><h1>3D laser scanning for buildings that need to be understood—not revisited.</h1><p className="service-lede">Cinci360 performs LiDAR surveys and 3D site surveys in Cincinnati, across the Midwest and nationwide, then delivers the point clouds, digital twins, CAD drawings and Revit models your project team can actually use.</p><div className="service-actions"><Link className="button button-gold" href="/#contact">Discuss your site</Link><a href="mailto:support@cinci360.com">support@cinci360.com ↗</a></div></div><aside><span>One coordinated field visit</span><strong>Capture once.</strong><strong>Build from better information.</strong><dl><div><dt>Capture</dt><dd>LiDAR · Matterport</dd></div><div><dt>Data</dt><dd>Point cloud · E57</dd></div><div><dt>Models</dt><dd>DWG · PDF · Revit</dd></div></dl></aside></section>
     <section className="service-proof"><div><p className="eyebrow">Large-scale field work</p><h2>Proven inside complex facilities.</h2></div><article><span>BHDP · Estée Lauder plant</span><h3>Existing conditions for a clean-room retrofit</h3><p>Cinci360 scanned an entire Estée Lauder plant on Long Island, giving BHDP a reliable spatial record for a retrofit to Asian clean-room manufacturing standards.</p><Link href="/projects/estee-lauder-plant">Read the facility case study →</Link></article><article><span>Complete-facility capture</span><h3>One record for every stakeholder</h3><p>The digital twin and scan-to-Revit workflow let the project team revisit conditions, coordinate remotely and design from a shared understanding of the plant.</p><Link href="/projects/estee-lauder-plant">Explore the project record →</Link></article></section>

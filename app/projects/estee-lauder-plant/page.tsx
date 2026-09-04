@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../../3d-laser-scanning-cincinnati/service-page.css";
+import "../../service-nav.css";
 import "./estee.css";
 
 export const metadata: Metadata = {
@@ -20,10 +21,10 @@ const schema = [
 export default function EsteeLauderCaseStudy() {
   return <main className="service-page case-study-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <header className="service-nav print-hide"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><nav><Link href="/answers">Answers</Link><Link href="/#contact">Start a project</Link></nav></header>
+    <header className="service-nav print-hide"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><nav><Link href="/answers">FAQ</Link><Link href="/#contact">Start a project</Link></nav></header>
     <article>
       <section className="case-poster" aria-label="Estée Lauder plant scan-to-Revit case study">
-        <div className="poster-visual" aria-hidden="true"><span className="scan-layer"/><span className="plan-layer"/><span className="revit-layer"/></div>
+        <img className="poster-image" src="/images/case-studies/estee-lauder-scan-to-revit-poster.png" width="512" height="288" alt="Estée Lauder plant plan transitioning from a laser-scan point cloud into a coordinated Revit model" fetchPriority="high"/>
         <div className="poster-copy"><p>Case study · Industrial reality capture</p><h1>From operating plant<br/>to retrofit-ready model.</h1><span>Estée Lauder · Long Island, New York</span></div>
         <div className="poster-steps"><span><b>01</b> Laser scan</span><span><b>02</b> Existing conditions</span><span><b>03</b> Revit handoff</span></div>
       </section>

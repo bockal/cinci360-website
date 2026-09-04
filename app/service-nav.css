@@ -1,0 +1,4 @@
+.service-nav nav{display:flex;align-items:center;gap:24px}
+.service-nav nav a{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+.service-nav nav a:last-child{border:1px solid var(--ink);padding:14px 18px}
+@media(max-width:640px){.service-nav nav{gap:11px}.service-nav nav a{font-size:8px;letter-spacing:.04em}.service-nav nav a:last-child{padding:9px 8px}}
