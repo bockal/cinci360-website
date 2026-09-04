@@ -35,7 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: "https://cinci360.com/projects/trek-waterloo",
+      url: "https://cinci360.com/projects/estee-lauder-plant",
       lastModified: new Date("2026-09-04"),
       changeFrequency: "yearly",
       priority: 0.8,
