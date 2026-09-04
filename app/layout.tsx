@@ -32,9 +32,9 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   },
-  icons: { icon: "/favicon.svg" },
-  other: {
-    "codex-preview": "development",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
   },
 };
 
@@ -44,7 +44,13 @@ const businessSchema = {
   "@id": "https://cinci360.com/#organization",
   name: "Cinci360",
   url: "https://cinci360.com/",
-  logo: "https://cinci360.com/favicon.svg",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://cinci360.com/favicon.svg",
+    contentUrl: "https://cinci360.com/favicon.svg",
+    width: 128,
+    height: 128,
+  },
   email: "support@cinci360.com",
   telephone: "+1-513-800-7366",
   description: "National provider of 3D laser scanning, LiDAR reality capture, existing-condition surveys, architectural 3D modeling, CAD, Revit and scan-to-BIM services, with field technicians based in Miami, New York, Cincinnati and Denver.",

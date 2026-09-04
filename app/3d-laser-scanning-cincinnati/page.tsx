@@ -38,11 +38,15 @@ const serviceSchema = [
   {
     "@context": "https://schema.org",
     "@type": "VideoObject",
-    name: "Trek facility 3D laser scanning project",
+    "@id": "https://cinci360.com/3d-laser-scanning-cincinnati#trek-video",
+    name: "Trek Headquarters Waterloo, WI",
     description: "A look at Cinci360's full-facility reality-capture work for Trek with ChangeUp.",
     thumbnailUrl: "https://i.ytimg.com/vi/ojA0V17TJ94/hqdefault.jpg",
     embedUrl: "https://www.youtube-nocookie.com/embed/ojA0V17TJ94",
-    contentUrl: "https://www.youtube.com/watch?v=ojA0V17TJ94",
+    uploadDate: "2022-06-16T06:42:07-07:00",
+    duration: "PT4M19S",
+    publisher: { "@id": "https://cinci360.com/#organization" },
+    mainEntityOfPage: "https://cinci360.com/3d-laser-scanning-cincinnati",
   },
   {
     "@context": "https://schema.org",

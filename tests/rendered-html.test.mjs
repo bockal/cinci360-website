@@ -4,7 +4,7 @@ import test from "node:test";
 const developmentPreviewMeta =
   /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
 
-test("renders development preview metadata", async () => {
+test("renders production SEO metadata", async () => {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
@@ -30,7 +30,7 @@ test("renders development preview metadata", async () => {
     /^text\/html\b/i,
   );
   const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
+  assert.doesNotMatch(html, developmentPreviewMeta);
   assert.match(html, /<form[^>]+action=["']https:\/\/formsubmit\.co\/aubrey@cinci360\.com["'][^>]+method=["']POST["']/i);
   assert.match(html, /<source[^>]+srcSet=["']\/images\/workflows\/cinci360-tenure-hero-mobile\.webp["']/i);
 });
