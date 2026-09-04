@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AnimatedBrand from "../animated-brand";
 import "../3d-laser-scanning-cincinnati/service-page.css";
 import "./answers.css";
 import "../service-nav.css";
@@ -103,7 +104,7 @@ const schema = [
 export default function AnswersPage() {
   return <main className="service-page answers-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <header className="service-nav"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><nav><Link href="/projects/estee-lauder-plant">Case Study</Link><Link href="/#contact">Start a project</Link></nav></header>
+    <header className="service-nav"><AnimatedBrand/><nav><Link href="/projects/estee-lauder-plant">Case Study</Link><Link href="/#contact">Start a project</Link></nav></header>
     <section className="answer-hero"><div><p className="eyebrow">Reality capture · Explained</p><h1>Clear answers before anyone enters the building.</h1><p>Practical guidance for architects, builders, owners and facilities teams planning 3D laser scanning, LiDAR, Matterport, CAD, Revit or scan-to-BIM work.</p></div><aside><p>Start with the decision you need to make.</p><strong>Then choose the capture and deliverables that support it.</strong></aside></section>
     <section className="answer-index" aria-label="Answer topics"><p className="eyebrow">12 common questions</p><div>{answers.map((item, index) => <a href={`#${item.id}`} key={item.id}><span>{String(index + 1).padStart(2, "0")}</span>{item.question}</a>)}</div></section>
     <section className="answer-list">{answers.map((item, index) => <article id={item.id} key={item.id}><span>{String(index + 1).padStart(2, "0")}</span><div><h2>{item.question}</h2><p>{item.answer}</p>{item.id === "deliverables" && <Link href="/projects/estee-lauder-plant">See the Estée Lauder facility case study →</Link>}{item.id === "what-is-scan-to-bim" && <Link href="/scan-to-bim-revit-cad">Explore Cinci360 scan-to-BIM services →</Link>}</div></article>)}</section>

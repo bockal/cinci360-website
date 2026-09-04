@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AnimatedBrand from "../../animated-brand";
 import "../../3d-laser-scanning-cincinnati/service-page.css";
 import "../../service-nav.css";
 import "./estee.css";
@@ -21,7 +22,7 @@ const schema = [
 export default function EsteeLauderCaseStudy() {
   return <main className="service-page case-study-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <header className="service-nav print-hide"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><nav><Link href="/answers">FAQ</Link><Link href="/#contact">Start a project</Link></nav></header>
+    <header className="service-nav print-hide"><AnimatedBrand/><nav><Link href="/answers">FAQ</Link><Link href="/#contact">Start a project</Link></nav></header>
     <article>
       <section className="case-poster" aria-label="Estée Lauder plant scan-to-Revit case study">
         <img className="poster-image" src="/images/case-studies/estee-lauder-scan-to-revit-poster.png" width="512" height="288" alt="Estée Lauder plant plan transitioning from a laser-scan point cloud into a coordinated Revit model" fetchPriority="high"/>

@@ -55,3 +55,26 @@ test("renders the Estée Lauder case study without Trek content", async () => {
   assert.match(html, /my\.matterport\.com\/show\/\?m=QtjFgkR1NsT/);
   assert.doesNotMatch(html, /Trek Bicycle|Waterloo, Wisconsin|autode\.sk/);
 });
+
+test("renders the animated Cinci360 tripod mark on every interior page", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("interior-brand-test", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const routes = [
+    "/3d-laser-scanning-cincinnati",
+    "/scan-to-bim-revit-cad",
+    "/it-services",
+    "/answers",
+    "/projects/estee-lauder-plant",
+  ];
+
+  for (const route of routes) {
+    const response = await worker.fetch(
+      new Request(`http://localhost${route}`, { headers: { accept: "text/html" } }),
+      { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+      { waitUntil() {}, passThroughOnException() {} },
+    );
+    assert.equal(response.status, 200, route);
+    assert.match(await response.text(), /class=["'][^"']*brand-tripod[^"']*["']/, route);
+  }
+});
