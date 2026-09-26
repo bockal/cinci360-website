@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import AnimatedBrand from "../animated-brand";
 import "../3d-laser-scanning-cincinnati/service-page.css";
-import "../service-nav.css";
 
 export const metadata: Metadata = {
   title: "Architectural 3D Modeling, Scan-to-BIM, Revit & CAD",
