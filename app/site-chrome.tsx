@@ -21,7 +21,9 @@ export function SiteHeader() {
     <button className={open?"global-menu-button open":"global-menu-button"} aria-label="Toggle site navigation" aria-expanded={open} onClick={()=>setOpen(!open)}><span/><span/></button>
     <nav className={open?"global-nav open":"global-nav"} aria-label="Primary navigation">
       {primaryNav.map(([label,href])=><Link key={href} href={href} onClick={()=>setOpen(false)}>{label}</Link>)}
+      <Link className="global-mobile-cta" href="/#contact" onClick={()=>setOpen(false)}>Start a project</Link>
     </nav>
+    <Link className="global-header-cta" href="/#contact">Start a project</Link>
   </header>;
 }
 
