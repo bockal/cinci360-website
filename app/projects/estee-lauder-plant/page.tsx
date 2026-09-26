@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import AnimatedBrand from "../../animated-brand";
 import "../../3d-laser-scanning-cincinnati/service-page.css";
 import "../../service-nav.css";
 import "./estee.css";
