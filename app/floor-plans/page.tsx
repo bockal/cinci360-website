@@ -32,12 +32,22 @@ const schema = [
   },
   {
     "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://cinci360.com/" },
+      { "@type": "ListItem", position: 2, name: "Measured Floor Plans", item: "https://cinci360.com/floor-plans" },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
       { "@type": "Question", name: "How long does it take to capture a facility?", acceptedAnswer: { "@type": "Answer", text: "A facility under 100,000 square feet can often be captured in a day. As a planning benchmark, approximately 50,000 square feet may be captured in about six hours, depending on layout, access and complexity." } },
       { "@type": "Question", name: "How quickly are floor plans delivered?", acceptedAnswer: { "@type": "Answer", text: "For facilities under 50,000 square feet, typical floor-plan turnaround is seven business days after capture, depending on scope and complexity." } },
       { "@type": "Question", name: "What files can Cinci360 deliver?", acceptedAnswer: { "@type": "Answer", text: "Deliverables can include dimensioned PDF floor plans, DWG files, registered point clouds, Matterport digital twins and Revit models depending on the project scope." } },
       { "@type": "Question", name: "Does Cinci360 travel for floor-plan surveys?", acceptedAnswer: { "@type": "Answer", text: "Yes. Cinci360 supports single facilities and multi-location programs nationwide." } },
+      { "@type": "Question", name: "Can LiDAR create as-built floor plans for an existing commercial building?", acceptedAnswer: { "@type": "Answer", text: "Yes. LiDAR reality capture can document existing walls, openings, circulation and dimensions so measured as-built floor plans can be produced for renovation, facility records, test fits and planning." } },
+      { "@type": "Question", name: "Who uses measured commercial floor plans?", acceptedAnswer: { "@type": "Answer", text: "Architects, facility managers, owners, retailers, automotive programs, manufacturers and multi-site teams use measured floor plans when reliable existing-condition drawings are missing or outdated." } },
     ],
   },
 ];
@@ -69,7 +79,7 @@ export default function FloorPlansPage() {
 
     <section className="service-fit"><div><p className="eyebrow">A practical fit</p><h2>Need plans for a facility your team does not have time to measure?</h2></div><p>Send the location, approximate square footage and the files you need. We will define the field scope, capture strategy and delivery schedule before anyone travels.</p><Link className="button button-gold" href="/#contact">Tell us about the facility</Link></section>
 
-    <section className="landing-faq"><p className="eyebrow">Common questions</p><h2>Floor-plan survey FAQs</h2><details><summary>How long does capture take?</summary><p>As a planning benchmark, approximately 50,000 sq ft can often be captured in about six hours. Layout complexity, access restrictions, occupied areas and exterior scope can change field time.</p></details><details><summary>How fast are floor plans delivered?</summary><p>For facilities under 50,000 sq ft, seven business days is a typical turnaround for a standard floor-plan scope.</p></details><details><summary>What do we receive?</summary><p>Depending on scope: PDF plans, DWG files, registered point clouds, a Matterport digital twin, elevations or a Revit model.</p></details><details><summary>Do you travel?</summary><p>Yes. Cinci360 supports projects nationwide and is particularly well suited to multi-site programs that need consistent documentation.</p></details></section>
+    <section className="landing-faq"><p className="eyebrow">Common questions</p><h2>Floor-plan survey FAQs</h2><details><summary>How long does capture take?</summary><p>As a planning benchmark, approximately 50,000 sq ft can often be captured in about six hours. Layout complexity, access restrictions, occupied areas and exterior scope can change field time.</p></details><details><summary>How fast are floor plans delivered?</summary><p>For facilities under 50,000 sq ft, seven business days is a typical turnaround for a standard floor-plan scope.</p></details><details><summary>What do we receive?</summary><p>Depending on scope: PDF plans, DWG files, registered point clouds, a Matterport digital twin, elevations or a Revit model.</p></details><details><summary>Do you travel?</summary><p>Yes. Cinci360 supports projects nationwide and is particularly well suited to multi-site programs that need consistent documentation.</p></details><details><summary>Can LiDAR create as-built floor plans for an existing commercial building?</summary><p>Yes. LiDAR reality capture documents existing walls, openings, circulation and dimensions so measured as-built floor plans can be produced for renovation, test fits, facility records and planning.</p></details><details><summary>Who uses measured commercial floor plans?</summary><p>Architects, facility managers, owners, retailers, automotive programs, manufacturers and multi-site teams use them when dependable existing-condition drawings are missing or outdated.</p></details></section>
 
     <footer className="service-footer"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><p>Measured floor plans · LiDAR capture · Nationwide</p><span>© 2026 Cinci360 · Cincinnati, Ohio</span></footer>
   </main>;
