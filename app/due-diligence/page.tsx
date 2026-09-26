@@ -32,10 +32,20 @@ const schema = [
   },
   {
     "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://cinci360.com/" },
+      { "@type": "ListItem", position: 2, name: "Building Due Diligence", item: "https://cinci360.com/due-diligence" },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
       { "@type": "Question", name: "How does LiDAR help with property due diligence?", acceptedAnswer: { "@type": "Answer", text: "LiDAR creates a measured spatial record of an existing building so acquisition, architecture and facilities teams can review dimensions, layout, access, existing conditions and retrofit scope from shared data." } },
       { "@type": "Question", name: "What can Cinci360 deliver for due diligence?", acceptedAnswer: { "@type": "Answer", text: "Depending on scope, deliverables can include a Matterport digital twin, measured floor plans, point clouds, E57 files, CAD drawings, Revit models and photographic documentation." } },
+      { "@type": "Question", name: "When should a buyer scan a commercial building during due diligence?", acceptedAnswer: { "@type": "Answer", text: "Reality capture is most useful before acquisition, renovation or repurposing when the team needs a reliable record of dimensions, layout and visible existing conditions to inform scope, budgeting and design." } },
+      { "@type": "Question", name: "Can a LiDAR survey help estimate retrofit scope?", acceptedAnswer: { "@type": "Answer", text: "A LiDAR survey can provide measured spatial data, floor plans and a navigable digital record that help architects, owners and estimators understand the building and define where further investigation is needed. It does not replace specialized structural, environmental or engineering inspections." } },
     ],
   },
 ];
@@ -69,6 +79,7 @@ export default function DueDiligencePage() {
 
     <section className="service-proof"><div><p className="eyebrow">Beyond acquisition</p><h2>The same workflow supports major facility change.</h2></div><article><span>Estée Lauder · Long Island</span><h3>Existing conditions for a manufacturing retrofit</h3><p>Cinci360 captured an entire plant for BHDP so the project team could work from a dependable spatial record while planning a clean-room retrofit.</p><Link href="/projects/estee-lauder-plant">Read the case study →</Link></article><article><span>Retail + facility programs</span><h3>Repeatable records across sites</h3><p>The same approach can support portfolio acquisitions, prototype rollouts, facility inventories and retrofit programs where consistent documentation matters from one location to the next.</p><Link href="/floor-plans">Explore measured floor plans →</Link></article></section>
 
+    <section className="landing-faq"><p className="eyebrow">Common questions</p><h2>Building due-diligence FAQs</h2><details><summary>How does LiDAR help with property due diligence?</summary><p>It creates a measured spatial record of the existing building so acquisition, architecture and facilities teams can review layout, dimensions, circulation and visible conditions from shared data.</p></details><details><summary>When should a buyer scan a commercial building?</summary><p>Before acquisition, renovation or repurposing—especially when existing drawings are missing, old or unreliable and the team needs better information before committing to scope and budget.</p></details><details><summary>Can a LiDAR survey help estimate retrofit scope?</summary><p>It can provide measured spatial data, floor plans and a navigable digital record that help teams define retrofit scope and identify where additional investigation is needed. It does not replace structural, environmental or engineering inspections.</p></details><details><summary>What deliverables are available?</summary><p>Depending on scope: measured floor plans, Matterport digital twins, registered point clouds, E57 files, CAD drawings, Revit models and photographic documentation.</p></details></section>
     <section className="service-fit"><div><p className="eyebrow">Before the next capital decision</p><h2>Send us the building before you send a team back to measure it.</h2></div><p>Share the location, approximate square footage, transaction or retrofit timeline and the decisions your team needs to make. We will recommend the capture method and deliverables around that objective.</p><Link className="button button-gold" href="/#contact">Discuss the building</Link></section>
 
     <footer className="service-footer"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><p>Existing-building due diligence · LiDAR · Floor plans · 3D records</p><span>© 2026 Cinci360 · Cincinnati, Ohio</span></footer>
