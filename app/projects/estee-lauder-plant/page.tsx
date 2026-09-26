@@ -22,7 +22,6 @@ const schema = [
 export default function EsteeLauderCaseStudy() {
   return <main className="service-page case-study-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <header className="service-nav print-hide"><AnimatedBrand/><nav><Link href="/answers">FAQ</Link><Link href="/#contact">Start a project</Link></nav></header>
     <article>
       <section className="case-poster" aria-label="Estée Lauder plant scan-to-Revit case study">
         <img className="poster-image" src="/images/case-studies/estee-lauder-scan-to-revit-poster.png" width="512" height="288" alt="Estée Lauder plant plan transitioning from a laser-scan point cloud into a coordinated Revit model" fetchPriority="high"/>
@@ -53,6 +52,5 @@ export default function EsteeLauderCaseStudy() {
       </section>
       <section className="case-takeaway page-section"><p className="eyebrow">What this proves</p><p className="takeaway">Large-facility scanning is most valuable when the deliverable is designed around the decision ahead—not merely the building behind.</p><Link className="button button-gold print-hide" href="/#contact">Discuss a facility survey</Link></section>
     </article>
-    <footer className="service-footer"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><p>Reality capture · Existing conditions · Scan-to-Revit</p><span>© 2026 Cinci360 · Cincinnati, Ohio</span></footer>
   </main>;
 }
