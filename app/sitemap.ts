@@ -23,6 +23,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: "https://cinci360.com/floor-plans",
+      lastModified: new Date("2026-09-26"),
+      changeFrequency: "monthly",
+      priority: 0.95,
+    },
+    {
+      url: "https://cinci360.com/due-diligence",
+      lastModified: new Date("2026-09-26"),
+      changeFrequency: "monthly",
+      priority: 0.95,
+    },
+    {
       url: "https://cinci360.com/it-services",
       lastModified: new Date("2026-09-04"),
       changeFrequency: "monthly",
