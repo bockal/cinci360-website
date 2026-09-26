@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     url: "https://cinci360.com/due-diligence",
     title: "Existing-Building Due Diligence with LiDAR | Cinci360",
     description: "Know the building before you buy, renovate or repurpose it. Capture existing conditions, retrofit scope and spatial data in one coordinated survey.",
-    images: [{ url: "https://cinci360.com/images/landing/due-diligence-hero.webp", width: 1800, height: 694, alt: "Cinci360 existing-building due diligence LiDAR survey" }],
+    images: [{ url: "https://cinci360.com/images/workflows/scan-to-bim-workflow.webp", width: 1800, height: 694, alt: "Cinci360 existing-building scan-to-BIM workflow for due diligence" }],
   },
 };
 
@@ -56,7 +56,7 @@ export default function DueDiligencePage() {
     <header className="service-nav"><AnimatedBrand/><nav><Link href="/floor-plans">Floor Plans</Link><Link href="/3d-laser-scanning-cincinnati">3D Scanning</Link><Link href="/projects/estee-lauder-plant">Case Study</Link><Link href="/#contact">Start a project</Link></nav></header>
 
     <section className="landing-poster">
-      <img src="/images/landing/due-diligence-hero.webp" alt="Cinci360 LiDAR surveyor documenting an existing building for acquisition and retrofit due diligence"/>
+      <img src="/images/workflows/scan-to-bim-workflow.webp" alt="Cinci360 existing-building scan-to-BIM workflow used for due diligence and retrofit planning"/>
     </section>
 
     <section className="service-hero landing-hero">
