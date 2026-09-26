@@ -28,19 +28,13 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  return <footer className="global-footer">
-    <div className="global-footer-top">
-      <AnimatedBrand/>
-      <p>Reality capture · Scan-to-BIM · Measured floor plans · Existing-building due diligence · Digital operations</p>
+  return <footer className="global-footer compact-footer">
+    <div className="compact-footer-main">
+      <span>© 2026 Cinci360 · Cincinnati, Ohio · Nationwide</span>
+      <nav aria-label="Footer navigation">
+        <Link href="/answers">FAQ</Link>
+        <Link className="footer-project-cta" href="/#contact">Start a project</Link>
+      </nav>
     </div>
-    <nav className="global-footer-nav" aria-label="Footer navigation">
-      {primaryNav.map(([label,href])=><Link key={href} href={href}>{label}</Link>)}
-      <Link href="/answers">FAQ</Link>
-    </nav>
-    <div className="global-footer-contact">
-      <a href="mailto:support@cinci360.com">support@cinci360.com</a>
-      <a href="/#contact">Start a project</a>
-    </div>
-    <div className="global-footer-bottom"><span>© 2026 Cinci360 · Cincinnati, Ohio</span><span>Nationwide field coverage</span></div>
   </footer>;
 }
