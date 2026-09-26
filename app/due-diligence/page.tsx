@@ -4,7 +4,7 @@ import "../3d-laser-scanning-cincinnati/service-page.css";
 import "../floor-plans/landing-page.css";
 
 export const metadata: Metadata = {
-  title: "LiDAR Due Diligence for Existing Buildings",
+  title: "Commercial Building Due Diligence with LiDAR",
   description: "Document existing conditions before you buy, renovate or repurpose a building. Cinci360 captures facilities with LiDAR, floor plans, 3D data and digital records for acquisition and retrofit due diligence.",
   alternates: { canonical: "https://cinci360.com/due-diligence" },
   openGraph: {
@@ -21,11 +21,13 @@ const schema = [
     "@context": "https://schema.org",
     "@type": "Service",
     "@id": "https://cinci360.com/due-diligence#service",
-    name: "Existing-Building Due Diligence with LiDAR",
-    serviceType: "Building acquisition due diligence, LiDAR existing-condition capture and retrofit documentation",
+    name: "Commercial Building Due Diligence with LiDAR",
+    serviceType: "Commercial building acquisition due diligence, LiDAR existing-condition capture and retrofit documentation",
     provider: { "@id": "https://cinci360.com/#organization" },
     areaServed: { "@type": "Country", name: "United States" },
     url: "https://cinci360.com/due-diligence",
+    availableChannel: { "@type": "ServiceChannel", serviceUrl: "https://cinci360.com/#contact" },
+    image: "https://cinci360.com/images/workflows/due-diligence-hero.webp",
     description: "LiDAR surveys, floor plans, point clouds and digital building records used to understand existing conditions before acquisition, renovation or repurposing.",
   },
   {
@@ -56,7 +58,7 @@ export default function DueDiligencePage() {
     </section>
 
     <section className="service-hero landing-hero">
-      <div><p className="eyebrow">Acquisition · Retrofit · Existing conditions</p><h1>Know the building before you buy, renovate or repurpose it.</h1><p className="service-lede">A site can look straightforward during a walkthrough and still hide years of undocumented changes. Cinci360 creates a measured digital record before major capital decisions are made.</p><div className="service-actions"><Link className="button button-gold" href="/#contact">Plan a due-diligence survey</Link><a href="mailto:support@cinci360.com">support@cinci360.com ↗</a></div></div>
+      <div><p className="eyebrow">Acquisition · Retrofit · Existing conditions</p><h1>Commercial building due diligence before you buy, renovate or repurpose.</h1><p className="service-lede">Cinci360 uses LiDAR reality capture to document existing commercial buildings before acquisition or retrofit. A site can look straightforward during a walkthrough and still hide years of undocumented changes, so we create a measured digital record before major capital decisions are made.</p><div className="service-actions"><Link className="button button-gold" href="/#contact">Plan a due-diligence survey</Link><a href="mailto:support@cinci360.com">support@cinci360.com ↗</a></div></div>
       <aside><span>One coordinated survey</span><strong>Document what exists.</strong><strong>Plan what comes next.</strong><dl><div><dt>Document</dt><dd>Existing conditions at scale</dd></div><div><dt>Quantify</dt><dd>Retrofit scope + spatial risk</dd></div><div><dt>Record</dt><dd>Plans · 3D data · imagery</dd></div></dl></aside>
     </section>
 
