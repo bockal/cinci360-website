@@ -26,6 +26,8 @@ const schema = [
     provider: { "@id": "https://cinci360.com/#organization" },
     areaServed: { "@type": "Country", name: "United States" },
     url: "https://cinci360.com/floor-plans",
+    availableChannel: { "@type": "ServiceChannel", serviceUrl: "https://cinci360.com/#contact" },
+    image: "https://cinci360.com/images/workflows/floor-plans-hero.webp",
     description: "Nationwide LiDAR capture and measured floor plans for commercial facilities, architecture teams, facility managers and multi-site programs.",
   },
   {
