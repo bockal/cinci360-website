@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AnalyticsEvents, GoogleAnalyticsHead } from "./analytics";
+import { SiteFooter, SiteHeader } from "./site-chrome";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cinci360.com"),
@@ -93,7 +94,9 @@ export default function RootLayout({
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema).replace(/</g, "\\u003c") }} />
         <AnalyticsEvents />
+        <SiteHeader />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );
