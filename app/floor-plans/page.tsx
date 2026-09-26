@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     url: "https://cinci360.com/floor-plans",
     title: "Accurate Floor Plans for Any Facility | Cinci360",
     description: "LiDAR capture, measured floor plans and nationwide field coverage for architects, facility managers and multi-site programs.",
-    images: [{ url: "https://cinci360.com/images/workflows/laser-scanning-workflow.webp", width: 1800, height: 695, alt: "Cinci360 reality-capture workflow for measured floor plans" }],
+    images: [{ url: "https://cinci360.com/images/workflows/floor-plans-hero.webp", width: 1800, height: 695, alt: "Cinci360 LiDAR surveyor creating accurate measured floor plans for commercial facilities" }],
   },
 };
 
@@ -58,7 +58,7 @@ export default function FloorPlansPage() {
     <header className="service-nav"><AnimatedBrand/><nav><Link href="/due-diligence">Due Diligence</Link><Link href="/3d-laser-scanning-cincinnati">3D Scanning</Link><Link href="/projects/estee-lauder-plant">Case Study</Link><Link href="/#contact">Start a project</Link></nav></header>
 
     <section className="landing-poster">
-      <img src="/images/workflows/laser-scanning-workflow.webp" alt="Cinci360 reality-capture workflow for documenting an existing facility"/>
+      <img src="/images/workflows/floor-plans-hero.webp" alt="Cinci360 LiDAR surveyor creating accurate measured floor plans for commercial facilities"/>
     </section>
 
     <section className="service-hero landing-hero">
