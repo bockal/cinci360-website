@@ -53,8 +53,6 @@ const schema = [
 export default function DueDiligencePage() {
   return <main className="service-page landing-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <header className="service-nav"><AnimatedBrand/><nav><Link href="/floor-plans">Floor Plans</Link><Link href="/3d-laser-scanning-cincinnati">3D Scanning</Link><Link href="/projects/estee-lauder-plant">Case Study</Link><Link href="/#contact">Start a project</Link></nav></header>
-
     <section className="landing-poster">
       <img src="/images/workflows/due-diligence-hero.webp" alt="Cinci360 due diligence LiDAR survey for existing buildings and retrofit planning"/>
     </section>
@@ -81,7 +79,5 @@ export default function DueDiligencePage() {
 
     <section className="landing-faq"><p className="eyebrow">Common questions</p><h2>Building due-diligence FAQs</h2><details><summary>How does LiDAR help with property due diligence?</summary><p>It creates a measured spatial record of the existing building so acquisition, architecture and facilities teams can review layout, dimensions, circulation and visible conditions from shared data.</p></details><details><summary>When should a buyer scan a commercial building?</summary><p>Before acquisition, renovation or repurposing—especially when existing drawings are missing, old or unreliable and the team needs better information before committing to scope and budget.</p></details><details><summary>Can a LiDAR survey help estimate retrofit scope?</summary><p>It can provide measured spatial data, floor plans and a navigable digital record that help teams define retrofit scope and identify where additional investigation is needed. It does not replace structural, environmental or engineering inspections.</p></details><details><summary>What deliverables are available?</summary><p>Depending on scope: measured floor plans, Matterport digital twins, registered point clouds, E57 files, CAD drawings, Revit models and photographic documentation.</p></details></section>
     <section className="service-fit"><div><p className="eyebrow">Before the next capital decision</p><h2>Send us the building before you send a team back to measure it.</h2></div><p>Share the location, approximate square footage, transaction or retrofit timeline and the decisions your team needs to make. We will recommend the capture method and deliverables around that objective.</p><Link className="button button-gold" href="/#contact">Discuss the building</Link></section>
-
-    <footer className="service-footer"><Link className="brand" href="/"><span>Cinci</span><strong>360</strong></Link><p>Existing-building due diligence · LiDAR · Floor plans · 3D records</p><span>© 2026 Cinci360 · Cincinnati, Ohio</span></footer>
   </main>;
 }
