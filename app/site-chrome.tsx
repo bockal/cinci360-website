@@ -30,7 +30,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return <footer className="global-footer compact-footer">
     <div className="compact-footer-main">
-      <span>© 2026 Cinci360 · Cincinnati, Ohio · Nationwide · City of Cincinnati Vendor Code: VS1000024091</span>
+      <span>© 2026 Cinci360 · Woman-owned business · Cincinnati, Ohio · Nationwide · City of Cincinnati Vendor Code: VS1000024091</span>
       <nav aria-label="Footer navigation">
         <Link href="/answers">FAQ</Link>
         <Link className="footer-project-cta" href="/#contact">Start a project</Link>
