@@ -33,6 +33,7 @@ In the first Cinci360 Tales from the Field episode, we explain why existing-cond
 Topics covered:
 - Why legacy drawings drift from reality
 - What a walkthrough can miss
+- What Cartridge Brewing and Carew Tower taught us about hidden environmental risk
 - How Matterport and LiDAR help owners, architects and facility teams see the same building
 - Why due-diligence scans can reduce scope risk before renovation
 - How Cinci360 approaches field capture and practical deliverables
@@ -134,7 +135,8 @@ export default function PodcastEpisodePage() {
           <li>Reality capture gives the next team a shared source of truth before decisions harden into cost.</li>
         </ul>
         <h3>Field examples to reference</h3>
-        <p>The episode should connect the concept to Cinci360 work without overclaiming: Estée Lauder&apos;s Long Island plant retrofit for BHDP, Bell Event Centre&apos;s public-facing digital twin, dealership documentation programs, and due-diligence captures where the first value is simply knowing what exists.</p>
+        <p>Two strong examples for this episode are Cartridge Brewing and Carew Tower. In both cases, the building had hidden asbestos-related risk that was not obvious from a simple walkthrough or old documentation. Reality capture does not replace environmental testing, but it gives owners, buyers, architects and abatement teams a shared visual and measured record of where the concerns are, what spaces are affected and how decisions should be sequenced before demolition or retrofit work begins.</p>
+        <p>That is the deeper point behind &quot;your building is lying to you&quot;: the risk is often not that someone is being dishonest. The risk is that the building has a longer memory than the paperwork.</p>
         <h3>Suggested close</h3>
         <p>If your building is about to be bought, renovated, repurposed or modeled, do not ask the team to guess from memory and old PDFs. Send Cinci360 the address, approximate square footage, existing drawings if you have them, and the decision you need to make. We will recommend the capture method and deliverables around that decision.</p>
       </article>
@@ -153,7 +155,7 @@ export default function PodcastEpisodePage() {
         <li><strong>Hook:</strong> &quot;Your building is lying to you&quot; means the record is usually less current than the building.</li>
         <li><strong>The field problem:</strong> What walkthroughs, photos and inherited drawings miss.</li>
         <li><strong>The Cinci360 answer:</strong> Match Matterport, LiDAR, floor plans, CAD or Revit to the decision being made.</li>
-        <li><strong>Proof points:</strong> Dealership programs, Estée Lauder, Bell Event Centre and due-diligence surveys.</li>
+        <li><strong>Proof points:</strong> Cartridge Brewing, Carew Tower and the asbestos-related surprises that made documentation matter.</li>
         <li><strong>Buyer guidance:</strong> What to send before asking for a quote.</li>
         <li><strong>Close:</strong> Capture first, scope with better information, keep the record for the next team.</li>
       </ol>
