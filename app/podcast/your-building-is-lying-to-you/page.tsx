@@ -5,47 +5,55 @@ import "../podcast.css";
 const episodeUrl = "https://cinci360.com/podcast/your-building-is-lying-to-you";
 const publishDate = "2026-10-05";
 
+const matterportTours = [
+  { label: "Carew Tower existing conditions", href: "https://my.matterport.com/show/?m=mzpDndv61yD" },
+  { label: "Peter's Cartridge Factory before renovation", href: "https://my.matterport.com/show/?m=9QLaV3JFz5k" },
+  { label: "Cartridge Brewing finished space", href: "https://my.matterport.com/show/?m=D3UaD3yFgv7" },
+];
+
+const interviewQuestions = [
+  { question: "What was the original reason you were brought in to document Carew Tower?", answer: "The current owners were taken to court over the collapse of a ceiling above an occupied swimming pool on the first floor, as you can see in the survey. We were brought in to survey the entire structure, top to bottom, for a new intended buyer renovation." },
+  { question: "What did you expect Carew Tower to be like before you got there?", answer: "More occupied. The building is a ghost town at the heart of Cincinnati, a problem that can plague a metropolis with low rents for decades." },
+  { question: "What did the building actually tell you once you were inside?", answer: "The profitable parts of the structure, such as the Netherland Plaza Hall of Mirrors and hotel, were still well cared for, displaying the building's Art Deco-era facades and decor." },
+  { question: "When you saw the red-marked drawings and old plans, what did they reveal about relying on blueprints?", answer: "Answer to fill in.", media: "Media note: insert red-marked Carew Tower drawings here." },
+  { question: "What is the difference between “we have drawings” and “we know the building”?", answer: "Drawings do not show standing water, structural damage, low-quality building materials or vandalism. You would expect a difference between a blueprint and reality over the course of 100 years.", media: "Media note: insert Carew Tower roof water photo here." },
+  { question: "What did the standing water on the roof tell you that a drawing could not?", answer: "Cut from final narration, but kept here as an interview workbench prompt." },
+  { question: "How do you talk about flaws in a historic building without sounding like you are attacking the building?", answer: "The same way you inspect a home before a purchase: you add them up on a ledger until the dollars and cents make sense to the buyer." },
+  { question: "Why is identifying a building's problems actually a form of care?", answer: "Answer to fill in." },
+  { question: "What did Carew Tower teach you about public-facing buildings and hidden risk?", answer: "Neglect maintenance for long enough, and you will undoubtedly find your commercial or residential property posing a hazardous lawsuit." },
+  { question: "What was the physical experience of scanning Peter's Cartridge Factory?", answer: "It was below freezing in February, probably around 10 degrees first thing in the morning. You were in steel-toed boots and layers. The work was slow and tedious, and eventually the equipment froze. At the time, you were not prepared to be on site for eight-plus hours in those conditions. Today, the equipment and workflow could handle that kind of work better." },
+  { question: "What safety or site conditions stood out at Peter's Cartridge?", answer: "The site had a significant environmental history as a former ammunition facility. There were remediation efforts visible around the property, including trees planted to help address lead contamination tied to the site's industrial past." },
+  { question: "What did it mean that the owner and investor were present during the survey?", answer: "Answer to fill in." },
+  { question: "What did Kyle Hackworth's involvement say about the project?", answer: "Kyle Hackworth was a Boilermaker and part of the ownership/investor side of the project story." },
+  { question: "What did the “before” model reveal about Peter's Cartridge that a finished brewery never could?", answer: "The digital twin of the pre-renovation structure made it much easier to evaluate renovation costs with multiple bidders and demolition teams. That is a boon to any investor.", media: "Media note: insert Peter's Cartridge before Matterport tour or still here." },
+  { question: "Why does the finished Cartridge Brewing tour matter as much as the before tour?", answer: "Pure digital marketing, especially if your facility is rentable for events.", media: "Media note: insert finished Cartridge Brewing photo here." },
+  { question: "What changes when you can share an entire building as a URL?", answer: "With the power of AI, you can imagine your next themed event in the space to its fullest.", media: "Future media note: add an AI-rendered Cartridge Brewing scene decorated for Halloween." },
+  { question: "Who benefits from seeing the model before renovation decisions are finalized?", answer: "Answer to fill in." },
+  { question: "How is this similar to AI helping screen X-rays for cancer?", answer: "The comparison is not that AI replaces doctors or that scans replace experts. The point is that better visual evidence helps qualified people make better decisions earlier." },
+  { question: "When someone says, “We can't afford to scan it,” what do you want them to understand?", answer: "Any time a structure is intended for public use, the risks outweigh the rewards of doing it cheaply. A laser scan does not compromise the budget. It protects it by reducing rework, improving consensus, and giving the team a factual baseline." },
+  { question: "What would you say to a developer, public agency, or owner considering reuse of an old building?", answer: "It is worth every penny to get a digital twin and shop around for the right construction team for the project, especially if you are dealing with a historic structure like Peter's Cartridge Factory.", media: "Media note: insert winter exterior of Peter's Cartridge Factory here." },
+  { question: "What do you want future generations to understand about this work?", answer: "The goal is not just to document buildings once. It is to repeat and improve the process so better reuse decisions can be made over time." },
+  { question: "What is the one sentence you want listeners to remember?", answer: "The drawing is not the building." },
+];
+
 export const metadata: Metadata = {
-  title: "Podcast: Your Building Is Lying to You",
-  description: "Cinci360's first field-expertise podcast episode explains why existing buildings often mislead owners, buyers and design teams until reality capture documents what is really there.",
+  title: "Your Building Is Lying to You | Cinci360 Podcast",
+  description: "Cinci360's first Tales from the Field episode uses Carew Tower and Peter's Cartridge Factory to explain why existing drawings are not due diligence.",
   alternates: { canonical: episodeUrl },
   openGraph: {
     type: "article",
     url: episodeUrl,
     title: "Your Building Is Lying to You | Cinci360 Podcast",
-    description: "A field-expertise episode about due diligence, Matterport, LiDAR surveying and why old drawings and quick walkthroughs can hide costly building assumptions.",
+    description: "Carew Tower, Peter's Cartridge Factory and the field case for documenting existing conditions before renovation decisions get expensive.",
     publishedTime: publishDate,
     authors: ["Cinci360"],
   },
   twitter: {
     card: "summary",
     title: "Your Building Is Lying to You | Cinci360 Podcast",
-    description: "Why existing buildings mislead project teams until field reality is captured.",
+    description: "Why existing drawings are not due diligence.",
   },
 };
-
-const youtubeTitle = "Your Building Is Lying to You | Cinci360 Tales from the Field Ep. 001";
-
-const youtubeDescription = `Before you buy, renovate, remodel or model an existing building, remember this: the building is probably telling a story that old drawings, quick walkthroughs and inherited assumptions do not fully capture.
-
-In the first Cinci360 Tales from the Field episode, we explain why existing-condition documentation matters for due diligence, facility retrofits, Matterport digital twins, LiDAR surveying, floor plans and scan-to-BIM work.
-
-Topics covered:
-- Why legacy drawings drift from reality
-- What a walkthrough can miss
-- What Cartridge Brewing and Carew Tower taught us about hidden environmental risk
-- How Matterport and LiDAR help owners, architects and facility teams see the same building
-- Why due-diligence scans can reduce scope risk before renovation
-- How Cinci360 approaches field capture and practical deliverables
-
-Cinci360 provides national reality capture, LiDAR surveying, Matterport digital twins, measured floor plans, CAD, Revit and scan-to-BIM services from Cincinnati, Ohio.
-
-Plan a project: https://cinci360.com/#contact
-Episode page: ${episodeUrl}
-Due diligence services: https://cinci360.com/due-diligence
-Scan-to-BIM services: https://cinci360.com/scan-to-bim-revit-cad
-
-#RealityCapture #LiDAR #Matterport #ScanToBIM #DigitalTwin #CommercialRealEstate #DueDiligence`;
 
 const schema = [
   {
@@ -57,18 +65,11 @@ const schema = [
     url: episodeUrl,
     datePublished: publishDate,
     inLanguage: "en-US",
-    description: "Cinci360's first field-expertise episode explains why existing buildings often mislead owners, buyers and design teams until reality capture documents what is really there.",
+    description: "Cinci360's first Tales from the Field episode uses Carew Tower and Peter's Cartridge Factory to explain why existing drawings are not due diligence.",
     partOfSeries: { "@id": "https://cinci360.com/podcast#series" },
     publisher: { "@id": "https://cinci360.com/#organization" },
     author: { "@id": "https://cinci360.com/#organization" },
-    about: [
-      "Reality capture",
-      "LiDAR surveying",
-      "Matterport digital twins",
-      "Building due diligence",
-      "Existing-condition documentation",
-      "Scan-to-BIM",
-    ],
+    about: ["Reality capture", "Matterport digital twins", "Building due diligence", "Existing-condition documentation", "Historic renovation", "Adaptive reuse"],
   },
   {
     "@context": "https://schema.org",
@@ -80,100 +81,99 @@ const schema = [
     author: { "@id": "https://cinci360.com/#organization" },
     publisher: { "@id": "https://cinci360.com/#organization" },
     mainEntityOfPage: episodeUrl,
-    description: "Field notes for Cinci360's first podcast episode about existing-building due diligence and reality capture.",
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://cinci360.com/" },
-      { "@type": "ListItem", position: 2, name: "Podcast", item: "https://cinci360.com/podcast" },
-      { "@type": "ListItem", position: 3, name: "Your Building Is Lying to You", item: episodeUrl },
-    ],
+    description: "Field notes and interview prompts for Cinci360's first podcast episode about existing-building due diligence and reality capture.",
   },
 ];
 
 export default function PodcastEpisodePage() {
-  return <main className="podcast-page">
+  return <main className="podcast-page episode-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <section className="podcast-hero">
-      <div>
-        <p className="eyebrow">Tales from the Field · Episode 001</p>
-        <h1>Your Building Is Lying to You.</h1>
-        <p>Old drawings, quick walkthroughs and inherited assumptions can make an existing building feel understood long before it is actually documented. This episode explains why Cinci360 starts with field reality.</p>
-        <div className="service-actions">
-          <Link className="button button-gold" href="/#contact">Plan a survey</Link>
-          <Link href="/due-diligence">Explore due diligence</Link>
-        </div>
+    <section className="episode-hero-text">
+      <p className="eyebrow">Tales from the Field · Episode 001</p>
+      <h1>Your Building Is Lying to You</h1>
+      <p>Blueprints are not reality. They are a record of intent, revision, compromise and sometimes neglect.</p>
+      <div className="service-actions">
+        <Link className="button button-gold" href="/#contact">Plan a survey</Link>
+        <Link href="/due-diligence">Explore due diligence</Link>
       </div>
-      <aside className="podcast-panel">
-        <span>Episode positioning</span>
-        <strong>Answering questions from the field, not reading spec sheets.</strong>
-        <ul>
-          <li>For owners, buyers, architects and facilities teams.</li>
-          <li>Built around real Cinci360 lessons from surveys and digital twins.</li>
-          <li>Ready for YouTube now; podcast RSS can follow when an audio file exists.</li>
-        </ul>
-      </aside>
     </section>
 
-    <section className="podcast-content">
+    <section className="podcast-content episode-content">
       <article className="podcast-article">
-        <div className="podcast-audio-placeholder">
-          <strong>Audio status</strong>
-          <p>No audio-file URL is published yet, so this page intentionally does not include an audio embed, enclosure or AudioObject schema. Add those only after the final MP3 or podcast-host URL exists.</p>
+        <div className="podcast-audio-placeholder"><strong>Production status</strong><p>This is the first rendered page pass. Audio, Lab11 narration and final RSS/audio schema should be added after the episode recording is produced.</p></div>
+
+        <h2>Why Existing Drawings Aren&apos;t Due Diligence</h2>
+        <p>In this first episode of <strong>Cinci360: Tales from the Field</strong>, we look at two Cincinnati-area projects where the real story of the building was not fully visible on paper: <strong>Carew Tower</strong> and <strong>Peter&apos;s Cartridge Factory</strong>, now transformed into Cartridge Brewing.</p>
+        <p>Both buildings carried history. Both carried risk. Both had conditions that could not be understood from drawings alone.</p>
+        <p>The job of a due diligence survey is to uncover structural flaws for an intended buyer. In doing so, you extend a generational respect for the future plans of a historic place such as Carew Tower.</p>
+
+        <h2>Episode Thesis</h2>
+        <p><strong>The drawing is not the building.</strong></p>
+        <p>Existing drawings can tell you what someone thought was there, what someone hoped was there, or what was documented at one point in time. But buildings change. Owners defer maintenance. Water finds paths. Materials age. Walls move. Ceilings fail. Mechanical systems get rerouted. Hazardous materials hide behind finished surfaces.</p>
+        <p>Reality capture gives owners, architects, engineers, contractors, lenders, preservationists and public stakeholders a shared factual digital baseline.</p>
+        <p>It does not replace professional judgment. It makes professional judgment better.</p>
+
+        <div className="episode-media-placeholder">Media note: insert Carew Tower Matterport camera inside damaged room as the opening image.</div>
+        <div className="episode-media-placeholder">Media note: insert red-marked Carew Tower drawings and roof standing-water photo as the blueprint versus reality visual pair.</div>
+
+        <h2>Featured Projects</h2>
+        <h3>Carew Tower</h3>
+        <p>Carew Tower is one of Cincinnati&apos;s most recognizable landmarks. From the skyline, it reads as civic pride. From inside the building, the story becomes more complicated.</p>
+        <p>The scan documented conditions that drawings alone could not fully explain: damaged interiors, marked-up plans, roof drainage concerns, standing water, hidden-risk conditions and the gap between a building&apos;s public image and its physical reality.</p>
+        <p>A drawing can show where roof drains are supposed to be. Existing conditions show whether the roof is actually draining.</p>
+
+        <h3>Peter&apos;s Cartridge Factory</h3>
+        <p>Peter&apos;s Cartridge Factory was a former ammunition manufacturing site with a complicated environmental history. It was cold, hazardous and physically demanding to document.</p>
+        <p>The survey happened in below-freezing February conditions. Steel-toed boots, layers, slow work and eventually equipment affected by the cold. Around the site, trees had been planted as part of environmental remediation efforts, helping address lead contamination tied to the site&apos;s industrial past.</p>
+        <p>The finished Cartridge Brewing space makes the transformation look inevitable.</p>
+        <p><strong>The before scan proves it was not.</strong></p>
+
+        <div className="episode-media-placeholder">Media note: insert Peter&apos;s Cartridge winter exterior, before Matterport still, and finished Cartridge Brewing stills here.</div>
+
+        <h2>The Diagnostic Imaging Analogy</h2>
+        <p>Reality capture is like diagnostic imaging for buildings.</p>
+        <p>A scan does not diagnose asbestos. It does not replace environmental testing. It does not replace structural engineering. It does not make renovation easy.</p>
+        <p>But like an X-ray or MRI, it lets more people see the same patient.</p>
+        <p>When an entire building can be reduced to a shareable WebGL URL, expertise no longer has to be trapped on-site. Owners, investors, architects, consultants, contractors, public agencies and future users can all examine the same evidence before decisions get expensive.</p>
+        <p>That changes the quality of the conversation.</p>
+        <p>A building used to be trapped at its address. Reality capture turns it into a conversation.</p>
+
+        <h2>Why This Matters for Public-Use Buildings</h2>
+        <p>Any time a structure is intended for public use, the risks outweigh the rewards of doing it cheaply.</p>
+        <p>A laser scan does not compromise the budget. It protects it.</p>
+        <p>It helps the project operate with fewer reworks, fewer surprises and more stakeholder consensus. If the building will eventually hold employees, visitors, residents, customers, students, patients or the public, guessing is not frugal. It is risky.</p>
+        <p><strong>The scan is not the luxury item.</strong></p>
+        <p><strong>The rework is.</strong></p>
+
+        <h2>Interview Questions and Notes</h2>
+        <p>These are the working interview questions for the episode. Some are answered, some are intentionally left open so the final narration can be filled in from the audio interview.</p>
+        <div className="episode-question-list">
+          {interviewQuestions.map((item, index) => <section className="episode-question" key={item.question}><span>{String(index + 1).padStart(2, "0")}</span><h3>{item.question}</h3><p>{item.answer}</p>{item.media ? <div className="episode-media-placeholder">{item.media}</div> : null}</section>)}
         </div>
-        <h2>Episode premise</h2>
-        <p>A building can look simple during a walkthrough and still contain years of undocumented change. Walls move. Tenants improvise. Mechanical rooms evolve. Renovations happen without the drawings catching up. By the time a buyer, architect or facilities team starts planning from old information, the building is already quietly shaping the budget.</p>
-        <p>Cinci360&apos;s first episode turns that field lesson into a practical story: before you scope the retrofit, price the acquisition or start the model, capture the reality of the place.</p>
-        <h3>Why this matters</h3>
-        <ul>
-          <li>Existing drawings can be incomplete, outdated or missing entirely.</li>
-          <li>Photos help, but they do not create a measured record everyone can revisit.</li>
-          <li>Matterport digital twins help distributed teams walk the site remotely.</li>
-          <li>LiDAR and point-cloud data support measured floor plans, CAD and Revit deliverables.</li>
-          <li>Reality capture gives the next team a shared source of truth before decisions harden into cost.</li>
-        </ul>
-        <h3>Field examples to reference</h3>
-        <p>Two strong examples for this episode are Cartridge Brewing and Carew Tower. In both cases, the building had hidden asbestos-related risk that was not obvious from a simple walkthrough or old documentation. Reality capture does not replace environmental testing, but it gives owners, buyers, architects and abatement teams a shared visual and measured record of where the concerns are, what spaces are affected and how decisions should be sequenced before demolition or retrofit work begins.</p>
-        <p>That is the deeper point behind &quot;your building is lying to you&quot;: the risk is often not that someone is being dishonest. The risk is that the building has a longer memory than the paperwork.</p>
-        <h3>Suggested close</h3>
-        <p>If your building is about to be bought, renovated, repurposed or modeled, do not ask the team to guess from memory and old PDFs. Send Cinci360 the address, approximate square footage, existing drawings if you have them, and the decision you need to make. We will recommend the capture method and deliverables around that decision.</p>
+
+        <h2>Visual Storyboard</h2>
+        <div className="episode-storyboard">
+          <article><h3>Opening Image</h3><p>Matterport camera inside a damaged Carew Tower room, surrounded by failing ceiling conditions, damaged walls and daylight through old windows.</p></article>
+          <article><h3>Blueprint Section</h3><p>Red-marked 19th and 20th floor plans pinned to a wall.</p></article>
+          <article><h3>Carew Conditions</h3><p>Standing water on the roof, damaged interior conditions and the elegant elevator lobby.</p></article>
+          <article><h3>Peter&apos;s Cartridge Before</h3><p>Exterior of the old factory and Matterport views of the unfinished industrial space.</p></article>
+          <article><h3>Peter&apos;s Cartridge After</h3><p>Finished Cartridge Brewing views showing that the building did not need to disappear to become useful again.</p></article>
+        </div>
+
+        <h2>Working Narration Direction</h2>
+        <p>This episode should sound like field notes from someone who has actually been in these buildings.</p>
+        <p>Not a sales pitch. Not generic tech optimism. Not &quot;digital transformation&quot; language.</p>
+        <ul><li>Existing drawings are not due diligence.</li><li>Cheap documentation can become expensive rework.</li><li>Historic buildings deserve honesty.</li><li>Reality capture does not make renovation easy.</li><li>Reality capture makes renovation honest.</li></ul>
+
+        <h2>Possible Closing</h2>
+        <p>Buildings do not lie on purpose.</p><p>They just keep secrets.</p><p>They hide water above ceilings, asbestos behind finishes, rerouted systems inside walls and decades of decisions that never made it back into the drawings.</p><p>Reality capture gives those secrets a place to surface before they become change orders, safety issues or missed opportunities.</p><p><strong>The scan is not the luxury item.</strong></p><p><strong>The rework is.</strong></p>
       </article>
-      <aside className="podcast-sidebar">
-        <Link href="/projects/estee-lauder-plant">Estée Lauder case study</Link>
+      <aside className="podcast-sidebar episode-sidebar">
+        <div className="podcast-note"><p><strong>Episode title:</strong> Your Building Is Lying to You</p></div>
+        {matterportTours.map((tour) => <a href={tour.href} target="_blank" rel="noreferrer" key={tour.href}>{tour.label}</a>)}
+        <Link href="/due-diligence">Due diligence services</Link>
         <Link href="/scan-to-bim-revit-cad">Scan-to-BIM services</Link>
-        <Link href="/floor-plans">Measured floor plans</Link>
-        <div className="podcast-note"><p><strong>Production note:</strong> YouTube advanced features are enabled, so this episode can use the full description, outbound links and chapter-style topic list below.</p></div>
       </aside>
-    </section>
-
-    <section className="podcast-outline">
-      <span>Recording outline</span>
-      <h2>A clean run of show for episode one.</h2>
-      <ol>
-        <li><strong>Hook:</strong> &quot;Your building is lying to you&quot; means the record is usually less current than the building.</li>
-        <li><strong>The field problem:</strong> What walkthroughs, photos and inherited drawings miss.</li>
-        <li><strong>The Cinci360 answer:</strong> Match Matterport, LiDAR, floor plans, CAD or Revit to the decision being made.</li>
-        <li><strong>Proof points:</strong> Cartridge Brewing, Carew Tower and the asbestos-related surprises that made documentation matter.</li>
-        <li><strong>Buyer guidance:</strong> What to send before asking for a quote.</li>
-        <li><strong>Close:</strong> Capture first, scope with better information, keep the record for the next team.</li>
-      </ol>
-    </section>
-
-    <section className="podcast-assets">
-      <span>YouTube assets</span>
-      <h2>Ready-to-use title and description.</h2>
-      <div className="podcast-asset-grid">
-        <article>
-          <h3>Title</h3>
-          <pre>{youtubeTitle}</pre>
-        </article>
-        <article>
-          <h3>Description</h3>
-          <pre>{youtubeDescription}</pre>
-        </article>
-      </div>
     </section>
   </main>;
 }
