@@ -11,6 +11,22 @@ const matterportTours = [
   { label: "Cartridge Brewing finished space", href: "https://my.matterport.com/show/?m=D3UaD3yFgv7" },
 ];
 
+const media = {
+  carewDamagedRoom: "/images/podcast/episode-001/carew-damaged-room.jpeg",
+  carewMarkedDrawings: "/images/podcast/episode-001/carew-marked-drawings.jpeg",
+  carewStandingWater: "/images/podcast/episode-001/carew-standing-water.jpeg",
+  carewElevatorLobby: "/images/podcast/episode-001/carew-elevator-lobby.jpeg",
+  carewRooftopView: "/images/podcast/episode-001/carew-rooftop-view.jpeg",
+  carewRooftopSelfie: "/images/podcast/episode-001/carew-rooftop-selfie.jpeg",
+  petersExterior: "/images/podcast/episode-001/peters-cartridge-exterior.jpeg",
+  petersSmokestack: "/images/podcast/episode-001/peters-cartridge-smokestack.jpeg",
+  petersFieldPhoto: "/images/podcast/episode-001/peters-cartridge-field-photo.jpg",
+  petersBeforeWide: "/images/podcast/episode-001/peters-cartridge-before-wide.png",
+  petersBeforeConduit: "/images/podcast/episode-001/peters-cartridge-before-conduit.png",
+  cartridgeBar: "/images/podcast/episode-001/cartridge-brewery-bar.png",
+  cartridgeOverlook: "/images/podcast/episode-001/cartridge-brewery-overlook.png",
+};
+
 const interviewQuestions = [
   { question: "What was the original reason you were brought in to document Carew Tower?", answer: "The current owners were taken to court over the collapse of a ceiling above an occupied swimming pool on the first floor, as you can see in the survey. We were brought in to survey the entire structure, top to bottom, for a new intended buyer renovation." },
   { question: "What did you expect Carew Tower to be like before you got there?", answer: "More occupied. The building is a ghost town at the heart of Cincinnati, a problem that can plague a metropolis with low rents for decades." },
@@ -35,6 +51,13 @@ const interviewQuestions = [
   { question: "What do you want future generations to understand about this work?", answer: "The goal is not just to document buildings once. It is to repeat and improve the process so better reuse decisions can be made over time." },
   { question: "What is the one sentence you want listeners to remember?", answer: "The drawing is not the building." },
 ];
+
+function EpisodeImage({ src, alt, caption, tall = false }: { src: string; alt: string; caption: string; tall?: boolean }) {
+  return <figure className={tall ? "episode-figure episode-figure-tall" : "episode-figure"}>
+    <img src={src} alt={alt} />
+    <figcaption>{caption}</figcaption>
+  </figure>;
+}
 
 export const metadata: Metadata = {
   title: "Your Building Is Lying to You | Cinci360 Podcast",
@@ -70,6 +93,7 @@ const schema = [
     publisher: { "@id": "https://cinci360.com/#organization" },
     author: { "@id": "https://cinci360.com/#organization" },
     about: ["Reality capture", "Matterport digital twins", "Building due diligence", "Existing-condition documentation", "Historic renovation", "Adaptive reuse"],
+    image: `https://cinci360.com${media.carewDamagedRoom}`,
   },
   {
     "@context": "https://schema.org",
@@ -82,19 +106,23 @@ const schema = [
     publisher: { "@id": "https://cinci360.com/#organization" },
     mainEntityOfPage: episodeUrl,
     description: "Field notes and interview prompts for Cinci360's first podcast episode about existing-building due diligence and reality capture.",
+    image: `https://cinci360.com${media.carewDamagedRoom}`,
   },
 ];
 
 export default function PodcastEpisodePage() {
   return <main className="podcast-page episode-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <section className="episode-hero-text">
-      <p className="eyebrow">Tales from the Field · Episode 001</p>
-      <h1>Your Building Is Lying to You</h1>
-      <p>Blueprints are not reality. They are a record of intent, revision, compromise and sometimes neglect.</p>
-      <div className="service-actions">
-        <Link className="button button-gold" href="/#contact">Plan a survey</Link>
-        <Link href="/due-diligence">Explore due diligence</Link>
+    <section className="episode-hero">
+      <img src={media.carewDamagedRoom} alt="Matterport camera inside a damaged Carew Tower room with open ceiling tiles and distressed walls." />
+      <div className="episode-hero-copy">
+        <p className="eyebrow">Tales from the Field · Episode 001</p>
+        <h1>Your Building Is Lying to You</h1>
+        <p>Blueprints are not reality. They are a record of intent, revision, compromise and sometimes neglect.</p>
+        <div className="service-actions">
+          <Link className="button button-gold" href="/#contact">Plan a survey</Link>
+          <Link href="/due-diligence">Explore due diligence</Link>
+        </div>
       </div>
     </section>
 
@@ -113,14 +141,21 @@ export default function PodcastEpisodePage() {
         <p>Reality capture gives owners, architects, engineers, contractors, lenders, preservationists and public stakeholders a shared factual digital baseline.</p>
         <p>It does not replace professional judgment. It makes professional judgment better.</p>
 
-        <div className="episode-media-placeholder">Media note: insert Carew Tower Matterport camera inside damaged room as the opening image.</div>
-        <div className="episode-media-placeholder">Media note: insert red-marked Carew Tower drawings and roof standing-water photo as the blueprint versus reality visual pair.</div>
+        <div className="episode-image-grid">
+          <EpisodeImage src={media.carewMarkedDrawings} alt="Red-marked Carew Tower floor plans pinned to a wall." caption="Plans are a starting point. The red marks are the beginning of finding out what changed." />
+          <EpisodeImage src={media.carewStandingWater} alt="Standing water on the Carew Tower roof beside a laser scanner." caption="The roof told a different story than any drawing could: water was staying where it should have moved." />
+        </div>
 
         <h2>Featured Projects</h2>
         <h3>Carew Tower</h3>
         <p>Carew Tower is one of Cincinnati&apos;s most recognizable landmarks. From the skyline, it reads as civic pride. From inside the building, the story becomes more complicated.</p>
         <p>The scan documented conditions that drawings alone could not fully explain: damaged interiors, marked-up plans, roof drainage concerns, standing water, hidden-risk conditions and the gap between a building&apos;s public image and its physical reality.</p>
         <p>A drawing can show where roof drains are supposed to be. Existing conditions show whether the roof is actually draining.</p>
+        <div className="episode-image-grid">
+          <EpisodeImage src={media.carewElevatorLobby} alt="Elegant Carew Tower elevator lobby with a Matterport camera set up in the center." caption="Carew can be beautiful and still need hard questions. Preservation starts with seeing clearly." />
+          <EpisodeImage src={media.carewRooftopView} alt="Wide rooftop view from Carew Tower overlooking downtown Cincinnati." caption="From the skyline, Carew reads as civic pride. From the roof, the building starts telling the maintenance story." />
+          <EpisodeImage src={media.carewRooftopSelfie} alt="Aubrey on the Carew Tower rooftop with downtown Cincinnati behind her." caption="Field note: this work happens in real buildings, in real weather, with real risk underfoot." />
+        </div>
 
         <h3>Peter&apos;s Cartridge Factory</h3>
         <p>Peter&apos;s Cartridge Factory was a former ammunition manufacturing site with a complicated environmental history. It was cold, hazardous and physically demanding to document.</p>
@@ -128,7 +163,15 @@ export default function PodcastEpisodePage() {
         <p>The finished Cartridge Brewing space makes the transformation look inevitable.</p>
         <p><strong>The before scan proves it was not.</strong></p>
 
-        <div className="episode-media-placeholder">Media note: insert Peter&apos;s Cartridge winter exterior, before Matterport still, and finished Cartridge Brewing stills here.</div>
+        <div className="episode-image-grid">
+          <EpisodeImage src={media.petersExterior} alt="Peter's Cartridge Factory exterior in winter before renovation." caption="Peter&apos;s Cartridge before reuse: a former ammunition site, cold, exposed and full of hard unknowns." />
+          <EpisodeImage src={media.petersSmokestack} alt="Peter's Cartridge Factory smokestack and damaged industrial windows." caption="The industrial shell carried both identity and liability." />
+          <EpisodeImage src={media.petersFieldPhoto} alt="Snowy field photo of Peter's Cartridge Factory before renovation." caption="The winter survey conditions were part of the story: freezing weather, steel-toed boots and equipment pushed to its limits." />
+          <EpisodeImage src={media.petersBeforeWide} alt="Matterport view inside Peter's Cartridge Factory before renovation." caption="Before: a rough industrial interior captured as a navigable model instead of a guess." />
+          <EpisodeImage src={media.petersBeforeConduit} alt="Matterport view of unfinished interior conditions at Peter's Cartridge Factory." caption="The before model preserved what the finished brewery can no longer show." />
+          <EpisodeImage src={media.cartridgeBar} alt="Finished Cartridge Brewing bar after renovation." caption="After: a finished public space where the reuse story becomes visible." />
+          <EpisodeImage src={media.cartridgeOverlook} alt="Overhead finished view of Cartridge Brewing after renovation." caption="The finished tour matters because it completes the arc: risk, documentation, reuse and public life." />
+        </div>
 
         <h2>The Diagnostic Imaging Analogy</h2>
         <p>Reality capture is like diagnostic imaging for buildings.</p>
