@@ -53,6 +53,17 @@ type Capture = {
   imageDataUri: string;
 };
 
+type InventoryItem = {
+  assetId: string;
+  category: "boat_shell" | "erg" | "boat_rack" | "trailer" | "safety_equipment" | "shop_equipment" | "other";
+  description: string;
+  quantity: number;
+  confidence: number;
+  evidenceSweepIds: string[];
+  duplicateGroup: string;
+  notes: string;
+};
+
 function sleep(ms: number) {
   return new Promise(resolve => window.setTimeout(resolve, ms));
 }
@@ -75,6 +86,9 @@ export default function MatterportInspectorPrototype() {
   const [captures, setCaptures] = useState<Capture[]>([]);
   const [sampleSize, setSampleSize] = useState(5);
   const [walking, setWalking] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventorySummary, setInventorySummary] = useState("");
 
   const iframeSrc = useMemo(() => {
     const params = new URLSearchParams({
@@ -234,7 +248,50 @@ export default function MatterportInspectorPrototype() {
 
   function clearCaptures() {
     setCaptures([]);
+    setInventory([]);
+    setInventorySummary("");
     setStatus("Captures cleared");
+  }
+
+  async function analyzeCaptures() {
+    if (!captures.length) {
+      setError("Capture at least one panorama before running inventory analysis.");
+      return;
+    }
+
+    setAnalyzing(true);
+    setError("");
+    setStatus(`Analyzing ${captures.length} panorama${captures.length === 1 ? "" : "s"}…`);
+
+    try {
+      const response = await fetch("/api/labs/matterport-inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: { sid: MODEL_SID, name: modelLabel },
+          captures,
+        }),
+      });
+
+      const result = await response.json() as {
+        summary?: string;
+        items?: InventoryItem[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.error || `Inventory analysis failed with HTTP ${response.status}.`);
+      }
+
+      setInventory(Array.isArray(result.items) ? result.items : []);
+      setInventorySummary(result.summary || "");
+      setStatus(`Inventory complete · ${result.items?.length ?? 0} asset rows`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+      setStatus("Inventory analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
   function downloadCaptureBundle() {
@@ -344,10 +401,13 @@ export default function MatterportInspectorPrototype() {
               <button type="button" onClick={captureCurrent} disabled={!sweeps.length || walking}>
                 Capture current sweep
               </button>
+              <button type="button" onClick={analyzeCaptures} disabled={!captures.length || walking || analyzing}>
+                {analyzing ? "Analyzing…" : "Analyze inventory"}
+              </button>
               <button type="button" className="mpi-secondary" onClick={downloadCaptureBundle} disabled={!captures.length}>
                 Download capture bundle
               </button>
-              <button type="button" className="mpi-text-button" onClick={clearCaptures} disabled={!captures.length || walking}>
+              <button type="button" className="mpi-text-button" onClick={clearCaptures} disabled={!captures.length || walking || analyzing}>
                 Clear captures
               </button>
             </div>
@@ -426,6 +486,78 @@ export default function MatterportInspectorPrototype() {
           </div>
         </section>
       )}
+
+      <section className="mpi-inventory">
+        <div className="mpi-section-head">
+          <div>
+            <p className="mpi-kicker">AI inventory</p>
+            <h2>{inventory.length ? `${inventory.length} asset rows` : "Ready for visual inventory"}</h2>
+          </div>
+          <p>
+            One row per unique asset or asset group. Confidence and sweep evidence stay visible
+            so a human can verify the result instead of trusting an unsupported guess.
+          </p>
+        </div>
+        {inventorySummary && <p className="mpi-inventory-summary">{inventorySummary}</p>}
+        <div className="mpi-table-wrap">
+          <table className="mpi-inventory-table">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Confidence</th>
+                <th>Evidence sweeps</th>
+                <th>Duplicate group</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {inventory.length ? inventory.map(item => (
+                <tr key={item.assetId}>
+                  <td><code>{item.assetId}</code></td>
+                  <td>{item.category.replaceAll("_", " ")}</td>
+                  <td>{item.description}</td>
+                  <td>{item.quantity}</td>
+                  <td>
+                    <span className={item.confidence >= 0.8 ? "mpi-confidence mpi-confidence-high" : item.confidence >= 0.55 ? "mpi-confidence mpi-confidence-mid" : "mpi-confidence mpi-confidence-low"}>
+                      {Math.round(item.confidence * 100)}%
+                    </span>
+                  </td>
+                  <td>
+                    <div className="mpi-sweep-chips">
+                      {item.evidenceSweepIds.map(sweepId => (
+                        <button
+                          key={sweepId}
+                          type="button"
+                          className="mpi-sweep-chip"
+                          onClick={() => {
+                            const sweep = sweeps.find(candidate => candidate.sid === sweepId);
+                            if (sweep) void goToSweep(sweep);
+                          }}
+                          title="Jump Matterport viewer to this evidence sweep"
+                        >
+                          {sweepId.slice(0, 8)}…
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                  <td>{item.duplicateGroup || "—"}</td>
+                  <td>{item.notes || "—"}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={8} className="mpi-empty">
+                    Capture a few panoramas, then click <strong>Analyze inventory</strong>.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   );
 }
