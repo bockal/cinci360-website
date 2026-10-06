@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { episodeAudio } from "../audio";
 import "../podcast.css";
 
 const episodeUrl = "https://cinci360.com/podcast/your-building-is-lying-to-you";
@@ -94,6 +95,7 @@ const schema = [
     author: { "@id": "https://cinci360.com/#organization" },
     about: ["Reality capture", "Matterport digital twins", "Building due diligence", "Existing-condition documentation", "Historic renovation", "Adaptive reuse"],
     image: `https://cinci360.com${media.carewDamagedRoom}`,
+    ...(episodeAudio.isReady ? { audio: { "@type": "AudioObject", contentUrl: episodeAudio.absoluteUrl, encodingFormat: episodeAudio.mimeType, duration: episodeAudio.duration || undefined } } : {}),
   },
   {
     "@context": "https://schema.org",
@@ -128,7 +130,7 @@ export default function PodcastEpisodePage() {
 
     <section className="podcast-content episode-content">
       <article className="podcast-article">
-        <div className="podcast-audio-placeholder"><strong>Production status</strong><p>This is the first rendered page pass. Audio, Lab11 narration and final RSS/audio schema should be added after the episode recording is produced.</p></div>
+        {episodeAudio.isReady ? <div className="podcast-audio-player"><strong>Listen to the episode</strong><audio controls preload="metadata" src={episodeAudio.src}>Your browser does not support the audio element.</audio></div> : <div className="podcast-audio-placeholder"><strong>Narration status</strong><p>Google Cloud TTS narration is wired. Add the generated MP3 at <code>{episodeAudio.src}</code>, then flip <code>episodeAudio.isReady</code> to true.</p></div>}
 
         <h2>Why Existing Drawings Aren&apos;t Due Diligence</h2>
         <p>In this first episode of <strong>Cinci360: Tales from the Field</strong>, we look at two Cincinnati-area projects where the real story of the building was not fully visible on paper: <strong>Carew Tower</strong> and <strong>Peter&apos;s Cartridge Factory</strong>, now transformed into Cartridge Brewing.</p>
