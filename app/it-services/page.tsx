@@ -49,7 +49,7 @@ const schema = [
 ];
 
 const sites = [
-  ["E.A. Farms", "https://eafarms.com"],
+  ["Walnut Hills Music", "https://walnuthillsmusic.org"],
   ["NatrixOne", "https://natrixone.com"],
   ["The Vues at Klinger Lake", "https://vuesmi.com"],
 ];
