@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import "./matterport-inspector.css";
 
-const MODEL_SID = "qM1n2tF3CAQ";
-const MODEL_NAME = "Cincinnati Rowing Club";
+const DEFAULT_MODEL_URL = "https://my.matterport.com/show/?m=qM1n2tF3CAQ";
+const LEGO_MODEL_URL = "https://my.matterport.com/show/?m=nUyRcHjCCHy";
+const DEFAULT_MODEL_NAME = "Matterport Inventory";
 const SDK_BOOTSTRAP = "https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
 
 type Vector3 = { x: number; y: number; z: number };
@@ -55,7 +56,8 @@ type Capture = {
 
 type InventoryItem = {
   assetId: string;
-  category: "boat_shell" | "erg" | "boat_rack" | "trailer" | "safety_equipment" | "shop_equipment" | "other";
+  category: string;
+  visibleName: string;
   description: string;
   quantity: number;
   confidence: number;
@@ -72,15 +74,30 @@ function formatCoordinate(value?: number) {
   return typeof value === "number" ? value.toFixed(2) : "—";
 }
 
+function extractModelSid(value: string) {
+  const trimmed = value.trim();
+  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
+
+  try {
+    const url = new URL(trimmed);
+    const sid = url.searchParams.get("m")?.trim();
+    return sid && /^[A-Za-z0-9_-]{11}$/.test(sid) ? sid : "";
+  } catch {
+    return "";
+  }
+}
+
 export default function MatterportInspectorPrototype() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sdkRef = useRef<MatterportSdk | null>(null);
   const cancelWalkRef = useRef(false);
 
   const sdkKey = process.env.NEXT_PUBLIC_MATTERPORT_SDK_KEY?.trim() ?? "";
+  const [modelUrlInput, setModelUrlInput] = useState(DEFAULT_MODEL_URL);
+  const [modelSid, setModelSid] = useState(extractModelSid(DEFAULT_MODEL_URL));
+  const [modelLabel, setModelLabel] = useState(DEFAULT_MODEL_NAME);
   const [status, setStatus] = useState(sdkKey ? "Ready to connect" : "SDK key required");
   const [error, setError] = useState("");
-  const [modelLabel, setModelLabel] = useState(MODEL_NAME);
   const [sweeps, setSweeps] = useState<SweepData[]>([]);
   const [currentSweep, setCurrentSweep] = useState("");
   const [captures, setCaptures] = useState<Capture[]>([]);
@@ -89,17 +106,63 @@ export default function MatterportInspectorPrototype() {
   const [analyzing, setAnalyzing] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [inventorySummary, setInventorySummary] = useState("");
+  const [namingConvention, setNamingConvention] = useState("{CATEGORY}-{NNN}");
+  const [inventoryFocus, setInventoryFocus] = useState(
+    "Identify substantial visible assets. Read visible names, labels, model markings, or identifiers when legible. Deduplicate the same physical asset across overlapping Matterport sweeps.",
+  );
+  const [clientName, setClientName] = useState("");
+  const [projectTitle, setProjectTitle] = useState("Matterport Visual Inventory");
 
   const iframeSrc = useMemo(() => {
     const params = new URLSearchParams({
-      m: MODEL_SID,
+      m: modelSid,
       play: "1",
       qs: "1",
       help: "0",
     });
     if (sdkKey) params.set("applicationKey", sdkKey);
     return `https://my.matterport.com/show/?${params.toString()}`;
-  }, [sdkKey]);
+  }, [sdkKey, modelSid]);
+
+  function loadModel() {
+    const sid = extractModelSid(modelUrlInput);
+    if (!sid) {
+      setError("Paste a Matterport Showcase URL containing a valid ?m= model ID.");
+      return;
+    }
+
+    sdkRef.current = null;
+    cancelWalkRef.current = true;
+    setError("");
+    setModelSid(sid);
+    setModelLabel(DEFAULT_MODEL_NAME);
+    setSweeps([]);
+    setCurrentSweep("");
+    setCaptures([]);
+    setInventory([]);
+    setInventorySummary("");
+    setStatus("Model loaded · connect SDK");
+  }
+
+  function loadLegoDemo() {
+    setModelUrlInput(LEGO_MODEL_URL);
+    const sid = extractModelSid(LEGO_MODEL_URL);
+    sdkRef.current = null;
+    setModelSid(sid);
+    setModelLabel("LEGO MOC");
+    setSweeps([]);
+    setCurrentSweep("");
+    setCaptures([]);
+    setInventory([]);
+    setInventorySummary("");
+    setProjectTitle("LEGO MOC Visible Piece Inventory");
+    setNamingConvention("LEGO-{NNN}");
+    setInventoryFocus(
+      "Inventory visible LEGO pieces and subassemblies. Identify apparent piece type, color, and visible quantity when reasonably distinguishable. Treat hidden or occluded pieces as unknown rather than guessing. Return a conservative lower-bound visible inventory and call out uncertainty.",
+    );
+    setStatus("LEGO demo loaded · connect SDK");
+    setError("");
+  }
 
   async function connect() {
     if (!sdkKey) {
@@ -136,7 +199,7 @@ export default function MatterportInspectorPrototype() {
       });
 
       setSweeps(orderedSweeps);
-      setModelLabel(details.name || MODEL_NAME);
+      setModelLabel(details.name || DEFAULT_MODEL_NAME);
       setStatus(`Connected · ${orderedSweeps.length} sweeps found`);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause);
@@ -179,9 +242,6 @@ export default function MatterportInspectorPrototype() {
       transitionTime: 0,
     });
     setCurrentSweep(sweep.sid);
-
-    // Give Showcase a moment to settle after the instant move before asking
-    // the renderer for the full panorama.
     await sleep(350);
 
     const imageDataUri = await mpSdk.Renderer.takeEquirectangular();
@@ -268,7 +328,9 @@ export default function MatterportInspectorPrototype() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: { sid: MODEL_SID, name: modelLabel },
+          model: { sid: modelSid, name: modelLabel },
+          namingConvention,
+          inventoryFocus,
           captures,
         }),
       });
@@ -294,16 +356,58 @@ export default function MatterportInspectorPrototype() {
     }
   }
 
+  async function downloadPdf() {
+    if (!inventory.length) return;
+
+    setError("");
+    setStatus("Building client PDF…");
+    try {
+      const response = await fetch("/api/labs/matterport-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName,
+          projectTitle,
+          model: {
+            sid: modelSid,
+            name: modelLabel,
+            source: `https://my.matterport.com/show/?m=${modelSid}`,
+          },
+          summary: inventorySummary,
+          namingConvention,
+          items: inventory,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: "PDF generation failed." })) as { error?: string };
+        throw new Error(result.error || "PDF generation failed.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `cinci360-${modelSid}-inventory.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setStatus("Client PDF downloaded");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+      setStatus("PDF generation failed");
+    }
+  }
+
   function downloadCaptureBundle() {
     if (!captures.length) return;
 
     const bundle = {
-      prototype: "Cinci360 AI Building Inspector",
-      version: 1,
+      prototype: "Cinci360 Inventory Portal",
+      version: 2,
       model: {
-        sid: MODEL_SID,
+        sid: modelSid,
         name: modelLabel,
-        source: `https://my.matterport.com/show/?m=${MODEL_SID}`,
+        source: `https://my.matterport.com/show/?m=${modelSid}`,
       },
       createdAt: new Date().toISOString(),
       captureCount: captures.length,
@@ -314,7 +418,7 @@ export default function MatterportInspectorPrototype() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `cinci360-matterport-${MODEL_SID}-captures.json`;
+    anchor.download = `cinci360-matterport-${modelSid}-captures.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -322,25 +426,50 @@ export default function MatterportInspectorPrototype() {
   return (
     <main className="mpi-shell">
       <section className="mpi-hero">
-        <p className="mpi-eyebrow">Cinci360 R&amp;D · Prototype 01</p>
-        <h1>AI Building Inspector</h1>
+        <p className="mpi-eyebrow">Cinci360 R&amp;D · Prototype 02</p>
+        <h1>Inventory Portal</h1>
         <p>
-          First proof of concept: connect to the Cincinnati Rowing Club Matterport model,
-          enumerate its scan positions, navigate them programmatically, and capture
-          equirectangular visual evidence for later AI inventory analysis.
+          Paste a Matterport model, let Cinci360 traverse the digital twin, generate a
+          spatially referenced visual inventory, customize the naming convention, and
+          export a client-ready PDF report.
         </p>
         <div className="mpi-status-row">
           <span className={error ? "mpi-status mpi-status-error" : "mpi-status"}>{status}</span>
-          <code>{MODEL_SID}</code>
+          <code>{modelSid}</code>
         </div>
-        {!sdkKey && (
-          <div className="mpi-callout">
-            <strong>Local setup needed:</strong> create <code>.env.local</code> with
-            <code>NEXT_PUBLIC_MATTERPORT_SDK_KEY=your_key_here</code>, then restart <code>npm run dev</code>.
-            The key is intentionally not stored in GitHub.
-          </div>
-        )}
         {error && <div className="mpi-error" role="alert">{error}</div>}
+      </section>
+
+      <section className="mpi-setup">
+        <div className="mpi-panel mpi-model-panel">
+          <p className="mpi-kicker">1 · Choose model</p>
+          <h2>Matterport model URL</h2>
+          <label>
+            Showcase URL
+            <input
+              value={modelUrlInput}
+              onChange={event => setModelUrlInput(event.target.value)}
+              placeholder="https://my.matterport.com/show/?m=..."
+            />
+          </label>
+          <div className="mpi-button-row">
+            <button type="button" onClick={loadModel}>Load model</button>
+            <button type="button" className="mpi-secondary" onClick={loadLegoDemo}>Load LEGO test</button>
+          </div>
+        </div>
+
+        <div className="mpi-panel">
+          <p className="mpi-kicker">2 · Configure inventory</p>
+          <h2>Client output</h2>
+          <label>
+            Naming convention
+            <input value={namingConvention} onChange={event => setNamingConvention(event.target.value)} />
+          </label>
+          <label>
+            Inventory focus
+            <textarea value={inventoryFocus} onChange={event => setInventoryFocus(event.target.value)} rows={5} />
+          </label>
+        </div>
       </section>
 
       <section className="mpi-grid">
@@ -356,9 +485,10 @@ export default function MatterportInspectorPrototype() {
           </div>
           <div className="mpi-frame-wrap">
             <iframe
+              key={modelSid}
               ref={iframeRef}
               src={iframeSrc}
-              title="Cincinnati Rowing Club Matterport model"
+              title="Matterport inventory model"
               allow="autoplay; fullscreen; web-share; xr-spatial-tracking"
               allowFullScreen
             />
@@ -368,17 +498,14 @@ export default function MatterportInspectorPrototype() {
         <aside className="mpi-controls">
           <div className="mpi-panel">
             <p className="mpi-kicker">Automated traversal</p>
-            <h2>Sample walk</h2>
-            <p>
-              Move through the first sweeps and capture one full 360° panorama at each
-              location. Five sweeps is intentionally conservative for the first test.
-            </p>
+            <h2>Capture sweeps</h2>
+            <p>Traverse the first N sweeps and capture one full 360° panorama at each location.</p>
             <label>
               Sweeps to capture
               <input
                 type="number"
                 min="1"
-                max={Math.max(1, sweeps.length || 25)}
+                max={Math.max(1, sweeps.length || 100)}
                 value={sampleSize}
                 onChange={event => setSampleSize(Number(event.target.value) || 1)}
                 disabled={walking}
@@ -388,9 +515,7 @@ export default function MatterportInspectorPrototype() {
               <button type="button" onClick={runSampleWalk} disabled={walking || !sweeps.length}>
                 {walking ? "Walking…" : "Run sample walk"}
               </button>
-              <button type="button" className="mpi-secondary" onClick={stopWalk} disabled={!walking}>
-                Stop
-              </button>
+              <button type="button" className="mpi-secondary" onClick={stopWalk} disabled={!walking}>Stop</button>
             </div>
           </div>
 
@@ -398,9 +523,7 @@ export default function MatterportInspectorPrototype() {
             <p className="mpi-kicker">Evidence</p>
             <h2>{captures.length} panorama{captures.length === 1 ? "" : "s"}</h2>
             <div className="mpi-button-stack">
-              <button type="button" onClick={captureCurrent} disabled={!sweeps.length || walking}>
-                Capture current sweep
-              </button>
+              <button type="button" onClick={captureCurrent} disabled={!sweeps.length || walking}>Capture current sweep</button>
               <button type="button" onClick={analyzeCaptures} disabled={!captures.length || walking || analyzing}>
                 {analyzing ? "Analyzing…" : "Analyze inventory"}
               </button>
@@ -421,21 +544,12 @@ export default function MatterportInspectorPrototype() {
             <p className="mpi-kicker">Matterport spatial data</p>
             <h2>{sweeps.length ? `${sweeps.length} sweeps discovered` : "Sweeps will appear after connection"}</h2>
           </div>
-          <p>Click any row to prove the application can drive the model directly.</p>
+          <p>Click any row to jump the model directly to that evidence location.</p>
         </div>
         <div className="mpi-table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>#</th>
-                <th>Floor</th>
-                <th>Sweep ID</th>
-                <th>X</th>
-                <th>Y</th>
-                <th>Z</th>
-                <th>Neighbors</th>
-                <th></th>
-              </tr>
+              <tr><th>#</th><th>Floor</th><th>Sweep ID</th><th>X</th><th>Y</th><th>Z</th><th>Neighbors</th><th></th></tr>
             </thead>
             <tbody>
               {sweeps.length ? sweeps.map((sweep, index) => (
@@ -447,16 +561,10 @@ export default function MatterportInspectorPrototype() {
                   <td>{formatCoordinate(sweep.position?.y)}</td>
                   <td>{formatCoordinate(sweep.position?.z)}</td>
                   <td>{sweep.neighbors?.length ?? 0}</td>
-                  <td>
-                    <button type="button" className="mpi-row-button" onClick={() => goToSweep(sweep)} disabled={walking}>
-                      Go
-                    </button>
-                  </td>
+                  <td><button type="button" className="mpi-row-button" onClick={() => goToSweep(sweep)} disabled={walking}>Go</button></td>
                 </tr>
               )) : (
-                <tr>
-                  <td colSpan={8} className="mpi-empty">Connect the SDK to enumerate this model’s sweeps.</td>
-                </tr>
+                <tr><td colSpan={8} className="mpi-empty">Connect the SDK to enumerate this model’s sweeps.</td></tr>
               )}
             </tbody>
           </table>
@@ -466,16 +574,12 @@ export default function MatterportInspectorPrototype() {
       {captures.length > 0 && (
         <section className="mpi-captures">
           <div className="mpi-section-head">
-            <div>
-              <p className="mpi-kicker">Captured evidence</p>
-              <h2>Panorama sample</h2>
-            </div>
-            <p>These are the frames we will feed into the vision/inventory layer next.</p>
+            <div><p className="mpi-kicker">Captured evidence</p><h2>Panorama sample</h2></div>
+            <p>These are the visual frames used by the inventory analysis layer.</p>
           </div>
           <div className="mpi-capture-grid">
             {captures.map((capture, index) => (
               <figure key={`${capture.sweepId}-${capture.capturedAt}`}>
-                {/* Matterport returns a local data URI; it never needs to be committed. */}
                 <img src={capture.imageDataUri} alt={`Matterport panorama from sweep ${capture.sweepId}`} />
                 <figcaption>
                   <strong>{index + 1}. Sweep {capture.sweepId}</strong>
@@ -493,31 +597,33 @@ export default function MatterportInspectorPrototype() {
             <p className="mpi-kicker">AI inventory</p>
             <h2>{inventory.length ? `${inventory.length} asset rows` : "Ready for visual inventory"}</h2>
           </div>
-          <p>
-            One row per unique asset or asset group. Confidence and sweep evidence stay visible
-            so a human can verify the result instead of trusting an unsupported guess.
-          </p>
+          <p>One row per unique asset or group, with visible names and Matterport evidence retained for review.</p>
         </div>
+
         {inventorySummary && <p className="mpi-inventory-summary">{inventorySummary}</p>}
+
+        {inventory.length > 0 && (
+          <div className="mpi-report-controls">
+            <label>Client / organization<input value={clientName} onChange={event => setClientName(event.target.value)} placeholder="Client name" /></label>
+            <label>Report title<input value={projectTitle} onChange={event => setProjectTitle(event.target.value)} /></label>
+            <button type="button" onClick={downloadPdf}>Download client PDF</button>
+          </div>
+        )}
+
         <div className="mpi-table-wrap">
           <table className="mpi-inventory-table">
             <thead>
               <tr>
-                <th>Asset</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>Confidence</th>
-                <th>Evidence sweeps</th>
-                <th>Duplicate group</th>
-                <th>Notes</th>
+                <th>Asset</th><th>Category</th><th>Visible name / ID</th><th>Description</th><th>Qty</th>
+                <th>Confidence</th><th>Evidence sweeps</th><th>Duplicate group</th><th>Notes</th>
               </tr>
             </thead>
             <tbody>
               {inventory.length ? inventory.map(item => (
                 <tr key={item.assetId}>
                   <td><code>{item.assetId}</code></td>
-                  <td>{item.category.replaceAll("_", " ")}</td>
+                  <td>{item.category}</td>
+                  <td>{item.visibleName || "—"}</td>
                   <td>{item.description}</td>
                   <td>{item.quantity}</td>
                   <td>
@@ -536,7 +642,6 @@ export default function MatterportInspectorPrototype() {
                             const sweep = sweeps.find(candidate => candidate.sid === sweepId);
                             if (sweep) void goToSweep(sweep);
                           }}
-                          title="Jump Matterport viewer to this evidence sweep"
                         >
                           {sweepId.slice(0, 8)}…
                         </button>
@@ -547,17 +652,12 @@ export default function MatterportInspectorPrototype() {
                   <td>{item.notes || "—"}</td>
                 </tr>
               )) : (
-                <tr>
-                  <td colSpan={8} className="mpi-empty">
-                    Capture a few panoramas, then click <strong>Analyze inventory</strong>.
-                  </td>
-                </tr>
+                <tr><td colSpan={9} className="mpi-empty">Capture panoramas, then click <strong>Analyze inventory</strong>.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </section>
-
     </main>
   );
 }
