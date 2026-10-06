@@ -21,10 +21,10 @@ const media = {
   petersExterior: "/images/podcast/episode-001/peters-cartridge-exterior.jpeg",
   petersSmokestack: "/images/podcast/episode-001/peters-cartridge-smokestack.jpeg",
   petersFieldPhoto: "/images/podcast/episode-001/peters-cartridge-field-photo.jpg",
-  petersBeforeWide: "/images/podcast/episode-001/peters-cartridge-before-wide.png",
-  petersBeforeConduit: "/images/podcast/episode-001/peters-cartridge-before-conduit.png",
-  cartridgeBar: "/images/podcast/episode-001/cartridge-brewery-bar.png",
-  cartridgeOverlook: "/images/podcast/episode-001/cartridge-brewery-overlook.png",
+  petersBeforeWide: "/images/podcast/episode-001/peters-cartridge-before-wide.jpg",
+  petersBeforeConduit: "/images/podcast/episode-001/peters-cartridge-before-conduit.jpg",
+  cartridgeBar: "/images/podcast/episode-001/cartridge-brewery-bar.jpg",
+  cartridgeOverlook: "/images/podcast/episode-001/cartridge-brewery-overlook.jpg",
 };
 
 const interviewQuestions = [
