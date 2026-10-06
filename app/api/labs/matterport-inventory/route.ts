@@ -12,6 +12,8 @@ type Capture = {
 
 type AnalyzeRequest = {
   model?: { sid?: string; name?: string };
+  namingConvention?: string;
+  inventoryFocus?: string;
   captures?: Capture[];
 };
 
@@ -29,6 +31,7 @@ const inventorySchema = {
         required: [
           "assetId",
           "category",
+          "visibleName",
           "description",
           "quantity",
           "confidence",
@@ -38,18 +41,8 @@ const inventorySchema = {
         ],
         properties: {
           assetId: { type: "string" },
-          category: {
-            type: "string",
-            enum: [
-              "boat_shell",
-              "erg",
-              "boat_rack",
-              "trailer",
-              "safety_equipment",
-              "shop_equipment",
-              "other",
-            ],
-          },
+          category: { type: "string" },
+          visibleName: { type: "string" },
           description: { type: "string" },
           quantity: { type: "integer", minimum: 1 },
           confidence: { type: "number", minimum: 0, maximum: 1 },
@@ -89,10 +82,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json(
-      {
-        error:
-          "OPENAI_API_KEY is not configured. Add it to .env.local, restart the dev server, and try again.",
-      },
+      { error: "OPENAI_API_KEY is not configured. Add it to .env.local and restart the dev server." },
       { status: 503 },
     );
   }
@@ -104,7 +94,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
 
-  const captures = Array.isArray(body.captures) ? body.captures.slice(0, 8) : [];
+  const captures = Array.isArray(body.captures) ? body.captures.slice(0, 12) : [];
   if (!captures.length) {
     return NextResponse.json({ error: "At least one Matterport panorama is required." }, { status: 400 });
   }
@@ -124,8 +114,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const modelName = body.model?.name || "Matterport building";
+  const modelName = body.model?.name || "Matterport property";
   const modelSid = body.model?.sid || "unknown";
+  const namingConvention = body.namingConvention?.trim() || "{CATEGORY}-{NNN}";
+  const inventoryFocus =
+    body.inventoryFocus?.trim() ||
+    "Identify substantial visible assets and read visible names or identifiers when legible.";
   const visionModel = process.env.OPENAI_INVENTORY_MODEL?.trim() || "gpt-6-luna";
 
   const evidenceManifest = captures
@@ -137,32 +131,37 @@ export async function POST(request: NextRequest) {
     })
     .join("\n");
 
-  const prompt = `You are reviewing visual evidence from a Matterport digital twin for an insurance-style asset inventory.
+  const prompt = `You are reviewing visual evidence from a Matterport digital twin to create a conservative, evidence-backed asset inventory.
 
-Building: ${modelName}
+Property: ${modelName}
 Matterport model SID: ${modelSid}
 
 Evidence manifest:
 ${evidenceManifest}
 
-Inventory goal:
-- Identify visible rowing shells/boats, rowing ergometers, boat racks, trailers, safety equipment, major shop equipment, and other substantial/high-value physical assets.
-- Return ONE row per unique asset, or one grouped row only when multiple truly interchangeable assets cannot be distinguished reliably.
-- The same asset may appear in several overlapping panoramas. Deduplicate aggressively using appearance, nearby structure, sweep coordinates, and scene overlap.
-- Never count racks as boats, reflections as assets, or the same boat twice merely because it is visible from two sweeps.
-- Do not invent manufacturer, model, ownership, condition, value, serial number, or insurance status when not visually supported.
+Client inventory focus:
+${inventoryFocus}
+
+Asset ID naming convention requested by the client:
+${namingConvention}
+
+Rules:
+- Return ONE row per unique physical asset, or one grouped row only when multiple interchangeable objects cannot be distinguished reliably.
+- The same object may appear in several overlapping panoramas. Deduplicate aggressively using appearance, nearby structure, sweep coordinates, and scene overlap.
+- Read visible names, labels, decals, registration markings, manufacturer/model text, or other identifiers when legible. Put that text in visibleName. If none is legible, use an empty string.
+- category should be a short plain-English noun phrase appropriate to the object, such as "rowing shell", "boat rack", "ergometer", "LEGO brick", "fire extinguisher", or "machine tool".
+- Do not invent ownership, value, serial numbers, manufacturer, model, condition, hidden parts, or quantities that are not visually supported.
 - Use evidenceSweepIds containing only sweep IDs from the manifest above.
-- Set duplicateGroup to a short shared identifier only when two or more rows may still represent the same physical asset; otherwise use an empty string.
-- Confidence is 0 to 1 and should reflect confidence that the row represents a real, correctly categorized, uniquely counted asset.
-- Notes should briefly state uncertainty, visibility limits, or why quantity is grouped.
-- assetId should be stable-looking and human readable, such as BOAT-001, ERG-001, RACK-001.
-- Be conservative. Missing an uncertain asset is better than inventing one.
+- duplicateGroup should be a short shared identifier only when two or more returned rows may still represent the same physical object; otherwise use an empty string.
+- confidence is 0 to 1 and reflects confidence that the row represents a real, correctly categorized, uniquely counted asset.
+- notes should briefly explain uncertainty, occlusion, grouped counts, or identification limits.
+- Follow the naming convention as closely as possible. Interpret {CATEGORY} as a short uppercase category token and {NNN} as a zero-padded sequence number.
+- Be conservative. Missing an uncertain object is better than inventing one.
+- For LEGO or other assemblies, count only visually distinguishable pieces or grouped visible elements; never infer hidden/internal pieces.
 
-This is a visual inventory aid, not a certified insurance schedule. Return structured JSON only.`;
+This is a visual inventory aid, not a certified appraisal or insurance schedule. Return structured JSON only.`;
 
-  const content: Array<Record<string, unknown>> = [
-    { type: "input_text", text: prompt },
-  ];
+  const content: Array<Record<string, unknown>> = [{ type: "input_text", text: prompt }];
 
   for (const capture of captures) {
     content.push({
@@ -196,9 +195,7 @@ This is a visual inventory aid, not a certified insurance schedule. Return struc
   const responsePayload = (await openAIResponse.json()) as unknown;
 
   if (!openAIResponse.ok) {
-    const errorPayload = responsePayload as {
-      error?: { message?: string };
-    };
+    const errorPayload = responsePayload as { error?: { message?: string } };
     return NextResponse.json(
       {
         error:
