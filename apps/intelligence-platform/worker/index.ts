@@ -125,17 +125,17 @@ const BUILDINGS: Record<string, Building> = {
     matterportSid: "EoSVoDF7wqa",
     useCase: "Sell the stay and answer guest questions",
     intro: "Turn the rental walkthrough into a 24/7 property concierge that helps guests understand fit, sleeping arrangements, amenities, lake access, and what to expect before they book.",
-    badges: ["Sleeps 12", "Private lakefront", "Guest intelligence"],
+    badges: ["Sleeps 12", "MatterPak geometry ready", "Guest intelligence"],
     facts: [
       { label: "Sleeping", value: "4 bedrooms + loft · sleeps 12" },
-      { label: "Bathrooms", value: "3" },
+      { label: "Measured model envelope", value: "279.4 × 179.3 × 96.2 ft" },
       { label: "Waterfront", value: "100 ft private shoreline + dock" }
     ],
     signals: [
-      { label: "Deck", value: "1,021 sq ft lakeside deck" },
-      { label: "Water access", value: "Private dock + kayaks" },
-      { label: "Vehicle", value: "Universal EV charger" },
-      { label: "Kitchen", value: "Full kitchen + RO drinking water" }
+      { label: "Model length", value: "279.39 ft" },
+      { label: "Model width", value: "179.28 ft" },
+      { label: "Model height", value: "96.22 ft" },
+      { label: "Mesh", value: "276,941 vertices · 524,644 faces" }
     ],
     prompts: [
       "Will this house work well for two families traveling together?",
@@ -147,6 +147,15 @@ const BUILDINGS: Record<string, Building> = {
     ],
     evidence: {
       building: { id: "BLDG-003", name: "The Vues at Klinger Lake", matterportSid: "EoSVoDF7wqa" },
+      geometry: {
+        source: "Matterport MatterPak OBJ",
+        screeningOnly: true,
+        extentsFeet: { length: 279.39, width: 179.28, height: 96.22 },
+        extentsMeters: { length: 85.159008, width: 54.646002, height: 29.328002 },
+        vertexCount: 276941,
+        faceCount: 524644,
+        surfaceAreaM2: 12388.94
+      },
       publishedFacts: {
         guests: 12,
         bedrooms: "4 bedrooms + loft sleeping area",
@@ -157,7 +166,7 @@ const BUILDINGS: Record<string, Building> = {
         checkIn: "after 4:00 p.m.",
         checkOut: "by 10:00 a.m."
       },
-      knownGaps: ["MatterPak geometry pending", "persistent panorama-derived visual index pending", "exact furniture-fit or clearance measurements should not be presented as measured until geometry is attached"]
+      knownGaps: ["persistent panorama-derived visual index pending", "object-level segmentation is not yet attached, so exact dimensions of a specific bed, table, dock element, or fixture should not be called measured yet", "guest-fit recommendations should distinguish published property facts from geometry-derived screening"]
     }
   }
 };
