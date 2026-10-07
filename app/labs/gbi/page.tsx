@@ -306,7 +306,7 @@ export default function GbiPrototype() {
             <div><strong>{spatialIndex.mesh.extentsFeet[0]} ft</strong><span>model length</span></div>
             <div><strong>{spatialIndex.mesh.extentsFeet[1]} ft</strong><span>model width</span></div>
             <div><strong>{spatialIndex.mesh.extentsFeet[2]} ft</strong><span>model height</span></div>
-            <div><strong>{spatialIndex.occupancy.surfaceVoxelCount.toLocaleString()}</strong><span>0.25 m surface voxels</span></div>
+            <div><strong>{spatialIndex.occupancy.surfaceVoxelCount.toLocaleString()}</strong><span>{spatialIndex.occupancy.voxelSizeMeters} m surface voxels</span></div>
           </div> : <p>Loading MatterPak spatial index…</p>}
           <p className="gbi-note">The OBJ was reduced to a lightweight surface-voxel index for fast proximity and clearance screening. It is not represented as a high-density E57 and is not a certified survey.</p>
         </article>
