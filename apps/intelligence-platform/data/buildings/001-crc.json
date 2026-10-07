@@ -1,0 +1,31 @@
+{
+  "id": "BLDG-001",
+  "slug": "crc",
+  "name": "Cincinnati Rowing Club",
+  "customer": {
+    "id": "CUST-001",
+    "name": "Cincinnati Rowing Club"
+  },
+  "status": "prototype",
+  "matterport": {
+    "sid": "qM1n2tF3CAQ"
+  },
+  "spatialIndex": {
+    "source": "Matterport MatterPak OBJ",
+    "objectKey": "buildings/BLDG-001/spatial/crc-spatial-index.json"
+  },
+  "capabilities": [
+    "visual-observation",
+    "spatial-screening",
+    "asset-inventory",
+    "facility-q-and-a",
+    "space-planning"
+  ],
+  "evidencePolicy": [
+    "measured",
+    "observed",
+    "inferred",
+    "advised",
+    "insufficient"
+  ]
+}
