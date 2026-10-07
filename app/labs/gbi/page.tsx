@@ -97,9 +97,8 @@ export default function GbiPrototype() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sdkRef = useRef<MatterportSdk | null>(null);
   const cancelIndexRef = useRef(false);
-  const sdkKey = process.env.NEXT_PUBLIC_MATTERPORT_SDK_KEY?.trim() ?? "";
-
-  const [status, setStatus] = useState(sdkKey ? "Ready to connect" : "SDK key required");
+  const [sdkKey, setSdkKey] = useState("");
+  const [status, setStatus] = useState("Loading configuration…");
   const [error, setError] = useState("");
   const [sweeps, setSweeps] = useState<SweepData[]>([]);
   const [currentSweepId, setCurrentSweepId] = useState("");
@@ -121,6 +120,18 @@ export default function GbiPrototype() {
   }, [sdkKey]);
 
   useEffect(() => {
+    fetch("/api/labs/gbi-config", { cache: "no-store" })
+      .then(response => response.json())
+      .then((config: { matterportSdkKey?: string }) => {
+        const key = config.matterportSdkKey?.trim() || "";
+        setSdkKey(key);
+        setStatus(key ? "Ready to connect" : "SDK key required");
+      })
+      .catch(() => {
+        setStatus("SDK key required");
+        setError("Matterport SDK configuration could not be loaded.");
+      });
+
     fetch(SPATIAL_INDEX_URL).then(response => response.json()).then(async (data: SpatialIndex) => {
       setSpatialIndex(data);
       setOccupancyBytes(await loadOccupancyBytes(data));
