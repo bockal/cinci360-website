@@ -27,5 +27,33 @@
     "inferred",
     "advised",
     "insufficient"
-  ]
+  ],
+  "scanHistory": [
+    {
+      "id": "SCAN-001",
+      "label": "Current CRC Pro3 interior baseline",
+      "matterportSid": "qM1n2tF3CAQ",
+      "role": "baseline",
+      "coverage": [
+        "interior",
+        "boat-storage",
+        "training-area",
+        "visible-structure",
+        "interior-assets"
+      ],
+      "gaps": [
+        "full-exterior",
+        "rear-entrance-current-state",
+        "site-circulation",
+        "exterior-drainage",
+        "exterior-utilities"
+      ]
+    }
+  ],
+  "currentKnowledge": {
+    "spatialGeometry": "available",
+    "interiorVisualEvidence": "available",
+    "exteriorVisualEvidence": "pending",
+    "temporalComparison": "pending-second-scan"
+  }
 }
