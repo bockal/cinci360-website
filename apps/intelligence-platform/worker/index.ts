@@ -143,8 +143,8 @@ const appHtml = `<!doctype html>
 <h1>Ask the building.</h1>
 </div>
 <div>
-<p class="hero-copy">A live digital twin with spatial geometry, observed building evidence, and an intelligence layer that can reason about the facility instead of simply displaying it.</p>
-<div class="badges"><span class="badge">Matterport baseline live</span><span class="badge">OBJ geometry ready</span><span class="badge">Exterior enrichment pending</span></div>
+<p class="hero-copy"><strong>Reality capture has evolved.</strong> What began as marketing imagery and geospatial documentation can now become a long-term building intelligence layer—helping owners uncover risk, unused capacity, maintenance priorities, renovation constraints, and change over time from the same capture.</p>
+<div class="badges"><span class="badge">Marketing + documentation</span><span class="badge">Geospatial layout</span><span class="badge">Long-term intelligence</span></div>
 </div>
 </section>
 
@@ -171,10 +171,12 @@ const appHtml = `<!doctype html>
 <button class="submit" id="ask" type="button">Ask GBI</button>
 </div>
 <div class="suggestions">
-<button type="button">Where could we fit more storage?</button>
-<button type="button">What assets are visible here?</button>
-<button type="button">What should the owner inspect next?</button>
-<button type="button">What evidence are we missing?</button>
+<button type="button">Where are we wasting usable space?</button>
+<button type="button">What could become expensive in the next 1–3 years?</button>
+<button type="button">What would an insurer, buyer, architect, or contractor flag?</button>
+<button type="button">What should we know before spending money on this building?</button>
+<button type="button">Where could we add storage without disrupting operations?</button>
+<button type="button">What parts of this building are undocumented or risky?</button>
 </div>
 </aside>
 </section>
