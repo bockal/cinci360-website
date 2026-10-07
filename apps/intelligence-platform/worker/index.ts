@@ -40,7 +40,7 @@ const CRC_EVIDENCE = {
     observed: "Only claim visual facts that are present in the supplied evidence.",
     inferred: "Qualify interpretation and never present it as directly observed.",
     advised: "Recommendations must state assumptions and missing inputs.",
-    insufficient: "Say when the available capture cannot support the answer.",
+    insufficient: "If evidence is weak, still provide the best useful estimate with a probability and clearly explain why confidence is limited.",
   },
 };
 
@@ -57,14 +57,15 @@ async function reasonAboutBuilding(question: string, env: Env) {
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
   const prompt = `You are Cinci360 Building Intelligence for Building 001, Cincinnati Rowing Club.
 
-Answer only from the evidence supplied below. Distinguish:
+Use the evidence supplied below to give the most useful answer possible. Distinguish:
 - MEASURED: geometry-derived screening facts
 - OBSERVED: directly supported by current visual evidence
 - INFERRED: reasonable interpretation, clearly qualified
 - ADVISED: recommendation with assumptions
-- INSUFFICIENT: evidence does not support a reliable answer
 
-Do not invent exact dimensions beyond supplied geometry, hidden conditions, code compliance, ages, costs, serial numbers, market value, or exterior facts not captured.
+Always answer the question. When direct evidence is incomplete, give the best evidence-based estimate rather than stopping at "insufficient." Attach an explicit likelihood/confidence percentage to the conclusion and explain what would raise or lower that confidence.
+
+Do not fabricate exact dimensions beyond supplied geometry, hidden conditions, code compliance, ages, costs, serial numbers, market value, or exterior facts not captured. You may make a qualified best estimate from building type, context, visible/known evidence, and common construction patterns, but label it as inference and give a probability.
 
 Building evidence:
 ${JSON.stringify(CRC_EVIDENCE)}
@@ -72,7 +73,13 @@ ${JSON.stringify(CRC_EVIDENCE)}
 User question:
 ${question}
 
-Respond in concise plain language. Start with one of: MEASURED, OBSERVED, INFERRED, ADVISED, or INSUFFICIENT followed by a colon. Mention important evidence gaps when relevant.`;
+Respond in concise plain language using this structure:
+CLASSIFICATION — CONFIDENCE%
+Answer: <best useful answer, even if it must be a qualified estimate>
+Why: <short evidence-based reasoning>
+What would confirm it: <one short sentence, only when confidence is below 90%>
+
+Use one classification: MEASURED, OBSERVED, INFERRED, or ADVISED. Never return only "insufficient"; if evidence is weak, make the safest reasonable inference with a lower confidence percentage and say what evidence is missing.`;
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
