@@ -56,7 +56,7 @@ export function SiteHeader() {
         </div>
       </div>
       <Link href="/projects/estee-lauder-plant" onClick={closeNav}>Case Studies</Link>
-      <Link href="/podcast" onClick={closeNav}>Field Notes Podcast</Link>
+      <Link href="/podcast" onClick={closeNav}><span aria-hidden="true">🎙</span> From the Field</Link>
       <Link className="global-intelligence-link" href="/intelligence-portal" onClick={closeNav}>Intelligence Portal</Link>
       <Link className="global-mobile-cta" href="/#contact" onClick={closeNav}>Start a project</Link>
     </nav>
