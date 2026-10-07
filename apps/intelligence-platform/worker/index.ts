@@ -71,17 +71,17 @@ const BUILDINGS: Record<string, Building> = {
     matterportSid: "RRUh81GAFtt",
     useCase: "Sell and plan the venue",
     intro: "Turn the venue tour into a planning assistant for couples, planners, vendors, and corporate clients before they ever step onsite.",
-    badges: ["Historic venue", "2-floor digital twin", "Event-planning intelligence"],
+    badges: ["Historic venue", "MatterPak geometry ready", "Event-planning intelligence"],
     facts: [
       { label: "Published size", value: "18,160 sq ft" },
-      { label: "Published capacity", value: "250 ceremony + reception / 300 reception-only" },
-      { label: "Operations", value: "Catering, bar + day-of coordinator" }
+      { label: "Measured model envelope", value: "215.3 × 201.4 × 78.8 ft" },
+      { label: "Published capacity", value: "250 ceremony + reception / 300 reception-only" }
     ],
     signals: [
-      { label: "Building", value: "Historic St. Paul's Church" },
-      { label: "Built", value: "1850" },
-      { label: "Floors", value: "2" },
-      { label: "Use", value: "Weddings · corporate · social" }
+      { label: "Model length", value: "215.25 ft" },
+      { label: "Model width", value: "201.38 ft" },
+      { label: "Model height", value: "78.84 ft" },
+      { label: "Mesh", value: "291,536 vertices · 568,820 faces" }
     ],
     prompts: [
       "What should an event planner know before touring this venue?",
@@ -93,6 +93,17 @@ const BUILDINGS: Record<string, Building> = {
     ],
     evidence: {
       building: { id: "BLDG-002", name: "Bell Event Centre", matterportSid: "RRUh81GAFtt" },
+      geometry: {
+        source: "Matterport MatterPak OBJ",
+        screeningOnly: true,
+        extentsFeet: { length: 215.25, width: 201.38, height: 78.84 },
+        extentsMeters: { length: 65.609003, width: 61.382001, height: 24.029 },
+        vertexCount: 291536,
+        faceCount: 568820,
+        surfaceAreaM2: 10808.12,
+        surfaceVoxelCount: 37262,
+        voxelSizeMeters: 0.5
+      },
       publishedFacts: {
         sizeSquareFeet: 18160,
         floors: 2,
@@ -103,7 +114,7 @@ const BUILDINGS: Record<string, Building> = {
         operations: ["catering handled by venue", "bar services handled by venue", "day-of event coordinator provided", "free parking available", "wedding suites included for 3 hours before the event"],
         architecturalFeatures: ["vaulted ceilings", "stained glass windows", "hand-painted murals", "marble and terrazzo flooring"]
       },
-      knownGaps: ["MatterPak geometry pending", "persistent panorama-derived visual index pending", "exact object dimensions and clearances should not be presented as measured until geometry is attached"]
+      knownGaps: ["persistent panorama-derived visual index pending", "object-level segmentation is not yet attached, so exact dimensions of a specific chair/table/fixture should not be called measured yet", "event-layout recommendations should distinguish published capacity from geometry-derived screening"]
     }
   },
   "BLDG-003": {
