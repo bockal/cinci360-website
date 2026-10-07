@@ -1,0 +1,9 @@
+{
+  "name": "Cinci360 Intelligence",
+  "short_name": "Cinci360",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#111618",
+  "description": "Ask your building."
+}
