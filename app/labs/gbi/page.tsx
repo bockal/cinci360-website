@@ -111,7 +111,7 @@ export default function GbiPrototype() {
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", text: "I’m GBI. Connect the digital twin, then ask me about the building, its assets, clearances, layout, condition, or renovation priorities." },
+    { role: "assistant", text: "I’m the Cinci360 Building Intelligence assistant. Ask me about this facility’s assets, clearances, layout, condition, or renovation priorities." },
   ]);
 
   const iframeSrc = useMemo(() => {
@@ -257,7 +257,7 @@ export default function GbiPrototype() {
   return (
     <main className="gbi-shell">
       <section className="gbi-hero">
-        <p className="gbi-eyebrow">Cinci360 · GBI Proof of Concept</p>
+        <p className="gbi-eyebrow">Cinci360 · Building Intelligence Portal</p>
         <h1>Ask the building.</h1>
         <p>GBI combines the live Matterport digital twin, visual AI evidence, sweep coordinates, and a lightweight OBJ-derived spatial index so the facility can answer questions instead of simply being viewed.</p>
         <div className="gbi-badges"><span>{status}</span><span>OBJ spatial layer: {spatialIndex ? "ready" : "loading"}</span><span>Visual observations: {visualKnowledge.length}</span></div>
@@ -275,7 +275,7 @@ export default function GbiPrototype() {
         </div>
 
         <aside className="gbi-chat-card">
-          <div className="gbi-card-head"><div><p className="gbi-kicker">Facility assistant</p><h2>GBI</h2></div><span className="gbi-live-dot">Evidence grounded</span></div>
+          <div className="gbi-card-head"><div><p className="gbi-kicker">Facility assistant</p><h2>Building Intelligence</h2></div><span className="gbi-live-dot">Evidence grounded</span></div>
           <div className="gbi-messages">
             {messages.map((message, index) => (
               <div key={index} className={`gbi-message gbi-message-${message.role}`}>
@@ -325,7 +325,7 @@ export default function GbiPrototype() {
         </article>
       </section>
 
-      <section className="gbi-footer-note"><strong>GBI prototype.</strong> Geometry and AI outputs are decision-support evidence, not a certified survey, code inspection, appraisal, engineering opinion, or guarantee of hidden conditions.</section>
+      <section className="gbi-footer-note"><strong>Cinci360 Intelligence Portal proof of concept.</strong> Geometry and AI outputs are decision-support evidence, not a certified survey, code inspection, appraisal, engineering opinion, or guarantee of hidden conditions.</section>
     </main>
   );
 }
