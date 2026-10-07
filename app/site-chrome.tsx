@@ -5,13 +5,10 @@ import { useState } from "react";
 import AnimatedBrand from "./animated-brand";
 import "./site-chrome.css";
 
-const primaryNav = [
-  ["Case Study", "/projects/estee-lauder-plant"],
-  ["Scan2BIM", "/scan-to-bim-revit-cad"],
+const serviceNav = [
   ["Floor Plans", "/floor-plans"],
+  ["Scan2BIM", "/scan-to-bim-revit-cad"],
   ["Due Diligence", "/due-diligence"],
-  ["LiDAR", "/3d-laser-scanning-cincinnati"],
-  ["Podcast", "/podcast"],
   ["IT Services", "/it-services"],
 ] as const;
 
@@ -33,12 +30,35 @@ function SocialIcon({ icon }: { icon: (typeof socialLinks)[number][2] }) {
 
 export function SiteHeader() {
   const [open,setOpen]=useState(false);
+  const [servicesOpen,setServicesOpen]=useState(false);
+
+  const closeNav = () => {
+    setOpen(false);
+    setServicesOpen(false);
+  };
+
   return <header className="global-header">
     <AnimatedBrand/>
     <button className={open?"global-menu-button open":"global-menu-button"} aria-label="Toggle site navigation" aria-expanded={open} onClick={()=>setOpen(!open)}><span/><span/></button>
     <nav className={open?"global-nav open":"global-nav"} aria-label="Primary navigation">
-      {primaryNav.map(([label,href])=><Link key={href} href={href} onClick={()=>setOpen(false)}>{label}</Link>)}
-      <Link className="global-mobile-cta" href="/#contact" onClick={()=>setOpen(false)}>Start a project</Link>
+      <div className={servicesOpen?"global-nav-group open":"global-nav-group"}>
+        <button
+          type="button"
+          className="global-nav-trigger"
+          aria-expanded={servicesOpen}
+          onClick={()=>setServicesOpen(!servicesOpen)}
+          onMouseEnter={()=>setServicesOpen(true)}
+        >
+          Services <span aria-hidden="true">▾</span>
+        </button>
+        <div className="global-nav-menu" onMouseLeave={()=>setServicesOpen(false)}>
+          {serviceNav.map(([label,href])=><Link key={href} href={href} onClick={closeNav}>{label}</Link>)}
+        </div>
+      </div>
+      <Link href="/projects/estee-lauder-plant" onClick={closeNav}>Case Studies</Link>
+      <Link href="/podcast" onClick={closeNav}>Field Notes Podcast</Link>
+      <Link className="global-intelligence-link" href="/intelligence-portal" onClick={closeNav}>Intelligence Portal</Link>
+      <Link className="global-mobile-cta" href="/#contact" onClick={closeNav}>Start a project</Link>
     </nav>
     <Link className="global-header-cta" href="/#contact">Start a project</Link>
   </header>;
@@ -49,6 +69,7 @@ export function SiteFooter() {
     <div className="compact-footer-main">
       <span>© 2026 Cinci360 · Woman-owned business · Cincinnati, Ohio · Nationwide · City of Cincinnati Vendor Code: VS1000024091</span>
       <nav aria-label="Footer navigation">
+        <Link href="/intelligence-portal">Intelligence Portal</Link>
         <Link href="/podcast">Podcast</Link>
         <Link href="/answers">FAQ</Link>
         <Link className="footer-project-cta" href="/#contact">Start a project</Link>
