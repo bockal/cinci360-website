@@ -4,6 +4,10 @@ import handler from "vinext/server/app-router-entry";
 
 interface Env {
   ASSETS: Fetcher;
+  OPENAI_API_KEY?: string;
+  OPENAI_GBI_MODEL?: string;
+  OPENAI_INVENTORY_MODEL?: string;
+  NEXT_PUBLIC_MATTERPORT_SDK_KEY?: string;
   DB: D1Database;
   IMAGES: {
     input(stream: ReadableStream): {
@@ -38,6 +42,16 @@ const worker = {
           return result.response();
         },
       }, allowedWidths);
+    }
+
+    // Bridge Cloudflare bindings into process.env for vinext route handlers.
+    // This keeps server secrets available at runtime and avoids relying on
+    // build-time NEXT_PUBLIC injection for the Matterport SDK key.
+    if (env.OPENAI_API_KEY) process.env.OPENAI_API_KEY = env.OPENAI_API_KEY;
+    if (env.OPENAI_GBI_MODEL) process.env.OPENAI_GBI_MODEL = env.OPENAI_GBI_MODEL;
+    if (env.OPENAI_INVENTORY_MODEL) process.env.OPENAI_INVENTORY_MODEL = env.OPENAI_INVENTORY_MODEL;
+    if (env.NEXT_PUBLIC_MATTERPORT_SDK_KEY) {
+      process.env.NEXT_PUBLIC_MATTERPORT_SDK_KEY = env.NEXT_PUBLIC_MATTERPORT_SDK_KEY;
     }
 
     return handler.fetch(request, env, ctx);
