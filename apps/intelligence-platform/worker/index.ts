@@ -1,6 +1,100 @@
 interface Env {
   OPENAI_API_KEY?: string;
+  OPENAI_GBI_MODEL?: string;
   MATTERPORT_SDK_KEY?: string;
+}
+
+
+const CRC_EVIDENCE = {
+  building: {
+    id: "BLDG-001",
+    name: "Cincinnati Rowing Club",
+    matterportSid: "qM1n2tF3CAQ",
+    scan: "SCAN-001 interior Pro3 baseline",
+  },
+  geometry: {
+    source: "Matterport MatterPak OBJ",
+    screeningOnly: true,
+    extentsFeet: { length: 161.49, width: 70.14, height: 30.19 },
+    vertexCount: 266255,
+    faceCount: 508700,
+    surfaceVoxelCount: 18547,
+    voxelSizeMeters: 0.5,
+  },
+  observedClasses: [
+    "rowing shells",
+    "boat storage racks",
+    "outboard motors and support equipment",
+    "lighting and visible structure",
+    "doors and access paths (partial)",
+  ],
+  knownGaps: [
+    "full exterior",
+    "current rear entrance configuration",
+    "site circulation",
+    "exterior drainage",
+    "exterior utilities",
+  ],
+  policy: {
+    measured: "Geometry-derived screening facts only; not a certified survey.",
+    observed: "Only claim visual facts that are present in the supplied evidence.",
+    inferred: "Qualify interpretation and never present it as directly observed.",
+    advised: "Recommendations must state assumptions and missing inputs.",
+    insufficient: "Say when the available capture cannot support the answer.",
+  },
+};
+
+function outputText(payload: any) {
+  if (typeof payload?.output_text === "string") return payload.output_text;
+  return (payload?.output ?? [])
+    .flatMap((item: any) => item.content ?? [])
+    .filter((part: any) => part.type === "output_text" && typeof part.text === "string")
+    .map((part: any) => part.text)
+    .join("\n");
+}
+
+async function reasonAboutBuilding(question: string, env: Env) {
+  const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
+  const prompt = `You are Cinci360 Building Intelligence for Building 001, Cincinnati Rowing Club.
+
+Answer only from the evidence supplied below. Distinguish:
+- MEASURED: geometry-derived screening facts
+- OBSERVED: directly supported by current visual evidence
+- INFERRED: reasonable interpretation, clearly qualified
+- ADVISED: recommendation with assumptions
+- INSUFFICIENT: evidence does not support a reliable answer
+
+Do not invent exact dimensions beyond supplied geometry, hidden conditions, code compliance, ages, costs, serial numbers, market value, or exterior facts not captured.
+
+Building evidence:
+${JSON.stringify(CRC_EVIDENCE)}
+
+User question:
+${question}
+
+Respond in concise plain language. Start with one of: MEASURED, OBSERVED, INFERRED, ADVISED, or INSUFFICIENT followed by a colon. Mention important evidence gaps when relevant.`;
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }],
+      store: false,
+    }),
+  });
+
+  const payload: any = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || `Reasoning service failed with HTTP ${response.status}.`);
+  }
+
+  const answer = outputText(payload).trim();
+  if (!answer) throw new Error("Reasoning service returned no answer.");
+  return answer;
 }
 
 const CRC = {
@@ -143,9 +237,14 @@ const appWorker = {
         });
       }
 
-      return json({
-        answer: "Building 001 is online. The next milestone is connecting its persisted CRC evidence index so answers are grounded in stored building knowledge."
-      });
+      try {
+        const answer = await reasonAboutBuilding(question, env);
+        return json({ answer });
+      } catch (error) {
+        return json({
+          error: error instanceof Error ? error.message : "The reasoning service could not answer that question."
+        }, 502);
+      }
     }
 
     if (url.pathname === "/manifest.webmanifest") {
