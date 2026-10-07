@@ -29,39 +29,100 @@ const appHtml = `<!doctype html>
 <meta name="theme-color" content="#111618">
 <title>Cinci360 Intelligence · Building 001</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f0e8;color:#111618}.shell{max-width:760px;margin:0 auto;padding:22px;min-height:100vh}header{display:flex;justify-content:space-between;align-items:center;padding:8px 0 34px}.brand{font-weight:850;letter-spacing:-.02em}.id{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#737875}.hero{padding:28px 0 22px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,10vw,76px);font-weight:400;letter-spacing:-.05em;line-height:.93;margin:0 0 22px}.status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#39a96b}.intro{font-size:18px;line-height:1.55;max-width:620px;margin:18px 0 28px}.ask{background:#fff;border:1px solid #d7d2c9;border-radius:24px;padding:16px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}.ask button{border:0;border-radius:999px;background:#111618;color:#fff;font-weight:800;min-height:48px;padding:0 18px}.mic{width:50px;padding:0!important;font-size:20px}.ask textarea{border:0;outline:0;resize:none;font:inherit;background:transparent;min-width:0}.quick{display:grid;gap:10px;margin-top:18px}.quick button{background:transparent;border:1px solid #d7d2c9;border-radius:999px;padding:12px 16px;text-align:left;font-weight:750;color:#111618}.answer{margin-top:24px;padding:20px 0;border-top:1px solid #d7d2c9;font-size:17px;line-height:1.55}.small{font-size:12px;color:#737875;margin-top:34px}@media(max-width:560px){.shell{padding:18px}.ask{grid-template-columns:auto 1fr}.ask .submit{grid-column:1/-1}.hero{padding-top:12px}}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1eee7;color:#111618}.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:24px 0 56px}header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 20px}.brand{font-weight:850;letter-spacing:-.02em}.building-id{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#6d726f}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:22px;align-items:end;margin:16px 0 22px}.eyebrow,.kicker{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin:0 0 8px}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,96px);font-weight:400;letter-spacing:-.055em;line-height:.9;margin:0}.hero-copy{font-size:17px;line-height:1.55;color:#4f5552;margin:0 0 6px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.badge{border:1px solid #d4d0c7;background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700}.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(360px,.6fr);gap:18px}.card{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px}.card-head h2{font-size:20px;margin:0}.live{font-size:12px;font-weight:750;border:1px solid #d7d2c9;border-radius:999px;padding:7px 10px}.viewer{aspect-ratio:16/10;background:#111}.viewer iframe{display:block;width:100%;height:100%;border:0}.strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #ece8df}.strip>div{padding:14px 16px}.strip>div+div{border-left:1px solid #ece8df}.strip strong{display:block;font-size:13px}.strip span{font-size:12px;color:#6a706d}.assistant{display:flex;flex-direction:column;min-height:680px}.messages{flex:1;padding:14px;background:#f6f4ef}.message{border:1px solid #e2ded5;background:#fff;border-radius:15px;padding:13px 14px;line-height:1.5}.message+.message{margin-top:10px}.ask{padding:12px;border-top:1px solid #e2ded5;display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center}.ask textarea{font:inherit;border:1px solid #d8d4ca;border-radius:13px;padding:10px 12px;resize:none;min-width:0}.ask button{border:0;background:#111618;color:#fff;border-radius:999px;font-weight:800;min-height:46px;padding:0 15px}.mic{width:46px;padding:0!important;font-size:20px}.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 13px}.suggestions button{border:1px solid #d9d4cb;background:#fff;border-radius:999px;padding:7px 10px;font-weight:700;font-size:12px;color:#111618}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.panel h3{font-size:20px;margin:0 0 12px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#f6f4ef;border-radius:12px;padding:12px}.metric strong{display:block;font-size:22px}.metric span{font-size:12px;color:#676d6a}.asset-list{display:grid;gap:8px}.asset{display:flex;justify-content:space-between;gap:10px;background:#f6f4ef;border-radius:12px;padding:11px 12px}.asset b{font-size:13px}.asset span{font-size:12px;color:#69706c}.evidence{display:grid;gap:8px}.evidence div{border-left:3px solid #111618;padding:8px 0 8px 10px}.evidence strong{display:block;font-size:13px}.evidence span{font-size:12px;color:#6b716e}.note{margin-top:18px;font-size:12px;color:#6b716e}@media(max-width:1050px){.hero,.main{grid-template-columns:1fr}.assistant{min-height:540px}.grid{grid-template-columns:1fr 1fr}}@media(max-width:680px){.shell{width:calc(100% - 20px);padding-top:16px}.grid{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.strip>div+div{border-left:0;border-top:1px solid #ece8df}.ask{grid-template-columns:auto 1fr}.ask .submit{grid-column:1/-1}.viewer{aspect-ratio:4/3}}
 </style>
 </head>
 <body>
 <main class="shell">
-<header><div class="brand">Cinci360 Intelligence</div><div class="id">BLDG-001</div></header>
+<header><div class="brand">Cinci360 Intelligence</div><div class="building-id">Building 001 · CRC</div></header>
+
 <section class="hero">
-<p class="eyebrow">Your building</p>
-<h1>Cincinnati Rowing Club</h1>
-<div class="status"><span class="dot"></span> Building intelligence online</div>
-<p class="intro">CRC is Building 001. Ask about assets, layout, clearances, condition, or space-planning opportunities.</p>
+<div>
+<p class="eyebrow">Cincinnati Rowing Club</p>
+<h1>Ask the building.</h1>
+</div>
+<div>
+<p class="hero-copy">A live digital twin with spatial geometry, observed building evidence, and an intelligence layer that can reason about the facility instead of simply displaying it.</p>
+<div class="badges"><span class="badge">Matterport baseline live</span><span class="badge">OBJ geometry ready</span><span class="badge">Exterior enrichment pending</span></div>
+</div>
 </section>
-<section class="ask">
+
+<section class="main">
+<article class="card">
+<div class="card-head"><div><p class="kicker">Live digital twin</p><h2>Cincinnati Rowing Club</h2></div><span class="live">Current interior baseline</span></div>
+<div class="viewer"><iframe src="https://my.matterport.com/show/?m=qM1n2tF3CAQ&play=1&qs=1&help=0" title="Cincinnati Rowing Club Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div>
+<div class="strip">
+<div><strong>Capture</strong><span>Pro3 interior baseline</span></div>
+<div><strong>Geometry</strong><span>MatterPak OBJ indexed</span></div>
+<div><strong>Next scan</strong><span>Exterior + rear entrance</span></div>
+</div>
+</article>
+
+<aside class="card assistant">
+<div class="card-head"><div><p class="kicker">Facility assistant</p><h2>Building Intelligence</h2></div><span class="live">Evidence grounded</span></div>
+<div class="messages">
+<div class="message">I know this building from its current Matterport interior capture and OBJ geometry. Ask about storage, clearances, visible assets, layout, or what additional evidence would improve an answer.</div>
+<div class="message" id="answer">Building 001 is live. The reasoning layer will become fully evidence-backed when the OpenAI key and persistent CRC evidence index are attached to this Worker.</div>
+</div>
+<div class="ask">
 <button class="mic" type="button" aria-label="Voice coming soon">🎙</button>
-<textarea id="q" rows="3" placeholder="Ask your building…"></textarea>
-<button class="submit" id="ask" type="button">Ask</button>
+<textarea id="q" rows="3" placeholder="Ask: Where could we fit more storage?"></textarea>
+<button class="submit" id="ask" type="button">Ask GBI</button>
+</div>
+<div class="suggestions">
+<button type="button">Where could we fit more storage?</button>
+<button type="button">What assets are visible here?</button>
+<button type="button">What should the owner inspect next?</button>
+<button type="button">What evidence are we missing?</button>
+</div>
+</aside>
 </section>
-<section class="quick">
-<button type="button">What should I be paying attention to?</button>
-<button type="button">Where could I fit more storage?</button>
-<button type="button">What is the clearance here?</button>
-<button type="button">What assets are in this building?</button>
+
+<section class="grid">
+<article class="panel">
+<p class="kicker">Spatial layer</p><h3>OBJ mesh index</h3>
+<div class="metrics">
+<div class="metric"><strong>161.5 ft</strong><span>model length</span></div>
+<div class="metric"><strong>70.1 ft</strong><span>model width</span></div>
+<div class="metric"><strong>30.2 ft</strong><span>model height</span></div>
+<div class="metric"><strong>18,547</strong><span>surface voxels</span></div>
+</div>
+<p class="note">Screening geometry only; not a certified survey.</p>
+</article>
+
+<article class="panel">
+<p class="kicker">Building assets</p><h3>Observed classes</h3>
+<div class="asset-list">
+<div class="asset"><b>Rowing shells</b><span>visible</span></div>
+<div class="asset"><b>Boat storage racks</b><span>visible</span></div>
+<div class="asset"><b>Outboard motors / support equipment</b><span>visible</span></div>
+<div class="asset"><b>Lighting + visible structure</b><span>visible</span></div>
+<div class="asset"><b>Doors / access paths</b><span>partial</span></div>
+</div>
+<p class="note">These are broad observed categories from the current capture, not yet a verified asset schedule.</p>
+</article>
+
+<article class="panel">
+<p class="kicker">Evidence status</p><h3>What GBI knows</h3>
+<div class="evidence">
+<div><strong>Measured</strong><span>OBJ dimensions and screening clearances</span></div>
+<div><strong>Observed</strong><span>Interior visual evidence from Matterport</span></div>
+<div><strong>Missing</strong><span>Full exterior, current rear entrance, site circulation</span></div>
+<div><strong>Next</strong><span>SCAN-002 becomes a new temporal evidence layer</span></div>
+</div>
+</article>
 </section>
-<div class="answer" id="answer">Building 001 is live. The next step is connecting the persisted CRC evidence index.</div>
-<p class="small">Current evidence: interior Pro3 baseline + MatterPak geometry. Exterior enrichment pending.</p>
+
+<p class="note">BLDG-001 · Current evidence: SCAN-001 interior Pro3 baseline + MatterPak OBJ geometry.</p>
 </main>
 <script>
 const q=document.getElementById("q"),answer=document.getElementById("answer"),ask=document.getElementById("ask");
-document.querySelectorAll(".quick button").forEach(b=>b.addEventListener("click",()=>{q.value=b.textContent||"";q.focus()}));
+document.querySelectorAll(".suggestions button").forEach(b=>b.addEventListener("click",()=>{q.value=b.textContent||"";q.focus()}));
 ask.addEventListener("click",async()=>{const question=q.value.trim();if(!question)return;answer.textContent="Checking building evidence…";try{const r=await fetch("/api/buildings/BLDG-001/ask",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({question})});const data=await r.json();answer.textContent=data.answer||data.error||"No answer returned."}catch{answer.textContent="The building service could not be reached."}});
 </script>
 </body>
 </html>`;
+
 
 const appWorker = {
   async fetch(request: Request, env: Env): Promise<Response> {
