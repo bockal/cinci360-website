@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy --config dist/wrangler.json",
+    "verify:build": "node -e \"const fs=require('fs'); for (const p of ['dist/wrangler.json','dist/client/index.html']) if(!fs.existsSync(p)) throw new Error('Missing '+p);\""
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.2",
