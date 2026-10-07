@@ -120,17 +120,42 @@ function makeBlack(animation: object) {
 export default function Home() {
   const [skyscraper, setSkyscraper] = useState<object>();
   const [messageSent, setMessageSent] = useState(false);
+  const servicesRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    const loadAnimation = (url: string) => fetch(url).then(r => r.json()).then(data => typeof data === "string" ? JSON.parse(data) : data);
-    loadAnimation("/assets/lottie/skyscraper-construction-timelapse.json").then(s=>setSkyscraper(makeBlack(s)));
     setMessageSent(new URLSearchParams(window.location.search).get("sent") === "1");
-  }, []);
+
+    const section = servicesRef.current;
+    if (!section || skyscraper) return;
+
+    const loadAnimation = () => {
+      fetch("/assets/lottie/skyscraper-construction-timelapse.json")
+        .then(r => r.json())
+        .then(data => typeof data === "string" ? JSON.parse(data) : data)
+        .then(s => setSkyscraper(makeBlack(s)))
+        .catch(() => {});
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      window.setTimeout(loadAnimation, 1200);
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        observer.disconnect();
+        window.setTimeout(loadAnimation, 250);
+      }
+    }, { rootMargin: "250px 0px" });
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [skyscraper]);
   return <main>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema).replace(/</g, "\\u003c") }} />
     <section id="top" className="home-workflow-poster" aria-label="Cinci360 surveying and technology workflow"><picture><source media="(max-width: 560px)" srcSet="/images/workflows/cinci360-tenure-hero-mobile.webp"/><img src="/images/workflows/cinci360-tenure-hero.webp" alt="A Cinci360 field technician scans a building that becomes a precise digital model and connected business workflow" width="1821" height="864" fetchPriority="high"/></picture><div><span><b>01</b> Capture reality</span><span><b>02</b> Model the building</span><span><b>03</b> Connect the workflow</span><span><b>04</b> Build what’s next</span></div></section>
     <section className="hero hero-text-only"><div className="hero-copy"><p className="eyebrow">Woman-owned business · Cincinnati-based · Surveying since 2017 · Technology work since 2001</p><h1>We make the<br/><em>built world</em><br/>work smarter.</h1><p className="hero-intro">National reality capture, LiDAR surveying, scan-to-BIM and practical digital operations—delivered by field technicians based in Miami, New York, Cincinnati and Denver.</p><div className="hero-actions"><a className="button button-gold" href="#contact">Tell us about your site</a><a className="text-link" href="#projects">Explore recent work ↓</a></div></div><div className="hero-index">Measure · Model · Automate · Grow</div></section>
     <section className="intro-band"><p>One field visit.</p><h2>A precise digital foundation for every decision that follows.</h2><a href="/projects/estee-lauder-plant">Read the Estée Lauder case study <span>→</span></a></section>
-    <section id="services" className="section services"><div className="section-heading"><p className="eyebrow">What we do</p><h2>From real space<br/>to useful data.</h2><p>Clear deliverables, responsive communication and enough experience to know what your next team will need.</p>{skyscraper&&<div className="service-lottie"><Lottie animationData={skyscraper} pingPong/></div>}</div><div>{services.map(s=><article className="service-card" key={s[0]}><span>{s[0]}</span><div><h3>{s[1]}</h3><p>{s[2]}</p><a className="service-keyword-link" href={s[4]} aria-label={`Explore ${s[1]} services`}>{s[3]} <span>↗</span></a></div><b>↗</b></article>)}</div></section>
+    <section id="services" ref={servicesRef} className="section services"><div className="section-heading"><p className="eyebrow">What we do</p><h2>From real space<br/>to useful data.</h2><p>Clear deliverables, responsive communication and enough experience to know what your next team will need.</p>{skyscraper&&<div className="service-lottie"><Lottie animationData={skyscraper} pingPong/></div>}</div><div>{services.map(s=><article className="service-card" key={s[0]}><span>{s[0]}</span><div><h3>{s[1]}</h3><p>{s[2]}</p><a className="service-keyword-link" href={s[4]} aria-label={`Explore ${s[1]} services`}>{s[3]} <span>↗</span></a></div><b>↗</b></article>)}</div></section>
     <section id="projects" className="section projects"><div className="project-heading"><div><p className="eyebrow">Selected work</p><h2>Step inside<br/>the work.</h2></div><p>Explore two recent digital twins captured and delivered by Cinci360.</p></div><div className="matterport-gallery"><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=RRUh81GAFtt&amp;play=1&amp;qs=1" title="Bell Event Centre Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Cincinnati, Ohio</span><h3>Bell Event Centre</h3><p>Explore two floors and more than 18,000 square feet of this historic Cincinnati landmark in an immersive digital twin.</p></div></article><article className="matterport-feature"><div className="matterport-frame"><iframe src="https://my.matterport.com/show/?m=sYHchc6aLZh&amp;play=1&amp;qs=1" title="Ohio University Stocker Center Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" referrerPolicy="strict-origin-when-cross-origin" loading="lazy" allowFullScreen/></div><div className="matterport-caption"><span>Live Matterport tour · Athens, Ohio</span><h3>Ohio University Stocker Center</h3><p>Explore an existing-conditions capture created for the Stocker Center at Ohio University, supporting a Revit model for renovation planning.</p></div></article></div></section>
     <section className="clients"><p className="eyebrow">Trusted across Cincinnati and beyond</p><div className="logo-window"><div className="logo-track">{[...logos,...logos].map(([file,name],i)=><div className="logo-item" key={`${file}-${i}`}><img src={`/assets/logos/${file}`} alt={name} decoding="async"/></div>)}</div></div></section>
     <section id="team" className="section team"><div className="team-copy"><p className="eyebrow">Better field coverage than Roy Kent</p><h2>National reach.<br/>Field-proven expertise.</h2><p>With technicians based in Miami, New York, Cincinnati and Denver, our team supports multi-site and one-off projects nationwide using consistent capture standards across architecture, construction, insurance and manufacturing.</p></div><div className="team-grid">{people.map(p=><article key={p[0]}><div className="portrait">{p[2]?<Image src={p[2]} alt={p[0]} fill sizes="300px"/>:<span>SB</span>}</div><h3>{p[0]}</h3><p>{p[1]}</p></article>)}</div></section>
