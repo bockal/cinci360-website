@@ -1,0 +1,59 @@
+{
+  "id": "BLDG-001",
+  "slug": "crc",
+  "name": "Cincinnati Rowing Club",
+  "customer": {
+    "id": "CUST-001",
+    "name": "Cincinnati Rowing Club"
+  },
+  "status": "prototype",
+  "matterport": {
+    "sid": "qM1n2tF3CAQ"
+  },
+  "spatialIndex": {
+    "source": "Matterport MatterPak OBJ",
+    "objectKey": "buildings/BLDG-001/spatial/crc-spatial-index.json"
+  },
+  "capabilities": [
+    "visual-observation",
+    "spatial-screening",
+    "asset-inventory",
+    "facility-q-and-a",
+    "space-planning"
+  ],
+  "evidencePolicy": [
+    "measured",
+    "observed",
+    "inferred",
+    "advised",
+    "insufficient"
+  ],
+  "scanHistory": [
+    {
+      "id": "SCAN-001",
+      "label": "Current CRC Pro3 interior baseline",
+      "matterportSid": "qM1n2tF3CAQ",
+      "role": "baseline",
+      "coverage": [
+        "interior",
+        "boat-storage",
+        "training-area",
+        "visible-structure",
+        "interior-assets"
+      ],
+      "gaps": [
+        "full-exterior",
+        "rear-entrance-current-state",
+        "site-circulation",
+        "exterior-drainage",
+        "exterior-utilities"
+      ]
+    }
+  ],
+  "currentKnowledge": {
+    "spatialGeometry": "available",
+    "interiorVisualEvidence": "available",
+    "exteriorVisualEvidence": "pending",
+    "temporalComparison": "pending-second-scan"
+  }
+}
