@@ -410,7 +410,7 @@ const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76
 const sdkKey=${key};
 const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log");
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let stopped=false;
-function say(s){status.textContent=s;log.textContent+=s+"\n";log.scrollTop=log.scrollHeight}
+function say(s){status.textContent=s;log.textContent+=s+"\\n";log.scrollTop=log.scrollHeight}
 stop.onclick=()=>{stopped=true;say("Stop requested…")};
 run.onclick=async()=>{
   if(!sdkKey){say("Matterport SDK key is not configured.");return}
