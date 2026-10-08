@@ -238,6 +238,156 @@ What would confirm it: <one short sentence when confidence is below 90%>`;
 }
 
 
+type CostSegItem = {
+  component: string;
+  quantity: string;
+  evidenceBasis: string;
+  replacementCostLow: number | null;
+  replacementCostHigh: number | null;
+  proposedClass: string;
+  confidence: number;
+};
+
+type CostSegSection = {
+  title: string;
+  sectionConfidence: number;
+  items: CostSegItem[];
+};
+
+type GeneratedCostSegStudy = {
+  buildingId: string;
+  buildingName: string;
+  overallConfidence: number;
+  executiveSummary: string;
+  totalReplacementCostLow: number | null;
+  totalReplacementCostHigh: number | null;
+  sections: CostSegSection[];
+  missingInputs: string[];
+  caveats: string[];
+};
+
+function parseJsonObject(text: string) {
+  const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start < 0 || end <= start) throw new Error("Cost segregation model did not return JSON.");
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+async function generateCostSegStudy(building: Building, env: Env): Promise<GeneratedCostSegStudy> {
+  const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
+  const prompt = `You are Cinci360 Building Intelligence generating a COST SEGREGATION SCREENING STUDY.
+
+TEST RULE: Use ONLY the property-specific data inside BUILDING_EVIDENCE below. Do not use web search, prior knowledge about this named property, owner documents, prior cost segregation reports, or any property-specific facts not present in BUILDING_EVIDENCE.
+
+You may use general professional knowledge to:
+- identify plausible depreciable component categories implied by the evidence,
+- propose broad MACRS-style recovery classes for CPA review,
+- estimate broad replacement-cost RANGES when a quantity or property fact in the evidence supports a reasonable estimate.
+
+Do not invent quantities, counts, square footage, equipment, finishes, systems, ages, or conditions that are not in the evidence. If an asset category is merely plausible but not evidenced, omit it rather than fabricate it.
+
+Evidence labels:
+- MEASURED = directly from attached MatterPak/OBJ geometry
+- OBSERVED = explicitly listed in evidence
+- PUBLISHED = explicitly supplied in the building record
+- INFERRED = model interpretation from those facts
+
+For cost ranges:
+- return null when current evidence is too weak to support even a screening range.
+- otherwise make the range intentionally broad and explain the evidence basis.
+- do not allocate tax basis. Replacement-cost screening is not taxpayer basis.
+
+For proposed classes:
+- use plain labels such as "5-year candidate", "7-year candidate", "15-year candidate", "39-year building candidate", "Mixed / CPA review", or "Insufficient evidence".
+- This is a screening hypothesis, not tax advice.
+
+BUILDING_EVIDENCE:
+${JSON.stringify(building.evidence)}
+
+Return ONLY valid JSON with exactly this shape:
+{
+  "buildingId": "${building.id}",
+  "buildingName": "${building.name}",
+  "overallConfidence": 0,
+  "executiveSummary": "",
+  "totalReplacementCostLow": null,
+  "totalReplacementCostHigh": null,
+  "sections": [
+    {
+      "title": "",
+      "sectionConfidence": 0,
+      "items": [
+        {
+          "component": "",
+          "quantity": "",
+          "evidenceBasis": "",
+          "replacementCostLow": null,
+          "replacementCostHigh": null,
+          "proposedClass": "",
+          "confidence": 0
+        }
+      ]
+    }
+  ],
+  "missingInputs": [],
+  "caveats": []
+}
+
+Confidence values are integers 0-100. Include 3-6 useful sections when evidence supports them. Keep the study concise enough for a web page but detailed enough to evaluate whether the app can produce a useful first-pass study.`;
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      model,
+      input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }],
+      store: false
+    })
+  });
+
+  const payload: any = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.error?.message || `Cost segregation generation failed with HTTP ${response.status}.`);
+  const raw = outputText(payload).trim();
+  const parsed = parseJsonObject(raw) as GeneratedCostSegStudy;
+  parsed.buildingId = building.id;
+  parsed.buildingName = building.name;
+  return parsed;
+}
+
+function generatedCostSegHtml(building: Building) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · Cost Segregation Test · ${building.name}</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f1eee7;color:#111618;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.shell{width:min(1260px,calc(100% - 28px));margin:0 auto;padding:24px 0 70px}header{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand a,.back{color:inherit;text-decoration:none;font-weight:850}.back{font-size:13px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:end;padding:62px 0 26px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,86px);font-weight:400;letter-spacing:-.05em;line-height:.92;margin:10px 0 16px}.lede{max-width:760px;font-size:18px;line-height:1.6;color:#535956}.test-box{background:#e8f0e9;border:1px solid #c9d8ca;border-radius:16px;padding:16px;line-height:1.55;font-size:13px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 24px}.metric{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.metric span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#747a76}.metric strong{display:block;font-family:Georgia,serif;font-size:28px;font-weight:400;margin-top:8px}.status{background:#111618;color:#fff;border-radius:18px;padding:18px;margin:16px 0}.status button{border:0;border-radius:999px;background:#fff;color:#111618;padding:10px 14px;font-weight:850;cursor:pointer}.study{display:grid;gap:16px}.schedule{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.schedule-head{display:flex;justify-content:space-between;gap:20px;padding:20px 22px;border-bottom:1px solid #e6e1d8}.schedule-head h2{font-family:Georgia,serif;font-size:28px;font-weight:400;margin:0}.schedule-head span{font-size:12px;color:#6b716e}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #eee9e1;font-size:12px;vertical-align:top}th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76;background:#faf9f6}.money{font-weight:800}.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.note-card{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.note-card h3{margin:0 0 10px}.note-card ul{padding-left:18px;margin:0}.note-card li{margin:7px 0;line-height:1.45}.muted{font-size:12px;color:#6b716e;line-height:1.55}.error{background:#fff0ee;border:1px solid #e3bdb7;color:#7c251c;border-radius:16px;padding:14px}@media(max-width:850px){.hero{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.notes{grid-template-columns:1fr}.schedule-head{flex-direction:column}}@media(max-width:520px){.summary{grid-template-columns:1fr}}
+</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><a class="back" href="/${building.slug}">← Back to ${building.id}</a></header><section class="hero"><div><p class="eyebrow">${building.id} · app-data-only test</p><h1>Cost segregation screening.</h1><p class="lede">This study is generated from the evidence already inside the Building Intelligence app for ${building.name}. No owner cost-segregation report is supplied to the generator.</p></div><div class="test-box"><strong>Blind test</strong><br>Property-specific inputs are restricted to this building's current app record and MatterPak-derived geometry. Replacement-cost ranges and proposed recovery classes are screening estimates for review, not tax basis or tax advice.</div></section><section class="summary"><div class="metric"><span>Building</span><strong>${building.id}</strong></div><div class="metric"><span>MatterPak</span><strong>Ready</strong></div><div class="metric"><span>Generator source</span><strong>App data</strong></div><div class="metric"><span>Tax status</span><strong>Screening</strong></div></section><section class="status"><div id="statusText">Generating a blind first-pass study from current app evidence…</div><p><button id="regen" type="button">Regenerate test</button></p></section><div id="study" class="study"></div></main><script>
+const studyEl=document.getElementById("study"),statusText=document.getElementById("statusText"),regen=document.getElementById("regen");
+const usd=n=>n==null?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
+function render(data){
+  const sections=(data.sections||[]).map((s,i)=>{
+    const rows=(s.items||[]).map(item=>`<tr><td><strong>${item.component||""}</strong></td><td>${item.quantity||"—"}</td><td>${item.evidenceBasis||""}</td><td class="money">${usd(item.replacementCostLow)} – ${usd(item.replacementCostHigh)}</td><td>${item.proposedClass||""}</td><td>${item.confidence ?? 0}%</td></tr>`).join("");
+    return `<section class="schedule"><div class="schedule-head"><h2>${String(i+1).padStart(2,"0")} · ${s.title||"Section"}</h2><span>Section confidence: ${s.sectionConfidence ?? 0}%</span></div><div class="table-wrap"><table><thead><tr><th>Component</th><th>Qty / extent</th><th>Evidence basis</th><th>Replacement-cost range</th><th>Proposed class</th><th>Confidence</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  }).join("");
+  const missing=(data.missingInputs||[]).map(x=>`<li>${x}</li>`).join("");
+  const caveats=(data.caveats||[]).map(x=>`<li>${x}</li>`).join("");
+  studyEl.innerHTML=`<section class="schedule"><div class="schedule-head"><div><h2>Executive screening</h2><p class="muted">${data.executiveSummary||""}</p></div><span>Overall confidence: ${data.overallConfidence ?? 0}%</span></div><div style="padding:18px 22px"><strong>Estimated replacement-cost range represented by supported items: ${usd(data.totalReplacementCostLow)} – ${usd(data.totalReplacementCostHigh)}</strong><p class="muted">This is a replacement-cost screening range, not tax basis.</p></div></section>${sections}<section class="notes"><div class="note-card"><h3>Missing inputs</h3><ul>${missing||"<li>None listed.</li>"}</ul></div><div class="note-card"><h3>Caveats</h3><ul>${caveats||"<li>None listed.</li>"}</ul></div></section>`;
+}
+async function load(){
+  regen.disabled=true;statusText.textContent="Generating a blind first-pass study from current app evidence…";studyEl.innerHTML="";
+  try{
+    const r=await fetch("/api/buildings/${building.id}/cost-seg",{method:"POST"});
+    const data=await r.json();
+    if(!r.ok)throw new Error(data.error||"Generation failed.");
+    statusText.textContent="Generated from current Building Intelligence evidence only.";
+    render(data.study);
+  }catch(e){
+    statusText.textContent="The screening study could not be generated.";
+    studyEl.innerHTML=`<div class="error">${e?.message||"Unknown error"}</div>`;
+  }finally{regen.disabled=false}
+}
+regen.addEventListener("click",load);load();
+</script></body></html>`;
+}
+
+
 const VUES_COST_SEG = {
   prepared: "June 2026",
   status: "Benchmark prototype",
@@ -395,7 +545,7 @@ function buildingHtml(building: Building) {
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · ${building.name}</title><style>
 *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1eee7;color:#111618}.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:24px 0 56px}header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 20px}.brand{font-weight:850}.brand a{color:inherit;text-decoration:none}.building-id{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#6d726f}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:22px;align-items:end;margin:16px 0 22px}.eyebrow,.kicker{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin:0 0 8px}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,96px);font-weight:400;letter-spacing:-.055em;line-height:.9;margin:0}.hero-copy{font-size:17px;line-height:1.55;color:#4f5552;margin:0 0 6px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.badge{border:1px solid #d4d0c7;background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700}.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(360px,.6fr);gap:18px}.card{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px}.card-head h2{font-size:20px;margin:0}.live{font-size:12px;font-weight:750;border:1px solid #d7d2c9;border-radius:999px;padding:7px 10px}.viewer{aspect-ratio:16/10;background:#111}.viewer iframe{display:block;width:100%;height:100%;border:0}.strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #ece8df}.strip>div{padding:14px 16px}.strip>div+div{border-left:1px solid #ece8df}.strip strong{display:block;font-size:13px}.strip span{font-size:12px;color:#6a706d}.assistant{display:flex;flex-direction:column;min-height:680px}.messages{flex:1;padding:14px;background:#f6f4ef}.message{border:1px solid #e2ded5;background:#fff;border-radius:15px;padding:13px 14px;line-height:1.5;white-space:pre-wrap}.message+.message{margin-top:10px}.ask{padding:12px;border-top:1px solid #e2ded5;display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center}.ask textarea{font:inherit;border:1px solid #d8d4ca;border-radius:13px;padding:10px 12px;resize:none;min-width:0}.ask button{border:0;background:#111618;color:#fff;border-radius:999px;font-weight:800;min-height:46px;padding:0 15px}.mic{width:46px;padding:0!important;font-size:20px}.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 13px}.suggestions button{border:1px solid #d9d4cb;background:#fff;border-radius:999px;padding:7px 10px;font-weight:700;font-size:12px;color:#111618}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.panel h3{font-size:20px;margin:0 0 12px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#f6f4ef;border-radius:12px;padding:12px}.metric strong{display:block;font-size:18px}.metric span{font-size:12px;color:#676d6a}.evidence{display:grid;gap:8px}.evidence div{border-left:3px solid #111618;padding:8px 0 8px 10px}.evidence strong{display:block;font-size:13px}.evidence span{font-size:12px;color:#6b716e}.note{margin-top:18px;font-size:12px;color:#6b716e}@media(max-width:1050px){.hero,.main{grid-template-columns:1fr}.assistant{min-height:540px}}@media(max-width:680px){.shell{width:calc(100% - 20px);padding-top:16px}.grid{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.strip>div+div{border-left:0;border-top:1px solid #ece8df}.ask{grid-template-columns:auto 1fr}.ask .submit{grid-column:1/-1}.viewer{aspect-ratio:4/3}}
-</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><div class="building-id">${building.id} · ${building.subtitle}</div></header><section class="hero"><div><p class="eyebrow">${building.name}</p><h1>Ask the building.</h1></div><div><p class="hero-copy">${building.intro}</p><div class="badges">${building.badges.map(badge => `<span class="badge">${badge}</span>`).join("")}</div></div></section><section class="main"><article class="card"><div class="card-head"><div><p class="kicker">Live digital twin</p><h2>${building.name}</h2></div><span class="live">${building.useCase}</span></div><div class="viewer"><iframe src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0" title="${building.name} Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div><div class="strip">${facts}</div></article><aside class="card assistant"><div class="card-head"><div><p class="kicker">Building assistant</p><h2>Intelligence</h2></div><span class="live">Probability-aware</span></div><div class="messages"><div class="message">I know this property from its current building record, published facts, and attached capture evidence. Ask a practical question about this space.</div><div class="message" id="answer">Choose one of the high-value questions below or ask your own.</div></div><div class="ask"><button class="mic" type="button" aria-label="Voice coming soon">🎙</button><textarea id="q" rows="3" placeholder="Ask this building…"></textarea><button class="submit" id="ask" type="button">Ask GBI</button></div><div class="suggestions">${prompts}</div></aside></section><section class="grid"><article class="panel"><p class="kicker">Building signals</p><h3>What the current record already knows</h3><div class="metrics">${signals}</div></article><article class="panel"><p class="kicker">Evidence status</p><h3>What still improves confidence</h3><div class="evidence">${gaps || '<div><strong>Ready</strong><span>No major evidence gaps listed.</span></div>'}</div><p class="note">As MatterPak geometry, panorama analysis, documents, and future scans are attached, answers can move from inferred to observed or measured.</p></article></section>${building.id === "BLDG-003" ? '<div class="actions" style="margin-top:18px"><a href="/vues/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Open Cost Segregation Intelligence →</a></div>' : ''}<p class="note">${building.id} · Matterport ${building.matterportSid}</p></main><script>
+</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><div class="building-id">${building.id} · ${building.subtitle}</div></header><section class="hero"><div><p class="eyebrow">${building.name}</p><h1>Ask the building.</h1></div><div><p class="hero-copy">${building.intro}</p><div class="badges">${building.badges.map(badge => `<span class="badge">${badge}</span>`).join("")}</div></div></section><section class="main"><article class="card"><div class="card-head"><div><p class="kicker">Live digital twin</p><h2>${building.name}</h2></div><span class="live">${building.useCase}</span></div><div class="viewer"><iframe src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0" title="${building.name} Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div><div class="strip">${facts}</div></article><aside class="card assistant"><div class="card-head"><div><p class="kicker">Building assistant</p><h2>Intelligence</h2></div><span class="live">Probability-aware</span></div><div class="messages"><div class="message">I know this property from its current building record, published facts, and attached capture evidence. Ask a practical question about this space.</div><div class="message" id="answer">Choose one of the high-value questions below or ask your own.</div></div><div class="ask"><button class="mic" type="button" aria-label="Voice coming soon">🎙</button><textarea id="q" rows="3" placeholder="Ask this building…"></textarea><button class="submit" id="ask" type="button">Ask GBI</button></div><div class="suggestions">${prompts}</div></aside></section><section class="grid"><article class="panel"><p class="kicker">Building signals</p><h3>What the current record already knows</h3><div class="metrics">${signals}</div></article><article class="panel"><p class="kicker">Evidence status</p><h3>What still improves confidence</h3><div class="evidence">${gaps || '<div><strong>Ready</strong><span>No major evidence gaps listed.</span></div>'}</div><p class="note">As MatterPak geometry, panorama analysis, documents, and future scans are attached, answers can move from inferred to observed or measured.</p></article></section>${building.id === "BLDG-003" ? '<div class="actions" style="margin-top:18px"><a href="/vues/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Open Cost Segregation Intelligence →</a></div>' : '<div class="actions" style="margin-top:18px"><a href="/' + building.slug + '/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Generate Cost Segregation Test →</a></div>'}<p class="note">${building.id} · Matterport ${building.matterportSid}</p></main><script>
 const q=document.getElementById("q"),answer=document.getElementById("answer"),ask=document.getElementById("ask");
 document.querySelectorAll(".suggestions button").forEach(b=>b.addEventListener("click",()=>{q.value=b.textContent||"";q.focus()}));
 ask.addEventListener("click",async()=>{const question=q.value.trim();if(!question)return;answer.textContent="Checking building evidence…";try{const r=await fetch("/api/buildings/${building.id}/ask",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({question})});const data=await r.json();answer.textContent=data.answer||data.error||"No answer returned."}catch{answer.textContent="The building service could not be reached."}});
@@ -412,7 +562,18 @@ function findBuilding(pathname: string) {
 const appWorker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const apiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})(?:\/(ask))?$/);
+    const costSegApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/cost-seg$/);\n    const apiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})(?:\/(ask))?$/);
+
+    if (costSegApiMatch && request.method === "POST") {
+      const building = BUILDINGS[costSegApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      if (!env.OPENAI_API_KEY) return json({ error: "Reasoning service is not configured." }, 503);
+      try {
+        return json({ study: await generateCostSegStudy(building, env) });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Cost segregation screening failed." }, 502);
+      }
+    }
 
     if (apiMatch) {
       const building = BUILDINGS[apiMatch[1]];
@@ -454,6 +615,14 @@ const appWorker = {
         background_color: "#f1eee7",
         theme_color: "#111618"
       }), { headers: { "content-type": "application/manifest+json" } });
+    }
+
+    if (url.pathname === "/crc/cost-seg" || url.pathname === "/crc/cost-segregation") {
+      return new Response(generatedCostSegHtml(BUILDINGS["BLDG-001"]), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+    }
+
+    if (url.pathname === "/bell/cost-seg" || url.pathname === "/bell/cost-segregation") {
+      return new Response(generatedCostSegHtml(BUILDINGS["BLDG-002"]), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     if (url.pathname === "/vues/cost-seg" || url.pathname === "/vues/cost-segregation") {
