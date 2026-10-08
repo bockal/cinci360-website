@@ -3,5 +3,11 @@
   "name": "cinci360-intelligence",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-07",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "r2_buckets": [
+    {
+      "binding": "BUILDING_DATA",
+      "bucket_name": "cinci360-building-data"
+    }
+  ]
 }
