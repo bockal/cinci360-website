@@ -12,9 +12,30 @@ export type VisualObservation = {
 
 export async function loadPersistedVisualEvidence(building: any, env: any) {
   if (!env.BUILDING_DATA) return null;
-  const object = await env.BUILDING_DATA.get(`buildings/${building.id}/observations/latest.json`);
+  const prefix = `buildings/${building.id}`;
+  const object = await env.BUILDING_DATA.get(`${prefix}/observations/latest.json`);
   if (!object) return null;
-  return object.json().catch(() => null);
+  const data: any = await object.json().catch(() => null);
+  if (!data) return null;
+
+  const processed = new Set<string>(Array.isArray(data.processedSweepIds) ? data.processedSweepIds : []);
+  try {
+    let cursor: string | undefined;
+    do {
+      const listed = await env.BUILDING_DATA.list({ prefix: `${prefix}/panos/`, cursor });
+      for (const item of listed.objects || []) {
+        const name = String(item.key || "").split("/").pop() || "";
+        if (name.endsWith(".jpg")) processed.add(name.slice(0, -4));
+      }
+      cursor = listed.truncated ? listed.cursor : undefined;
+    } while (cursor);
+  } catch {
+    // Observation JSON remains usable even if object listing is temporarily unavailable.
+  }
+
+  data.processedSweepIds = Array.from(processed);
+  data.processedSweepCount = processed.size;
+  return data;
 }
 
 function outputText(payload: any) {
