@@ -107,6 +107,10 @@ export async function persistVisualBatch(building: any, captures: any[], invento
   const priorObj = await env.BUILDING_DATA.get(`${prefix}/observations/latest.json`);
   const prior = priorObj ? await priorObj.json().catch(() => null) : null;
   const existing = Array.isArray(prior?.items) ? prior.items : [];
+  const priorProcessed = Array.isArray(prior?.processedSweepIds)
+    ? prior.processedSweepIds
+    : Array.from(new Set(existing.flatMap((item: any) => Array.isArray(item?.evidenceSweepIds) ? item.evidenceSweepIds : [])));
+  const processedSweepIds = new Set<string>(priorProcessed);
   const byKey = new Map<string, any>();
 
   for (const item of [...existing, ...(inventory.items || [])]) {
@@ -117,6 +121,7 @@ export async function persistVisualBatch(building: any, captures: any[], invento
   }
 
   for (const capture of captures) {
+    processedSweepIds.add(String(capture.sweepId));
     const base64 = String(capture.imageDataUri || "").split(",")[1] || "";
     if (!base64) continue;
     const bytes = Uint8Array.from(atob(base64), ch => ch.charCodeAt(0));
@@ -129,6 +134,8 @@ export async function persistVisualBatch(building: any, captures: any[], invento
     updatedAt: new Date().toISOString(),
     summary: inventory.summary,
     itemCount: byKey.size,
+    processedSweepCount: processedSweepIds.size,
+    processedSweepIds: Array.from(processedSweepIds),
     items: Array.from(byKey.values())
   };
 
@@ -136,5 +143,5 @@ export async function persistVisualBatch(building: any, captures: any[], invento
     httpMetadata: { contentType: "application/json" }
   });
 
-  return { persisted: true, itemCount: byKey.size };
+  return { persisted: true, itemCount: byKey.size, processedSweepCount: processedSweepIds.size, processedSweepIds: Array.from(processedSweepIds) };
 }
