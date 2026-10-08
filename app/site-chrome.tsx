@@ -13,7 +13,7 @@ const serviceNav = [
 ] as const;
 
 const socialLinks = [
-  ["Matterport", "https://my.matterport.com/show/?m=RRUh81GAFtt", "M"],
+  ["Matterport", "https://my.matterport.com/show/?m=RRUh81GAFtt", "digital-twin"],
   ["GitHub", "https://github.com/Cinci360-LLC", "github"],
   ["LinkedIn", "https://www.linkedin.com/in/aubrey", "linkedin"],
   ["YouTube", "https://www.youtube.com/@cinci360", "youtube"],
@@ -21,6 +21,7 @@ const socialLinks = [
 ] as const;
 
 function SocialIcon({ icon }: { icon: (typeof socialLinks)[number][2] }) {
+  if (icon === "digital-twin") return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.5 21 7.5v9L12 21.5 3 16.5v-9L12 2.5Z"/><path d="m3 7.5 9 5 9-5M12 12.5v9"/><path d="m7.5 5 9 5"/></svg>;
   if (icon === "github") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .8a11.2 11.2 0 0 0-3.5 21.8c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1.6 2.5 3.3 1.8.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.6 0-1.2.4-2.2 1.2-3-.1-.3-.5-1.5.1-3 0 0 .9-.3 3.1 1.1.9-.3 1.9-.4 2.9-.4s2 .1 2.9.4c2.2-1.5 3.1-1.1 3.1-1.1.6 1.5.2 2.7.1 3 .8.8 1.2 1.8 1.2 3 0 4.3-2.7 5.3-5.3 5.6.4.4.8 1.1.8 2.2V22c0 .4.2.7.8.6A11.2 11.2 0 0 0 12 .8Z" /></svg>;
   if (icon === "linkedin") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 7.8H1.5V22h3.4V7.8ZM3.2 2a2 2 0 1 0 0 4.1 2 2 0 0 0 0-4.1ZM22.5 14.1c0-4.2-2.2-6.2-5.2-6.2-2.4 0-3.5 1.3-4.1 2.3h-.1V7.8H9.8V22h3.4v-7c0-1.9.4-3.7 2.7-3.7 2.2 0 2.2 2.1 2.2 3.8V22h3.4v-7.9Z" /></svg>;
   if (icon === "youtube") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.3 7.1a3 3 0 0 0-2.1-2.2C19.3 4.4 12 4.4 12 4.4s-7.3 0-9.2.5A3 3 0 0 0 .7 7.1 31 31 0 0 0 .2 12a31 31 0 0 0 .5 4.9 3 3 0 0 0 2.1 2.2c1.9.5 9.2.5 9.2.5s7.3 0 9.2-.5a3 3 0 0 0 2.1-2.2 31 31 0 0 0 .5-4.9 31 31 0 0 0-.5-4.9ZM9.6 15.3V8.7l6.3 3.3-6.3 3.3Z" /></svg>;
