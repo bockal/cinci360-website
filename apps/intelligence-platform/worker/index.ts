@@ -575,8 +575,32 @@ function findBuilding(pathname: string) {
 const appWorker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const ingestVisualApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/ingest-visual$/);
+    const evidenceApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/evidence$/);
     const costSegApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/cost-seg$/);
     const apiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})(?:\/(ask))?$/);
+
+    if (ingestVisualApiMatch && request.method === "POST") {
+      const building = BUILDINGS[ingestVisualApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      const body = await request.json().catch(() => null) as any;
+      const captures = Array.isArray(body?.captures) ? body.captures.slice(0, 8) : [];
+      if (!captures.length) return json({ error: "At least one panorama capture is required." }, 400);
+      try {
+        const inventory = await analyzeVisualCaptures(building, captures, env);
+        const persistence = await persistVisualBatch(building, captures, inventory, env);
+        return json({ summary: inventory.summary, batchItems: inventory.items?.length || 0, ...persistence });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Visual ingestion failed." }, 502);
+      }
+    }
+
+    if (evidenceApiMatch && request.method === "GET") {
+      const building = BUILDINGS[evidenceApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      const persisted = await loadPersistedVisualEvidence(building, env);
+      return json({ buildingId: building.id, r2Configured: Boolean(env.BUILDING_DATA), visualInventory: persisted });
+    }
 
     if (costSegApiMatch && request.method === "POST") {
       const building = BUILDINGS[costSegApiMatch[1]];
