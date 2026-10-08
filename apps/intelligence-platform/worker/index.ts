@@ -1,7 +1,10 @@
+import { analyzeVisualCaptures, loadPersistedVisualEvidence, persistVisualBatch } from "./visual-ingest";
+
 interface Env {
   OPENAI_API_KEY?: string;
   OPENAI_GBI_MODEL?: string;
   MATTERPORT_SDK_KEY?: string;
+  BUILDING_DATA?: any;
 }
 
 type Building = {
@@ -194,6 +197,8 @@ function outputText(payload: any) {
 
 async function reasonAboutBuilding(building: Building, question: string, env: Env) {
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
+  const persistedVisual = await loadPersistedVisualEvidence(building, env);
+  const combinedEvidence = persistedVisual ? { ...building.evidence, visualInventory: persistedVisual } : building.evidence;
   const prompt = `You are Cinci360 Building Intelligence for ${building.id}, ${building.name}.
 
 Commercial use case: ${building.useCase}.
@@ -209,7 +214,7 @@ Always answer the question. When direct evidence is incomplete, give the best ev
 Do not fabricate exact dimensions, hidden conditions, code compliance, ages, costs, serial numbers, market value, or unseen facts. If no OBJ geometry is attached, never call an exact physical dimension "measured." You may make a qualified estimate from building type, published facts, current evidence, and common patterns, but label it INFERRED.
 
 Building evidence:
-${JSON.stringify(building.evidence)}
+${JSON.stringify(combinedEvidence)}
 
 User question:
 ${question}
@@ -276,6 +281,8 @@ function parseJsonObject(text: string) {
 
 async function generateCostSegStudy(building: Building, env: Env): Promise<GeneratedCostSegStudy> {
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
+  const persistedVisual = await loadPersistedVisualEvidence(building, env);
+  const combinedEvidence = persistedVisual ? { ...building.evidence, visualInventory: persistedVisual } : building.evidence;
   const prompt = `You are Cinci360 Building Intelligence generating a COST SEGREGATION SCREENING STUDY.
 
 TEST RULE: Use ONLY the property-specific data inside BUILDING_EVIDENCE below. Do not use web search, prior knowledge about this named property, owner documents, prior cost segregation reports, or any property-specific facts not present in BUILDING_EVIDENCE.
@@ -303,7 +310,7 @@ For proposed classes:
 - This is a screening hypothesis, not tax advice.
 
 BUILDING_EVIDENCE:
-${JSON.stringify(building.evidence)}
+${JSON.stringify(combinedEvidence)}
 
 Return ONLY valid JSON with exactly this shape:
 {
