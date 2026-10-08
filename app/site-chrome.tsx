@@ -71,7 +71,7 @@ export function SiteFooter() {
       <div>
         <strong>Cinci360 · Reality Capture &amp; Building Intelligence</strong>
         <p>3D laser scanning · Existing-condition surveys · As-built drawings · Scan-to-BIM / Revit · Digital twins</p>
-        <span>Woman-owned · Cincinnati-based · Nationwide service · City of Cincinnati Vendor Code: VS1000024091</span>
+        <span>Woman-owned · Cincinnati-based · Nationwide service · City of Cincinnati Vendor Code: VS1000024091 · SAM.gov UEI: L5HPKGE34S21</span>
       </div>
       <nav aria-label="Footer navigation">
         <Link href="/3d-laser-scanning-cincinnati">Laser Scanning</Link>
