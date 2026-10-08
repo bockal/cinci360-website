@@ -13,7 +13,7 @@ const serviceNav = [
 ] as const;
 
 const socialLinks = [
-  ["Matterport", "https://my.matterport.com/show/?m=RRUh81GAFtt", "digital-twin"],
+  ["Sketchfab", "https://sketchfab.com/RCE", "digital-twin"],
   ["GitHub", "https://github.com/Cinci360-LLC", "github"],
   ["LinkedIn", "https://www.linkedin.com/in/aubrey", "linkedin"],
   ["YouTube", "https://www.youtube.com/@cinci360", "youtube"],
