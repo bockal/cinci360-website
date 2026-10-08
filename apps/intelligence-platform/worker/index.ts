@@ -401,6 +401,52 @@ regen.addEventListener("click",load);load();
 </script></body></html>`;
 }
 
+function ingestionHtml(building: Building, sdkKey: string) {
+  const key = JSON.stringify(sdkKey || "");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Visual ingestion · ${building.name}</title><style>
+body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap}
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey="+encodeURIComponent(${key}) allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
+const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
+const sdkKey=${key};
+const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log");
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let stopped=false;
+function say(s){status.textContent=s;log.textContent+=s+"\n";log.scrollTop=log.scrollHeight}
+stop.onclick=()=>{stopped=true;say("Stop requested…")};
+run.onclick=async()=>{
+  if(!sdkKey){say("Matterport SDK key is not configured.");return}
+  stopped=false;run.disabled=true;stop.disabled=false;
+  try{
+    say("Connecting to Matterport…");
+    const mod=await import(SDK_BOOTSTRAP+"?applicationKey="+encodeURIComponent(sdkKey));
+    const sdk=await mod.connect(iframe);
+    await sdk.App.state.waitUntil(s=>s.phase===sdk.App.Phase.PLAYING);
+    const model=await sdk.Model.getData();
+    const sweeps=model.sweeps||[];
+    say("Connected: "+sweeps.length+" sweeps.");
+    const batchSize=6;
+    for(let i=0;i<sweeps.length&&!stopped;i+=batchSize){
+      const batch=sweeps.slice(i,i+batchSize),captures=[];
+      for(const sweep of batch){
+        if(stopped)break;
+        await sdk.Sweep.moveTo(sweep.sid,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});
+        await sleep(300);
+        captures.push({sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri:await sdk.Renderer.takeEquirectangular()});
+      }
+      if(!captures.length)break;
+      say("Analyzing sweeps "+(i+1)+"-"+Math.min(i+captures.length,sweeps.length)+"…");
+      const r=await fetch("/api/buildings/${building.id}/ingest-visual",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({captures})});
+      const data=await r.json();
+      if(!r.ok)throw new Error(data.error||"Visual ingestion failed.");
+      say("Batch complete: "+(data.batchItems||0)+" observations; persistent total "+(data.itemCount??"unknown"));
+      bar.style.width=Math.round(((i+captures.length)/sweeps.length)*100)+"%";
+    }
+    say(stopped?"Ingestion stopped.":"Visual ingestion complete.");
+  }catch(e){say("ERROR: "+(e&&e.message?e.message:String(e)))}finally{run.disabled=false;stop.disabled=true}
+};
+</script></body></html>`;
+}
+
+
 const VUES_COST_SEG = {
   prepared: "June 2026",
   status: "Benchmark prototype",
@@ -653,6 +699,12 @@ const appWorker = {
         background_color: "#f1eee7",
         theme_color: "#111618"
       }), { headers: { "content-type": "application/manifest+json" } });
+    }
+
+    const ingestPageMatch = url.pathname.match(/^\/(crc|bell|vues)\/ingest$/);
+    if (ingestPageMatch) {
+      const building = BUILDINGS_BY_SLUG[ingestPageMatch[1]];
+      return new Response(ingestionHtml(building, env.MATTERPORT_SDK_KEY || ""), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     if (url.pathname === "/crc/cost-seg" || url.pathname === "/crc/cost-segregation") {
