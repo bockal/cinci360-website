@@ -41,12 +41,12 @@ const BUILDINGS: Record<string, Building> = {
       { label: "Surface voxels", value: "18,547" }
     ],
     prompts: [
-      "Where are we wasting usable space?",
-      "What could become expensive in the next 1–3 years?",
-      "What would an insurer, buyer, architect, or contractor flag?",
-      "Where could we add storage without disrupting operations?",
-      "What parts of this building are undocumented or risky?",
-      "What should we know before spending money on this building?"
+      "How many rowing shells are stored here, and what types are visible?",
+      "What is the longest shell, and which rack positions can fit it?",
+      "Where could we add rack capacity without narrowing circulation?",
+      "What is the clearest path for moving shells through the building?",
+      "Which visible assets belong in an equipment inventory?",
+      "What maintenance or building-condition issues deserve a closer look?"
     ],
     evidence: {
       building: { id: "BLDG-001", name: "Cincinnati Rowing Club", matterportSid: "qM1n2tF3CAQ", scan: "SCAN-001 interior Pro3 baseline" },
@@ -84,12 +84,12 @@ const BUILDINGS: Record<string, Building> = {
       { label: "Mesh", value: "291,536 vertices · 568,820 faces" }
     ],
     prompts: [
-      "What should an event planner know before touring this venue?",
-      "Which questions should a caterer or rental vendor ask about this space?",
-      "What guest-flow or setup constraints should we plan around?",
-      "What should a corporate event buyer verify before booking?",
-      "What overlooked building details could affect an event plan?",
-      "What could this digital twin answer that would save the sales team time?"
+      "Can we seat 200 guests and still have room for a dance floor?",
+      "Where would vendors load in, and what is the path to the event floor?",
+      "How many restrooms are visible, and where are they relative to the main hall?",
+      "Where could a band, DJ, photo booth, and bar fit without blocking guest flow?",
+      "What should a caterer know about kitchen, staging, and service paths?",
+      "What should a planner verify before signing a contract for this venue?"
     ],
     evidence: {
       building: { id: "BLDG-002", name: "Bell Event Centre", matterportSid: "RRUh81GAFtt" },
@@ -138,12 +138,12 @@ const BUILDINGS: Record<string, Building> = {
       { label: "Mesh", value: "276,941 vertices · 524,644 faces" }
     ],
     prompts: [
-      "Will this house work well for two families traveling together?",
-      "How should 12 guests divide the sleeping spaces?",
-      "What should guests know about lake access before booking?",
-      "Which amenities are easy to miss in the listing?",
-      "What questions would a cautious guest ask before reserving?",
-      "How does this property reduce the friction of a lake weekend?"
+      "Can two families stay here comfortably, and who should sleep where?",
+      "Which bedrooms are closest to bathrooms?",
+      "Can we park two cars and charge an EV at the same time?",
+      "What lake gear is included, and where is it stored?",
+      "What should parents of young children know before booking?",
+      "What should guests bring that the house does not appear to provide?"
     ],
     evidence: {
       building: { id: "BLDG-003", name: "The Vues at Klinger Lake", matterportSid: "EoSVoDF7wqa" },
@@ -361,14 +361,21 @@ function generatedCostSegHtml(building: Building) {
 </style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><a class="back" href="/${building.slug}">← Back to ${building.id}</a></header><section class="hero"><div><p class="eyebrow">${building.id} · app-data-only test</p><h1>Cost segregation screening.</h1><p class="lede">This study is generated from the evidence already inside the Building Intelligence app for ${building.name}. No owner cost-segregation report is supplied to the generator.</p></div><div class="test-box"><strong>Blind test</strong><br>Property-specific inputs are restricted to this building's current app record and MatterPak-derived geometry. Replacement-cost ranges and proposed recovery classes are screening estimates for review, not tax basis or tax advice.</div></section><section class="summary"><div class="metric"><span>Building</span><strong>${building.id}</strong></div><div class="metric"><span>MatterPak</span><strong>Ready</strong></div><div class="metric"><span>Generator source</span><strong>App data</strong></div><div class="metric"><span>Tax status</span><strong>Screening</strong></div></section><section class="status"><div id="statusText">Generating a blind first-pass study from current app evidence…</div><p><button id="regen" type="button">Regenerate test</button></p></section><div id="study" class="study"></div></main><script>
 const studyEl=document.getElementById("study"),statusText=document.getElementById("statusText"),regen=document.getElementById("regen");
 const usd=n=>n==null?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
+const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
 function render(data){
-  const sections=(data.sections||[]).map((s,i)=>{
-    const rows=(s.items||[]).map(item=>`<tr><td><strong>${item.component||""}</strong></td><td>${item.quantity||"—"}</td><td>${item.evidenceBasis||""}</td><td class="money">${usd(item.replacementCostLow)} – ${usd(item.replacementCostHigh)}</td><td>${item.proposedClass||""}</td><td>${item.confidence ?? 0}%</td></tr>`).join("");
-    return `<section class="schedule"><div class="schedule-head"><h2>${String(i+1).padStart(2,"0")} · ${s.title||"Section"}</h2><span>Section confidence: ${s.sectionConfidence ?? 0}%</span></div><div class="table-wrap"><table><thead><tr><th>Component</th><th>Qty / extent</th><th>Evidence basis</th><th>Replacement-cost range</th><th>Proposed class</th><th>Confidence</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
-  }).join("");
-  const missing=(data.missingInputs||[]).map(x=>`<li>${x}</li>`).join("");
-  const caveats=(data.caveats||[]).map(x=>`<li>${x}</li>`).join("");
-  studyEl.innerHTML=`<section class="schedule"><div class="schedule-head"><div><h2>Executive screening</h2><p class="muted">${data.executiveSummary||""}</p></div><span>Overall confidence: ${data.overallConfidence ?? 0}%</span></div><div style="padding:18px 22px"><strong>Estimated replacement-cost range represented by supported items: ${usd(data.totalReplacementCostLow)} – ${usd(data.totalReplacementCostHigh)}</strong><p class="muted">This is a replacement-cost screening range, not tax basis.</p></div></section>${sections}<section class="notes"><div class="note-card"><h3>Missing inputs</h3><ul>${missing||"<li>None listed.</li>"}</ul></div><div class="note-card"><h3>Caveats</h3><ul>${caveats||"<li>None listed.</li>"}</ul></div></section>`;
+  let sections="";
+  (data.sections||[]).forEach((s,i)=>{
+    let rows="";
+    (s.items||[]).forEach(item=>{
+      rows += "<tr><td><strong>"+esc(item.component)+"</strong></td><td>"+esc(item.quantity||"—")+"</td><td>"+esc(item.evidenceBasis)+"</td><td class='money'>"+usd(item.replacementCostLow)+" – "+usd(item.replacementCostHigh)+"</td><td>"+esc(item.proposedClass)+"</td><td>"+esc(item.confidence ?? 0)+"%</td></tr>";
+    });
+    sections += "<section class='schedule'><div class='schedule-head'><h2>"+String(i+1).padStart(2,"0")+" · "+esc(s.title||"Section")+"</h2><span>Section confidence: "+esc(s.sectionConfidence ?? 0)+"%</span></div><div class='table-wrap'><table><thead><tr><th>Component</th><th>Qty / extent</th><th>Evidence basis</th><th>Replacement-cost range</th><th>Proposed class</th><th>Confidence</th></tr></thead><tbody>"+rows+"</tbody></table></div></section>";
+  });
+  let missing="";
+  (data.missingInputs||[]).forEach(x=>{ missing += "<li>"+esc(x)+"</li>"; });
+  let caveats="";
+  (data.caveats||[]).forEach(x=>{ caveats += "<li>"+esc(x)+"</li>"; });
+  studyEl.innerHTML = "<section class='schedule'><div class='schedule-head'><div><h2>Executive screening</h2><p class='muted'>"+esc(data.executiveSummary||"")+"</p></div><span>Overall confidence: "+esc(data.overallConfidence ?? 0)+"%</span></div><div style='padding:18px 22px'><strong>Estimated replacement-cost range represented by supported items: "+usd(data.totalReplacementCostLow)+" – "+usd(data.totalReplacementCostHigh)+"</strong><p class='muted'>This is a replacement-cost screening range, not tax basis.</p></div></section>"+sections+"<section class='notes'><div class='note-card'><h3>Missing inputs</h3><ul>"+(missing||"<li>None listed.</li>")+"</ul></div><div class='note-card'><h3>Caveats</h3><ul>"+(caveats||"<li>None listed.</li>")+"</ul></div></section>";
 }
 async function load(){
   regen.disabled=true;statusText.textContent="Generating a blind first-pass study from current app evidence…";studyEl.innerHTML="";
@@ -380,13 +387,12 @@ async function load(){
     render(data.study);
   }catch(e){
     statusText.textContent="The screening study could not be generated.";
-    studyEl.innerHTML=`<div class="error">${e?.message||"Unknown error"}</div>`;
+    studyEl.innerHTML="<div class='error'>"+esc(e && e.message ? e.message : "Unknown error")+"</div>";
   }finally{regen.disabled=false}
 }
 regen.addEventListener("click",load);load();
 </script></body></html>`;
 }
-
 
 const VUES_COST_SEG = {
   prepared: "June 2026",
@@ -545,7 +551,7 @@ function buildingHtml(building: Building) {
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · ${building.name}</title><style>
 *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1eee7;color:#111618}.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:24px 0 56px}header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 20px}.brand{font-weight:850}.brand a{color:inherit;text-decoration:none}.building-id{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#6d726f}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:22px;align-items:end;margin:16px 0 22px}.eyebrow,.kicker{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin:0 0 8px}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,96px);font-weight:400;letter-spacing:-.055em;line-height:.9;margin:0}.hero-copy{font-size:17px;line-height:1.55;color:#4f5552;margin:0 0 6px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.badge{border:1px solid #d4d0c7;background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700}.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(360px,.6fr);gap:18px}.card{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px}.card-head h2{font-size:20px;margin:0}.live{font-size:12px;font-weight:750;border:1px solid #d7d2c9;border-radius:999px;padding:7px 10px}.viewer{aspect-ratio:16/10;background:#111}.viewer iframe{display:block;width:100%;height:100%;border:0}.strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #ece8df}.strip>div{padding:14px 16px}.strip>div+div{border-left:1px solid #ece8df}.strip strong{display:block;font-size:13px}.strip span{font-size:12px;color:#6a706d}.assistant{display:flex;flex-direction:column;min-height:680px}.messages{flex:1;padding:14px;background:#f6f4ef}.message{border:1px solid #e2ded5;background:#fff;border-radius:15px;padding:13px 14px;line-height:1.5;white-space:pre-wrap}.message+.message{margin-top:10px}.ask{padding:12px;border-top:1px solid #e2ded5;display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center}.ask textarea{font:inherit;border:1px solid #d8d4ca;border-radius:13px;padding:10px 12px;resize:none;min-width:0}.ask button{border:0;background:#111618;color:#fff;border-radius:999px;font-weight:800;min-height:46px;padding:0 15px}.mic{width:46px;padding:0!important;font-size:20px}.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 13px}.suggestions button{border:1px solid #d9d4cb;background:#fff;border-radius:999px;padding:7px 10px;font-weight:700;font-size:12px;color:#111618}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.panel h3{font-size:20px;margin:0 0 12px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#f6f4ef;border-radius:12px;padding:12px}.metric strong{display:block;font-size:18px}.metric span{font-size:12px;color:#676d6a}.evidence{display:grid;gap:8px}.evidence div{border-left:3px solid #111618;padding:8px 0 8px 10px}.evidence strong{display:block;font-size:13px}.evidence span{font-size:12px;color:#6b716e}.note{margin-top:18px;font-size:12px;color:#6b716e}@media(max-width:1050px){.hero,.main{grid-template-columns:1fr}.assistant{min-height:540px}}@media(max-width:680px){.shell{width:calc(100% - 20px);padding-top:16px}.grid{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.strip>div+div{border-left:0;border-top:1px solid #ece8df}.ask{grid-template-columns:auto 1fr}.ask .submit{grid-column:1/-1}.viewer{aspect-ratio:4/3}}
-</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><div class="building-id">${building.id} · ${building.subtitle}</div></header><section class="hero"><div><p class="eyebrow">${building.name}</p><h1>Ask the building.</h1></div><div><p class="hero-copy">${building.intro}</p><div class="badges">${building.badges.map(badge => `<span class="badge">${badge}</span>`).join("")}</div></div></section><section class="main"><article class="card"><div class="card-head"><div><p class="kicker">Live digital twin</p><h2>${building.name}</h2></div><span class="live">${building.useCase}</span></div><div class="viewer"><iframe src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0" title="${building.name} Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div><div class="strip">${facts}</div></article><aside class="card assistant"><div class="card-head"><div><p class="kicker">Building assistant</p><h2>Intelligence</h2></div><span class="live">Probability-aware</span></div><div class="messages"><div class="message">I know this property from its current building record, published facts, and attached capture evidence. Ask a practical question about this space.</div><div class="message" id="answer">Choose one of the high-value questions below or ask your own.</div></div><div class="ask"><button class="mic" type="button" aria-label="Voice coming soon">🎙</button><textarea id="q" rows="3" placeholder="Ask this building…"></textarea><button class="submit" id="ask" type="button">Ask GBI</button></div><div class="suggestions">${prompts}</div></aside></section><section class="grid"><article class="panel"><p class="kicker">Building signals</p><h3>What the current record already knows</h3><div class="metrics">${signals}</div></article><article class="panel"><p class="kicker">Evidence status</p><h3>What still improves confidence</h3><div class="evidence">${gaps || '<div><strong>Ready</strong><span>No major evidence gaps listed.</span></div>'}</div><p class="note">As MatterPak geometry, panorama analysis, documents, and future scans are attached, answers can move from inferred to observed or measured.</p></article></section>${building.id === "BLDG-003" ? '<div class="actions" style="margin-top:18px"><a href="/vues/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Open Cost Segregation Intelligence →</a></div>' : '<div class="actions" style="margin-top:18px"><a href="/' + building.slug + '/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Generate Cost Segregation Test →</a></div>'}<p class="note">${building.id} · Matterport ${building.matterportSid}</p></main><script>
+</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><div class="building-id">${building.id} · ${building.subtitle}</div></header><section class="hero"><div><p class="eyebrow">${building.name}</p><h1>Ask the building.</h1></div><div><p class="hero-copy">${building.intro}</p><div class="badges">${building.badges.map(badge => `<span class="badge">${badge}</span>`).join("")}</div></div></section><section class="main"><article class="card"><div class="card-head"><div><p class="kicker">Live digital twin</p><h2>${building.name}</h2></div><span class="live">${building.useCase}</span></div><div class="viewer"><iframe src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0" title="${building.name} Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div><div class="strip">${facts}</div></article><aside class="card assistant"><div class="card-head"><div><p class="kicker">Building assistant</p><h2>Intelligence</h2></div><span class="live">Probability-aware</span></div><div class="messages"><div class="message">Ask the questions a real buyer, planner, guest, or facility manager would ask before making a decision. I will separate what is measured, observed, inferred, and still missing.</div><div class="message" id="answer">Choose one of the high-value questions below or ask your own.</div></div><div class="ask"><button class="mic" type="button" aria-label="Voice coming soon">🎙</button><textarea id="q" rows="3" placeholder="Ask this building…"></textarea><button class="submit" id="ask" type="button">Ask GBI</button></div><div class="suggestions">${prompts}</div></aside></section><section class="grid"><article class="panel"><p class="kicker">Building signals</p><h3>What the current record already knows</h3><div class="metrics">${signals}</div></article><article class="panel"><p class="kicker">Evidence status</p><h3>What still improves confidence</h3><div class="evidence">${gaps || '<div><strong>Ready</strong><span>No major evidence gaps listed.</span></div>'}</div><p class="note">As MatterPak geometry, panorama analysis, documents, and future scans are attached, answers can move from inferred to observed or measured.</p></article></section>${building.id === "BLDG-003" ? '<div class="actions" style="margin-top:18px"><a href="/vues/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Open Cost Segregation Intelligence →</a></div>' : '<div class="actions" style="margin-top:18px"><a href="/' + building.slug + '/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Generate Cost Segregation Test →</a></div>'}<p class="note">${building.id} · Matterport ${building.matterportSid}</p></main><script>
 const q=document.getElementById("q"),answer=document.getElementById("answer"),ask=document.getElementById("ask");
 document.querySelectorAll(".suggestions button").forEach(b=>b.addEventListener("click",()=>{q.value=b.textContent||"";q.focus()}));
 ask.addEventListener("click",async()=>{const question=q.value.trim();if(!question)return;answer.textContent="Checking building evidence…";try{const r=await fetch("/api/buildings/${building.id}/ask",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({question})});const data=await r.json();answer.textContent=data.answer||data.error||"No answer returned."}catch{answer.textContent="The building service could not be reached."}});
