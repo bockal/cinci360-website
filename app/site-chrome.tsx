@@ -67,16 +67,24 @@ export function SiteHeader() {
 export function SiteFooter() {
   return <footer className="global-footer compact-footer">
     <div className="compact-footer-main">
-      <span>© 2026 Cinci360 · Woman-owned business · Cincinnati, Ohio · Nationwide · City of Cincinnati Vendor Code: VS1000024091</span>
+      <div>
+        <strong>Cinci360 · Reality Capture &amp; Building Intelligence</strong>
+        <p>3D laser scanning · Existing-condition surveys · As-built drawings · Scan-to-BIM / Revit · Digital twins</p>
+        <span>Woman-owned · Cincinnati-based · Nationwide service · City of Cincinnati Vendor Code: VS1000024091</span>
+      </div>
       <nav aria-label="Footer navigation">
-        <Link href="/intelligence-portal">Intelligence Portal</Link>
-        <Link href="/podcast">Podcast</Link>
-        <Link href="/answers">FAQ</Link>
-        <Link className="footer-project-cta" href="/#contact">Start a project</Link>
+        <Link href="/3d-laser-scanning-cincinnati">Laser Scanning</Link>
+        <Link href="/scan-to-bim-revit-cad">Scan-to-BIM</Link>
+        <Link href="/due-diligence">Due Diligence</Link>
+        <Link href="/intelligence-portal">Building Intelligence</Link>
+        <Link className="footer-project-cta" href="/#contact">Request a Survey</Link>
       </nav>
       <nav className="compact-footer-social" aria-label="Social links">
         {socialLinks.map(([label,href,icon])=><a key={label} href={href} target="_blank" rel="noreferrer" aria-label={`Cinci360 on ${label}`} title={label}><SocialIcon icon={icon}/></a>)}
       </nav>
+    </div>
+    <div style={{textAlign:"center",fontSize:"0.75rem",padding:"0.5rem 1rem 1rem",opacity:0.75}}>
+      © {new Date().getFullYear()} Cinci360 · <Link href="/podcast">Tales from the Field</Link> · <Link href="/answers">FAQ</Link>
     </div>
   </footer>;
 }
