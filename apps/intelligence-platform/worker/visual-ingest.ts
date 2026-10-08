@@ -1,0 +1,140 @@
+export type VisualObservation = {
+  assetId: string;
+  category: string;
+  visibleName: string;
+  description: string;
+  quantity: number;
+  confidence: number;
+  evidenceSweepIds: string[];
+  duplicateGroup: string;
+  notes: string;
+};
+
+export async function loadPersistedVisualEvidence(building: any, env: any) {
+  if (!env.BUILDING_DATA) return null;
+  const object = await env.BUILDING_DATA.get(`buildings/${building.id}/observations/latest.json`);
+  if (!object) return null;
+  return object.json().catch(() => null);
+}
+
+function outputText(payload: any) {
+  if (typeof payload?.output_text === "string") return payload.output_text;
+  return (payload?.output ?? [])
+    .flatMap((item: any) => item.content ?? [])
+    .filter((part: any) => part.type === "output_text" && typeof part.text === "string")
+    .map((part: any) => part.text)
+    .join("\n");
+}
+
+export async function analyzeVisualCaptures(building: any, captures: any[], env: any) {
+  if (!env.OPENAI_API_KEY) throw new Error("Reasoning service is not configured.");
+  const schema = {
+    type: "object",
+    additionalProperties: false,
+    required: ["summary", "items"],
+    properties: {
+      summary: { type: "string" },
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["assetId","category","visibleName","description","quantity","confidence","evidenceSweepIds","duplicateGroup","notes"],
+          properties: {
+            assetId: { type: "string" },
+            category: { type: "string" },
+            visibleName: { type: "string" },
+            description: { type: "string" },
+            quantity: { type: "integer", minimum: 1 },
+            confidence: { type: "number", minimum: 0, maximum: 1 },
+            evidenceSweepIds: { type: "array", items: { type: "string" }, minItems: 1 },
+            duplicateGroup: { type: "string" },
+            notes: { type: "string" }
+          }
+        }
+      }
+    }
+  };
+
+  const manifest = captures.map((capture, i) => {
+    const p = capture.position;
+    const xyz = p ? `${Number(p.x).toFixed(2)}, ${Number(p.y).toFixed(2)}, ${Number(p.z).toFixed(2)}` : "unknown";
+    return `Image ${i + 1}: sweep=${capture.sweepId}; floor=${capture.floor ?? "unknown"}; xyz=${xyz}`;
+  }).join("\n");
+
+  const prompt = `You are Cinci360 Building Intelligence reviewing Matterport panorama evidence for ${building.name}.
+
+Create a conservative facility and cost-segregation-ready visual inventory. Identify visible movable equipment and furniture, specialty storage/racks, doors, windows, flooring, wall/ceiling finishes, plumbing fixtures, visible HVAC/electrical equipment, lighting, safety devices, signage, specialty improvements/built-ins, and condition anomalies.
+
+Rules:
+- Deduplicate the same physical object across overlapping sweeps.
+- Do not invent hidden equipment, dimensions, age, ownership, manufacturer, model, condition, or quantities.
+- Use only supplied sweep IDs for evidence.
+- quantity must reflect visually supported count or grouped count.
+- confidence is 0 to 1.
+- Missing uncertain items is better than inventing them.
+
+Evidence manifest:
+${manifest}
+
+Return structured JSON only.`;
+
+  const content: any[] = [{ type: "input_text", text: prompt }];
+  for (const capture of captures) content.push({ type: "input_image", image_url: capture.imageDataUri, detail: "high" });
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      model: env.OPENAI_GBI_MODEL || "gpt-6-luna",
+      input: [{ role: "user", content }],
+      text: { format: { type: "json_schema", name: "building_visual_inventory", strict: true, schema } },
+      store: false
+    })
+  });
+
+  const payload: any = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.error?.message || `Visual analysis failed with HTTP ${response.status}.`);
+  const raw = outputText(payload);
+  if (!raw) throw new Error("Visual analysis returned no output.");
+  return JSON.parse(raw);
+}
+
+export async function persistVisualBatch(building: any, captures: any[], inventory: any, env: any) {
+  if (!env.BUILDING_DATA) return { persisted: false, reason: "R2 binding BUILDING_DATA is not configured." };
+
+  const prefix = `buildings/${building.id}`;
+  const priorObj = await env.BUILDING_DATA.get(`${prefix}/observations/latest.json`);
+  const prior = priorObj ? await priorObj.json().catch(() => null) : null;
+  const existing = Array.isArray(prior?.items) ? prior.items : [];
+  const byKey = new Map<string, any>();
+
+  for (const item of [...existing, ...(inventory.items || [])]) {
+    const key = (item.duplicateGroup || item.assetId || `${item.category}:${item.visibleName}:${item.description}`).toLowerCase();
+    const current = byKey.get(key);
+    if (!current || item.confidence > current.confidence) byKey.set(key, item);
+    else current.evidenceSweepIds = Array.from(new Set([...(current.evidenceSweepIds || []), ...(item.evidenceSweepIds || [])]));
+  }
+
+  for (const capture of captures) {
+    const base64 = String(capture.imageDataUri || "").split(",")[1] || "";
+    if (!base64) continue;
+    const bytes = Uint8Array.from(atob(base64), ch => ch.charCodeAt(0));
+    await env.BUILDING_DATA.put(`${prefix}/panos/${capture.sweepId}.jpg`, bytes, { httpMetadata: { contentType: "image/jpeg" } });
+  }
+
+  const combined = {
+    buildingId: building.id,
+    matterportSid: building.matterportSid,
+    updatedAt: new Date().toISOString(),
+    summary: inventory.summary,
+    itemCount: byKey.size,
+    items: Array.from(byKey.values())
+  };
+
+  await env.BUILDING_DATA.put(`${prefix}/observations/latest.json`, JSON.stringify(combined, null, 2), {
+    httpMetadata: { contentType: "application/json" }
+  });
+
+  return { persisted: true, itemCount: byKey.size };
+}
