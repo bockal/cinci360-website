@@ -431,6 +431,56 @@ const iframe=document.getElementById("mp"),run=document.getElementById("run"),st
 if(!sdkKey)keyPanel.style.display="block";
 saveKey.onclick=()=>{const v=sdkInput.value.trim();if(!v)return;sdkKey=v;localStorage.setItem("cinci360:matterport-sdk-key",v);keyPanel.style.display="none";say("Matterport SDK key loaded for this browser.");};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let stopped=false;
+async function compressPano(dataUri,maxWidth=2048,quality=.78){
+  try{
+    const img=new Image();
+    img.src=dataUri;
+    await img.decode();
+    const scale=Math.min(1,maxWidth/img.width);
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(img.width*scale));
+    canvas.height=Math.max(1,Math.round(img.height*scale));
+    const ctx=canvas.getContext("2d");
+    if(!ctx)return dataUri;
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    return canvas.toDataURL("image/jpeg",quality);
+  }catch{return dataUri}
+}
+async function getPersistedSweepSet(){
+  try{
+    const er=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});
+    const et=await er.text();
+    const ed=JSON.parse(et);
+    const vi=ed.visualInventory||null;
+    const explicit=vi&&Array.isArray(vi.processedSweepIds)?vi.processedSweepIds:[];
+    const inferred=vi&&Array.isArray(vi.items)?vi.items.flatMap(item=>Array.isArray(item.evidenceSweepIds)?item.evidenceSweepIds:[]):[];
+    return new Set([...explicit,...inferred]);
+  }catch{return new Set()}
+}
+async function sendBatch(captures){
+  const targetIds=captures.map(x=>x.sweepId);
+  const waits=[0,8000,20000,45000];
+  let lastError="Ingestion failed.";
+  for(let attempt=0;attempt<waits.length;attempt++){
+    if(stopped)throw new Error("Stopped.");
+    if(waits[attempt]){say("Cooling down "+Math.round(waits[attempt]/1000)+"s before retry "+attempt+"…");await sleep(waits[attempt]);}
+    try{
+      const r=await fetch("/api/buildings/${building.id}/ingest-visual",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({captures})});
+      const raw=await r.text();
+      let data=null;
+      try{data=JSON.parse(raw)}catch{}
+      if(r.ok&&data)return data;
+      lastError=data&&data.error?data.error:("Ingestion API returned HTTP "+r.status+(raw.startsWith("<")?" (HTML error page)":""));
+    }catch(e){lastError=e&&e.message?e.message:String(e)}
+    const persisted=await getPersistedSweepSet();
+    if(targetIds.every(id=>persisted.has(id))){
+      say("Batch response failed, but R2 confirms these sweeps were saved. Continuing without reprocessing.");
+      return {batchItems:0,itemCount:"preserved",processedSweepIds:Array.from(persisted),recovered:true};
+    }
+    say("Transient batch failure: "+lastError);
+  }
+  throw new Error(lastError+" after automatic retries.");
+}
 function say(s){status.textContent=s;log.textContent+=s+"\\n";log.scrollTop=log.scrollHeight}
 stop.onclick=()=>{stopped=true;say("Stop requested…")};
 run.onclick=async()=>{
@@ -447,45 +497,33 @@ run.onclick=async()=>{
     const sweeps=model.sweeps||[];
     say("Connected: "+sweeps.length+" sweeps.");
 
-    let doneSet=new Set();
-    try{
-      const er=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});
-      const et=await er.text();
-      const ed=JSON.parse(et);
-      const vi=ed.visualInventory||null;
-      const explicit=vi&&Array.isArray(vi.processedSweepIds)?vi.processedSweepIds:[];
-      const inferred=vi&&Array.isArray(vi.items)?vi.items.flatMap(item=>Array.isArray(item.evidenceSweepIds)?item.evidenceSweepIds:[]):[];
-      doneSet=new Set([...explicit,...inferred]);
-    }catch{}
+    let doneSet=await getPersistedSweepSet();
     const pending=sweeps.filter(s=>!doneSet.has(s.sid));
     say("Resume check: "+doneSet.size+" sweeps already persisted; "+pending.length+" remaining.");
     bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
     if(!pending.length){say("All sweeps are already persisted.");return;}
 
-    const batchSize=4;
+    const batchSize=2;
     for(let i=0;i<pending.length&&!stopped;i+=batchSize){
       const batch=pending.slice(i,i+batchSize),captures=[];
       for(const sweep of batch){
         if(stopped)break;
         await sdk.Sweep.moveTo(sweep.sid,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});
         await sleep(300);
-        captures.push({sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri:await sdk.Renderer.takeEquirectangular()});
+        const rawPano=await sdk.Renderer.takeEquirectangular();
+        const imageDataUri=await compressPano(rawPano);
+        captures.push({sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri});
       }
       if(!captures.length)break;
       const first=i+1,last=Math.min(i+captures.length,pending.length);
       say("Analyzing remaining sweeps "+first+"-"+last+"…");
-      const r=await fetch("/api/buildings/${building.id}/ingest-visual",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({captures})});
-      const raw=await r.text();
-      let data=null;
-      try{data=JSON.parse(raw)}catch{}
-      if(!r.ok){
-        const msg=data&&data.error?data.error:("Ingestion API returned HTTP "+r.status+(raw.startsWith("<")?" (HTML error page)":""));
-        throw new Error(msg);
-      }
-      if(!data)throw new Error("Ingestion API returned a non-JSON response.");
-      captures.forEach(x=>doneSet.add(x.sweepId));
+      const data=await sendBatch(captures);
+      const confirmed=await getPersistedSweepSet();
+      captures.forEach(x=>{if(confirmed.has(x.sweepId))doneSet.add(x.sweepId)});
+      if(captures.some(x=>!doneSet.has(x.sweepId)))throw new Error("Batch returned, but R2 did not confirm every sweep.");
       say("Batch complete: "+(data.batchItems||0)+" observations; persistent total "+(data.itemCount??"unknown")+"; sweeps saved "+doneSet.size+"/"+sweeps.length);
       bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
+      if(((i/batchSize)+1)%5===0 && i+batchSize<pending.length){say("Short cooldown to keep the long ingestion stable…");await sleep(10000);}
     }
     say(stopped?"Ingestion stopped.":"Visual ingestion complete.");
   }catch(e){say("ERROR: "+(e&&e.message?e.message:String(e)))}finally{run.disabled=false;stop.disabled=true}
