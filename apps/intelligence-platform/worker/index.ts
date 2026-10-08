@@ -709,6 +709,14 @@ const appWorker = {
       return json({ error: "Method not allowed." }, 405);
     }
 
+    if (url.pathname === "/api/config-status" && request.method === "GET") {
+      return json({
+        matterportSdkConfigured: Boolean(env.MATTERPORT_SDK_KEY),
+        openAiConfigured: Boolean(env.OPENAI_API_KEY),
+        r2Configured: Boolean(env.BUILDING_DATA)
+      });
+    }
+
     if (url.pathname === "/manifest.webmanifest") {
       return new Response(JSON.stringify({
         name: "Cinci360 Intelligence",
