@@ -532,7 +532,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     buildingId: building.id,
     sourceObjKey: objKey,
     analyzedAt: new Date().toISOString(),
-    algorithmVersion: "wall-slice-v2.1-room-fill",
+    algorithmVersion: "wall-slice-v2.2-landscape",
     classification: "MEASURED / SCREENING",
     limitations: [
       "Floor plans are reconstructed from OBJ mesh wall intersections and are not signed architectural drawings.",
@@ -568,12 +568,19 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
   }
 
   const title = escapeXml(building.name);
-  const combinedW = 1200;
+  const cols = floors.length > 1 ? 2 : 1;
+  const rows = Math.max(1, Math.ceil(Math.max(1, floors.length) / cols));
+  const panelW = 1100;
   const panelH = 760;
-  const combinedH = Math.max(1, floors.length) * panelH + 90;
+  const gutter = 28;
+  const combinedW = cols * panelW + (cols + 1) * gutter;
+  const combinedH = 92 + rows * panelH + (rows + 1) * gutter;
   let combined = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${combinedW} ${combinedH}" role="img" aria-label="Evidence-derived floor plans for ${title}"><rect width="100%" height="100%" fill="#fff"/><text x="40" y="40" font-family="system-ui,sans-serif" font-size="24" font-weight="700" fill="#111618">${title}</text><text x="40" y="64" font-family="system-ui,sans-serif" font-size="12" fill="#5f6763">MatterPak evidence-derived floor plan reconstruction · ${round(grossFloorAreaEstimateFt2, 0).toLocaleString("en-US")} sq ft estimated gross floor area</text>`;
   for (let i = 0; i < floors.length; i++) {
-    combined += `<svg x="50" y="${85 + i * panelH}" width="1100" height="740" viewBox="0 0 1100 760">${floors[i].svg.replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>`;
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = gutter + col * (panelW + gutter);
+    const y = 92 + gutter + row * (panelH + gutter);
+    combined += `<svg x="${x}" y="${y}" width="${panelW}" height="${panelH}" viewBox="0 0 1100 760">${floors[i].svg.replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>`;
   }
   if (!floors.length) combined += `<text x="40" y="120" font-family="system-ui,sans-serif" font-size="16" fill="#9b3b2f">No stable interior wall slices were detected from this OBJ.</text>`;
   combined += `</svg>`;
