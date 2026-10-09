@@ -581,7 +581,7 @@ async function loadEvidence(){
       const ar=await fetch("/api/buildings/${building.id}/geometry/analyze",{method:"POST"});
       if(ar.ok){r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});data=await r.json();}
     }
-    const comp=data.completeness||null,geo=data.geometry||{},ga=data.geometryAnalysis||null,vi=data.visualInventory||null,items=vi&&Array.isArray(vi.items)?vi.items:[];
+    const comp=data.completeness||null,geo=data.geometry||{},ga=data.geometryAnalysis||null,vi=data.visualInventory||null,items=vi&&Array.isArray(vi.consolidatedInventory)&&vi.consolidatedInventory.length?vi.consolidatedInventory:(vi&&Array.isArray(vi.items)?vi.items:[]);
     document.getElementById("panoPct").textContent=comp?comp.percent+"%":"Unknown";
     document.getElementById("panoCount").textContent=comp?(comp.processed+" / "+comp.expected):((vi&&vi.processedSweepCount)||0)+" / ?";
     document.getElementById("panoMissing").textContent=comp?String(comp.missing):"Unknown";
