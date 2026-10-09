@@ -1,6 +1,7 @@
 export type VisualObservation = {
   assetId: string;
   category: string;
+  room: string;
   visibleName: string;
   description: string;
   quantity: number;
@@ -60,10 +61,11 @@ export async function analyzeVisualCaptures(building: any, captures: any[], env:
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["assetId","category","visibleName","description","quantity","confidence","evidenceSweepIds","duplicateGroup","notes"],
+          required: ["assetId","category","room","visibleName","description","quantity","confidence","evidenceSweepIds","duplicateGroup","notes"],
           properties: {
             assetId: { type: "string" },
             category: { type: "string" },
+            room: { type: "string" },
             visibleName: { type: "string" },
             description: { type: "string" },
             quantity: { type: "integer", minimum: 1 },
@@ -91,6 +93,7 @@ Rules:
 - Deduplicate the same physical object across overlapping sweeps.
 - Do not invent hidden equipment, dimensions, age, ownership, manufacturer, model, condition, or quantities.
 - Use only supplied sweep IDs for evidence.
+- room should be the most specific visually supported room/area label, such as "Main Hall", "Foyer", "Sitting Room", "Restroom", "Kitchen", "Exterior Entry", or "Whole Building / Unassigned". Do not invent a room name if the views do not support one.
 - quantity must reflect visually supported count or grouped count.
 - confidence is 0 to 1.
 - Missing uncertain items is better than inventing them.
@@ -165,4 +168,47 @@ export async function persistVisualBatch(building: any, captures: any[], invento
   });
 
   return { persisted: true, itemCount: byKey.size, processedSweepCount: processedSweepIds.size, processedSweepIds: Array.from(processedSweepIds) };
+}
+
+
+export async function loadPersistedGeometryEvidence(building: any, env: any) {
+  const result: any = {
+    r2Configured: Boolean(env.BUILDING_DATA),
+    objPresent: false,
+    spatialIndexPresent: false,
+    objKey: null,
+    spatialIndexKey: null,
+    spatialIndex: null
+  };
+  if (!env.BUILDING_DATA) return result;
+
+  const prefix = `buildings/${building.id}/geometry`;
+  const objCandidates = [
+    `${prefix}/model.obj`,
+    `${prefix}/matterpak.obj`,
+    `${prefix}/mesh.obj`
+  ];
+  for (const key of objCandidates) {
+    const head = await env.BUILDING_DATA.head(key).catch(() => null);
+    if (head) {
+      result.objPresent = true;
+      result.objKey = key;
+      break;
+    }
+  }
+
+  const indexCandidates = [
+    `${prefix}/spatial-index.json`,
+    `${prefix}/geometry-summary.json`
+  ];
+  for (const key of indexCandidates) {
+    const object = await env.BUILDING_DATA.get(key).catch(() => null);
+    if (object) {
+      result.spatialIndexPresent = true;
+      result.spatialIndexKey = key;
+      result.spatialIndex = await object.json().catch(() => null);
+      break;
+    }
+  }
+  return result;
 }
