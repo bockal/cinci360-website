@@ -191,11 +191,11 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
 <text x="26" y="${svgH - 18}" font-family="system-ui,sans-serif" font-size="11" fill="#6b716e">Geometry preview only — not a Matterport schematic floor plan or architectural drawing.</text>
 </svg>`;
 
-  const prefix = `buildings/${building.id}/geometry`;
-  await env.BUILDING_DATA.put(`${prefix}/geometry-analysis.json`, JSON.stringify(analysis, null, 2), {
+  const outputPrefix = `buildings/${building.id}/geometry`;
+  await env.BUILDING_DATA.put(`${outputPrefix}/geometry-analysis.json`, JSON.stringify(analysis, null, 2), {
     httpMetadata: { contentType: "application/json" }
   });
-  await env.BUILDING_DATA.put(`${prefix}/floor-plan.svg`, svg, {
+  await env.BUILDING_DATA.put(`${outputPrefix}/floor-plan.svg`, svg, {
     httpMetadata: { contentType: "image/svg+xml" }
   });
 
