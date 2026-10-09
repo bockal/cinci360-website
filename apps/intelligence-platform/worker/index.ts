@@ -751,7 +751,22 @@ const appWorker = {
       const building = BUILDINGS[evidenceApiMatch[1]];
       if (!building) return json({ error: "Building not found." }, 404);
       const persisted = await loadPersistedVisualEvidence(building, env);
-      return json({ buildingId: building.id, r2Configured: Boolean(env.BUILDING_DATA), visualInventory: persisted });
+      const geometry = await loadPersistedGeometryEvidence(building, env);
+      const expectedSweepCount = Number((building.evidence as any).expectedSweepCount || 0) || null;
+      const processedSweepCount = Number((persisted as any)?.processedSweepCount || 0);
+      const completeness = expectedSweepCount ? {
+        processed: processedSweepCount,
+        expected: expectedSweepCount,
+        missing: Math.max(expectedSweepCount - processedSweepCount, 0),
+        percent: Math.round((processedSweepCount / expectedSweepCount) * 1000) / 10
+      } : null;
+      return json({
+        buildingId: building.id,
+        r2Configured: Boolean(env.BUILDING_DATA),
+        completeness,
+        geometry,
+        visualInventory: persisted
+      });
     }
 
     if (costSegApiMatch && request.method === "POST") {
