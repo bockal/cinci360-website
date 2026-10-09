@@ -417,6 +417,190 @@ function selectFloorLevels(
   return picked.slice(0, count).sort((a, b) => a.z - b.z).map(p => p.z);
 }
 
+
+type SpatialObjectCandidate = {
+  objectId: string;
+  kind: "rowing-shell-candidate";
+  floor: number;
+  centerMeters: [number, number, number];
+  lengthMeters: number;
+  lengthFeet: number;
+  widthMeters: number;
+  widthFeet: number;
+  heightMeters: number;
+  heightFeet: number;
+  axisDegrees: number;
+  aspectRatio: number;
+  occupiedVoxelCount: number;
+  estimatedCrewClass: "1-person" | "2-person" | "4-person" | "8-person";
+  classBasis: string;
+  confidence: number;
+};
+
+function shellCrewClass(lengthM: number): SpatialObjectCandidate["estimatedCrewClass"] {
+  if (lengthM < 9.2) return "1-person";
+  if (lengthM < 11.8) return "2-person";
+  if (lengthM < 15.2) return "4-person";
+  return "8-person";
+}
+
+function spatialId(buildingId: string, floor: number, x: number, y: number, z: number) {
+  const seed = [buildingId, floor, Math.round(x * 5), Math.round(y * 5), Math.round(z * 5)].join(":");
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return "OBJ-" + String(buildingId || "BLDG").replace(/[^A-Za-z0-9]/g, "") + "-SHELL-" + (hash >>> 0).toString(36).toUpperCase();
+}
+
+function detectRowingShellCandidates(
+  building: any,
+  vertices: number[],
+  floorLevels: number[],
+  bounds: { minX: number; minY: number; maxX: number; maxY: number }
+): SpatialObjectCandidate[] {
+  const voxel = 0.18;
+  const margin = 0.55;
+  const nx = Math.max(1, Math.ceil((bounds.maxX - bounds.minX) / voxel) + 3);
+  const ny = Math.max(1, Math.ceil((bounds.maxY - bounds.minY) / voxel) + 3);
+  const results: SpatialObjectCandidate[] = [];
+
+  for (let floorIndex = 0; floorIndex < floorLevels.length; floorIndex++) {
+    const floorZ = floorLevels[floorIndex];
+    const zMin = floorZ + 0.22;
+    const zMax = floorZ + 2.55;
+    const cells = new Map<number, { ix: number; iy: number; iz: number; x: number; y: number; z: number; count: number }>();
+
+    for (let i = 0; i < vertices.length; i += 3) {
+      const x = vertices[i], y = vertices[i + 1], z = vertices[i + 2];
+      if (z < zMin || z > zMax) continue;
+      if (x < bounds.minX + margin || x > bounds.maxX - margin || y < bounds.minY + margin || y > bounds.maxY - margin) continue;
+      const ix = Math.floor((x - bounds.minX) / voxel);
+      const iy = Math.floor((y - bounds.minY) / voxel);
+      const iz = Math.floor((z - zMin) / voxel);
+      const key = ix + iy * nx + iz * nx * ny;
+      const prior = cells.get(key);
+      if (prior) prior.count++;
+      else cells.set(key, {
+        ix, iy, iz,
+        x: bounds.minX + (ix + 0.5) * voxel,
+        y: bounds.minY + (iy + 0.5) * voxel,
+        z: zMin + (iz + 0.5) * voxel,
+        count: 1
+      });
+    }
+
+    const visited = new Set<number>();
+    const neighborRadiusXY = 1;
+    const neighborRadiusZ = 1;
+
+    for (const startKey of cells.keys()) {
+      if (visited.has(startKey)) continue;
+      const queue: number[] = [startKey];
+      visited.add(startKey);
+      const cluster: Array<{ ix: number; iy: number; iz: number; x: number; y: number; z: number; count: number }> = [];
+      for (let head = 0; head < queue.length; head++) {
+        const key = queue[head];
+        const cell = cells.get(key);
+        if (!cell) continue;
+        cluster.push(cell);
+        for (let dz = -neighborRadiusZ; dz <= neighborRadiusZ; dz++) {
+          for (let dy = -neighborRadiusXY; dy <= neighborRadiusXY; dy++) {
+            for (let dx = -neighborRadiusXY; dx <= neighborRadiusXY; dx++) {
+              if (!dx && !dy && !dz) continue;
+              const nk = (cell.ix + dx) + (cell.iy + dy) * nx + (cell.iz + dz) * nx * ny;
+              if (!visited.has(nk) && cells.has(nk)) {
+                visited.add(nk);
+                queue.push(nk);
+              }
+            }
+          }
+        }
+      }
+
+      if (cluster.length < 18) continue;
+
+      let sx = 0, sy = 0, sz = 0, weight = 0;
+      let minZc = Infinity, maxZc = -Infinity;
+      for (const p of cluster) {
+        const w = Math.max(1, p.count);
+        sx += p.x * w; sy += p.y * w; sz += p.z * w; weight += w;
+        minZc = Math.min(minZc, p.z); maxZc = Math.max(maxZc, p.z);
+      }
+      const cx = sx / weight, cy = sy / weight, cz = sz / weight;
+      let cxx = 0, cyy = 0, cxy = 0;
+      for (const p of cluster) {
+        const w = Math.max(1, p.count);
+        const dx = p.x - cx, dy = p.y - cy;
+        cxx += dx * dx * w; cyy += dy * dy * w; cxy += dx * dy * w;
+      }
+      const angle = 0.5 * Math.atan2(2 * cxy, cxx - cyy);
+      const ux = Math.cos(angle), uy = Math.sin(angle);
+      const vx = -uy, vy = ux;
+      let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity;
+      for (const p of cluster) {
+        const dx = p.x - cx, dy = p.y - cy;
+        const u = dx * ux + dy * uy;
+        const v = dx * vx + dy * vy;
+        minU = Math.min(minU, u); maxU = Math.max(maxU, u);
+        minV = Math.min(minV, v); maxV = Math.max(maxV, v);
+      }
+      const lengthM = (maxU - minU) + voxel;
+      const widthM = (maxV - minV) + voxel;
+      const heightM = (maxZc - minZc) + voxel;
+      const aspect = lengthM / Math.max(widthM, 0.05);
+
+      // Shells are unusually long, narrow and vertically shallow. These filters
+      // intentionally reject walls, floors, roof planes and most rack assemblies.
+      if (lengthM < 6.5 || lengthM > 20.5) continue;
+      if (widthM < 0.12 || widthM > 2.25) continue;
+      if (heightM < 0.08 || heightM > 1.25) continue;
+      if (aspect < 4.0) continue;
+
+      const crew = shellCrewClass(lengthM);
+      const slenderScore = Math.min(1, Math.max(0, (aspect - 4) / 10));
+      const heightScore = Math.min(1, Math.max(0, (1.25 - heightM) / 1.0));
+      const confidence = Math.min(0.9, 0.5 + slenderScore * 0.22 + heightScore * 0.18);
+
+      results.push({
+        objectId: spatialId(String(building?.id || "BLDG"), floorIndex + 1, cx, cy, cz),
+        kind: "rowing-shell-candidate",
+        floor: floorIndex + 1,
+        centerMeters: [round(cx, 3), round(cy, 3), round(cz, 3)],
+        lengthMeters: round(lengthM, 2),
+        lengthFeet: round(lengthM * M_TO_FT, 1),
+        widthMeters: round(widthM, 2),
+        widthFeet: round(widthM * M_TO_FT, 1),
+        heightMeters: round(heightM, 2),
+        heightFeet: round(heightM * M_TO_FT, 1),
+        axisDegrees: round(angle * 180 / Math.PI, 1),
+        aspectRatio: round(aspect, 1),
+        occupiedVoxelCount: cluster.length,
+        estimatedCrewClass: crew,
+        classBasis: "OBJ-derived principal length screening; visual confirmation required",
+        confidence: round(confidence, 2)
+      });
+    }
+  }
+
+  // Nearby duplicate components can arise from fragmented mesh surfaces on the
+  // same physical hull. Keep the stronger/larger candidate within a tight radius.
+  const sorted = results.sort((a, b) => b.occupiedVoxelCount - a.occupiedVoxelCount);
+  const deduped: SpatialObjectCandidate[] = [];
+  for (const candidate of sorted) {
+    const [x, y, z] = candidate.centerMeters;
+    const duplicate = deduped.some(existing => {
+      const [ex, ey, ez] = existing.centerMeters;
+      const distance = Math.hypot(x - ex, y - ey, z - ez);
+      const lengthDelta = Math.abs(candidate.lengthMeters - existing.lengthMeters);
+      return candidate.floor === existing.floor && distance < 0.8 && lengthDelta < 1.2;
+    });
+    if (!duplicate) deduped.push(candidate);
+  }
+  return deduped.sort((a, b) => a.floor - b.floor || a.centerMeters[1] - b.centerMeters[1] || a.centerMeters[0] - b.centerMeters[0]);
+}
+
 export async function analyzeObjGeometry(building: any, env: any, objKey: string) {
   if (!env.BUILDING_DATA) throw new Error("R2 storage is not configured.");
   const object = await env.BUILDING_DATA.get(objKey);
@@ -494,6 +678,8 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     if (plan) floors.push(plan);
   }
 
+  const rowingShellCandidates = detectRowingShellCandidates(building, vertices, floorLevels, bounds);
+
   const supportFiles: any = {
     mtlFiles: [],
     textureFiles: [],
@@ -532,13 +718,14 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     buildingId: building.id,
     sourceObjKey: objKey,
     analyzedAt: new Date().toISOString(),
-    algorithmVersion: "wall-slice-v2.2-landscape",
+    algorithmVersion: "wall-slice-v2.3-spatial-objects",
     classification: "MEASURED / SCREENING",
     limitations: [
       "Floor plans are reconstructed from OBJ mesh wall intersections and are not signed architectural drawings.",
       "Floor elevations are detected from horizontal mesh evidence; published floor count is used only as a selection aid when available.",
       "Room candidates are geometric enclosed spaces and are not semantically named until matched to panorama evidence.",
-      "Model envelope volume is not a conditioned HVAC load volume."
+      "Model envelope volume is not a conditioned HVAC load volume.",
+      "Spatial object candidates are OBJ-derived geometry screening results. Semantic identity and crew class require visual confirmation before being treated as verified inventory."
     ],
     vertexCount,
     faceCount,
@@ -557,6 +744,11 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     grossFloorAreaEstimateFt2: round(grossFloorAreaEstimateFt2, 0),
     modelEnvelopeVolumeM3: round(envelopeVolumeM3, 0),
     modelEnvelopeVolumeFt3: round(envelopeVolumeM3 * M3_TO_FT3, 0),
+    spatialObjects: {
+      algorithmVersion: "obj-voxel-pca-v1",
+      rowingShellCandidateCount: rowingShellCandidates.length,
+      rowingShellCandidates
+    },
     floorPlans: floors.map(({ svg, ...rest }) => rest)
   };
 
