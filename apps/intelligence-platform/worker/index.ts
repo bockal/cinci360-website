@@ -1,4 +1,4 @@
-import { analyzeStoredPanorama, analyzeVisualCaptures, listBuildingEvidenceAssets, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistRawPanorama, persistVisualBatch } from "./visual-ingest";
+import { analyzeStoredPanorama, analyzeVisualCaptures, listBuildingEvidenceAssets, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistRawPanorama, persistVisualBatch, rebuildConsolidatedInventory } from "./visual-ingest";
 import { analyzeObjGeometry, loadGeometryAnalysis, loadFloorPlanSvg } from "./geometry-analysis";
 
 interface Env {
@@ -1089,6 +1089,7 @@ const appWorker = {
     const ingestPanoApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/ingest-pano$/);
     const analyzePanoApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/analyze-pano$/);
     const evidenceApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/evidence$/);
+    const inventoryRebuildApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/inventory\/rebuild$/);
     const geometryApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry$/);
     const geometryAnalyzeApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry\/analyze$/);
     const floorPlanApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/floor-plan\.svg$/);
@@ -1121,6 +1122,17 @@ const appWorker = {
         return json(result);
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Stored panorama analysis failed." }, 502);
+      }
+    }
+
+    if (inventoryRebuildApiMatch && request.method === "POST") {
+      const building = BUILDINGS[inventoryRebuildApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      try {
+        const result = await rebuildConsolidatedInventory(building, env);
+        return json(result);
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Inventory rebuild failed." }, 502);
       }
     }
 
