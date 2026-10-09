@@ -24,7 +24,12 @@ type ConsolidatedInventoryRecord = {
   evidenceSweepIds: string[];
   observationIds: string[];
   spatialAnchors: Array<{ sweepId: string; x: number; y: number; z: number; floor?: number | null }>;
-  countMethod: "max-observed-deduplicated" | "single-observation";
+  countMethod: "max-observed-deduplicated" | "single-observation" | "obj-spatial-reconciled";
+  geometryCandidateCount?: number;
+  geometryCrewBreakdown?: Record<string, number>;
+  geometryLengthRangeFeet?: [number, number] | null;
+  spatialObjectIds?: string[];
+  geometryReconciliationStatus?: string;
   notes: string;
 };
 
@@ -127,6 +132,116 @@ export function consolidateVisualInventory(building: any, observations: any[]): 
   return out.sort((a,b) => a.room.localeCompare(b.room) || a.visibleName.localeCompare(b.visibleName));
 }
 
+
+function enrichConsolidatedWithGeometry(records: ConsolidatedInventoryRecord[], geometryAnalysis: any) {
+  const candidates = Array.isArray(geometryAnalysis?.spatialObjects?.rowingShellCandidates)
+    ? geometryAnalysis.spatialObjects.rowingShellCandidates
+    : [];
+  if (!candidates.length) return records;
+  const breakdown: Record<string, number> = {};
+  let minFeet = Infinity, maxFeet = -Infinity;
+  for (const c of candidates) {
+    const cls = String(c?.estimatedCrewClass || "unclassified");
+    breakdown[cls] = (breakdown[cls] || 0) + 1;
+    const ft = Number(c?.lengthFeet);
+    if (Number.isFinite(ft)) { minFeet = Math.min(minFeet, ft); maxFeet = Math.max(maxFeet, ft); }
+  }
+  return records.map(record => {
+    if (record.canonicalType !== "rowing-shell") return record;
+    const geometryCount = candidates.length;
+    const visualCount = Number(record.quantity || 0);
+    const avgConfidence = candidates.reduce((s: number, x: any) => s + Number(x?.confidence || 0), 0) / geometryCount;
+    const closeAgreement = visualCount > 0 && Math.abs(geometryCount - visualCount) <= Math.max(2, Math.ceil(visualCount * 0.15));
+    const highEnough = avgConfidence >= 0.62;
+    return {
+      ...record,
+      geometryCandidateCount: geometryCount,
+      geometryCrewBreakdown: breakdown,
+      geometryLengthRangeFeet: Number.isFinite(minFeet) && Number.isFinite(maxFeet) ? [Math.round(minFeet * 10) / 10, Math.round(maxFeet * 10) / 10] as [number, number] : null,
+      spatialObjectIds: candidates.map((x: any) => String(x?.objectId || "")).filter(Boolean),
+      geometryReconciliationStatus: closeAgreement && highEnough
+        ? "VISUAL/OBJ COUNTS AGREE"
+        : "OBJ CANDIDATES REQUIRE REVIEW",
+      countMethod: closeAgreement && highEnough ? "obj-spatial-reconciled" as const : record.countMethod,
+      quantity: closeAgreement && highEnough ? geometryCount : record.quantity,
+      confidence: closeAgreement && highEnough ? Math.max(record.confidence, Math.min(0.94, avgConfidence + 0.06)) : record.confidence,
+      notes: (record.notes ? record.notes + " " : "") +
+        "OBJ spatial layer found " + geometryCount + " elongated shell candidates" +
+        (Number.isFinite(minFeet) ? " spanning " + minFeet.toFixed(1) + "–" + maxFeet.toFixed(1) + " ft" : "") +
+        "; crew-class breakdown: " + Object.entries(breakdown).map(([k,v]) => k + " " + v).join(", ") + "."
+    };
+  });
+}
+
+async function loadGeometryAnalysisForInventory(building: any, env: any) {
+  if (!env.BUILDING_DATA) return null;
+  const object = await env.BUILDING_DATA.get(`buildings/${building.id}/geometry/geometry-analysis.json`).catch(() => null);
+  return object ? object.json().catch(() => null) : null;
+}
+
+export async function rebuildConsolidatedInventory(building: any, env: any) {
+  if (!env.BUILDING_DATA) throw new Error("R2 binding BUILDING_DATA is not configured.");
+  const prefix = `buildings/${building.id}`;
+  const priorObj = await env.BUILDING_DATA.get(`${prefix}/observations/latest.json`);
+  if (!priorObj) throw new Error("No visual observations are stored for this building.");
+  const data: any = await priorObj.json();
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const sweepIds = Array.from(new Set(items.flatMap((item: any) =>
+    Array.isArray(item?.evidenceSweepIds) ? item.evidenceSweepIds.map(String) : []
+  )));
+  const anchorBySweep = new Map<string, any>();
+  for (const sid of sweepIds) {
+    const pano = await env.BUILDING_DATA.head(`${prefix}/panos/${sid}.jpg`).catch(() => null);
+    const custom = pano?.customMetadata || {};
+    let position: any = null;
+    try { if (custom.position) position = JSON.parse(custom.position); } catch {}
+    if (position && [Number(position.x), Number(position.y), Number(position.z)].every(Number.isFinite)) {
+      anchorBySweep.set(sid, {
+        sweepId: sid,
+        x: Number(position.x),
+        y: Number(position.y),
+        z: Number(position.z),
+        floor: custom.floor === "" || custom.floor == null ? null : Number(custom.floor)
+      });
+    }
+  }
+
+  const hydratedItems = items.map((item: any) => ({
+    ...item,
+    spatialAnchors: Array.from(new Map([
+      ...((Array.isArray(item?.spatialAnchors) ? item.spatialAnchors : []).map((a: any) => [String(a?.sweepId || ""), a])),
+      ...((Array.isArray(item?.evidenceSweepIds) ? item.evidenceSweepIds : []).map((sid: any) => {
+        const anchor = anchorBySweep.get(String(sid));
+        return [String(sid), anchor];
+      }).filter((x: any) => x[1]))
+    ]).values())
+  }));
+
+  const geometryAnalysis = await loadGeometryAnalysisForInventory(building, env);
+  const base = consolidateVisualInventory(building, hydratedItems);
+  const consolidatedInventory = enrichConsolidatedWithGeometry(base, geometryAnalysis);
+  const updated = {
+    ...data,
+    updatedAt: new Date().toISOString(),
+    items: hydratedItems,
+    consolidatedItemCount: consolidatedInventory.length,
+    consolidatedInventory,
+    spatialInventoryVersion: "visual-obj-reconcile-v1"
+  };
+  await env.BUILDING_DATA.put(`${prefix}/observations/latest.json`, JSON.stringify(updated, null, 2), {
+    httpMetadata: { contentType: "application/json" }
+  });
+  return {
+    buildingId: building.id,
+    rawObservationCount: hydratedItems.length,
+    consolidatedItemCount: consolidatedInventory.length,
+    spatialAnchorCount: anchorBySweep.size,
+    shellInventory: consolidatedInventory.filter((x: any) => x.canonicalType === "rowing-shell"),
+    spatialInventoryVersion: updated.spatialInventoryVersion
+  };
+}
+
 export async function loadPersistedVisualEvidence(building: any, env: any) {
   if (!env.BUILDING_DATA) return null;
   const prefix = `buildings/${building.id}`;
@@ -159,7 +274,8 @@ export async function loadPersistedVisualEvidence(building: any, env: any) {
   data.processedSweepIds = Array.from(processed);
   data.processedSweepCount = processed.size;
   const observations = Array.isArray(data.items) ? data.items : [];
-  data.consolidatedInventory = consolidateVisualInventory(building, observations);
+  const geometryAnalysis = await loadGeometryAnalysisForInventory(building, env);
+  data.consolidatedInventory = enrichConsolidatedWithGeometry(consolidateVisualInventory(building, observations), geometryAnalysis);
   data.consolidatedItemCount = data.consolidatedInventory.length;
   return data;
 }
@@ -290,7 +406,8 @@ export async function persistVisualBatch(building: any, captures: any[], invento
   }
 
   const rawItems = Array.from(byKey.values());
-  const consolidatedInventory = consolidateVisualInventory(building, rawItems);
+  const geometryAnalysis = await loadGeometryAnalysisForInventory(building, env);
+  const consolidatedInventory = enrichConsolidatedWithGeometry(consolidateVisualInventory(building, rawItems), geometryAnalysis);
   const combined = {
     buildingId: building.id,
     matterportSid: building.matterportSid,
