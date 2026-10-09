@@ -137,10 +137,12 @@ export async function persistVisualBatch(building: any, captures: any[], invento
   const priorObj = await env.BUILDING_DATA.get(`${prefix}/observations/latest.json`);
   const prior = priorObj ? await priorObj.json().catch(() => null) : null;
   const existing = Array.isArray(prior?.items) ? prior.items : [];
-  const priorProcessed = Array.isArray(prior?.processedSweepIds)
-    ? prior.processedSweepIds
-    : Array.from(new Set(existing.flatMap((item: any) => Array.isArray(item?.evidenceSweepIds) ? item.evidenceSweepIds : [])));
-  const processedSweepIds = new Set<string>(priorProcessed);
+  const priorAnalyzed = Array.isArray(prior?.analyzedSweepIds)
+    ? prior.analyzedSweepIds
+    : Array.isArray(prior?.processedSweepIds)
+      ? prior.processedSweepIds
+      : Array.from(new Set(existing.flatMap((item: any) => Array.isArray(item?.evidenceSweepIds) ? item.evidenceSweepIds : [])));
+  const analyzedSweepIds = new Set<string>(priorAnalyzed);
   const byKey = new Map<string, any>();
 
   for (const item of [...existing, ...(inventory.items || [])]) {
@@ -151,7 +153,7 @@ export async function persistVisualBatch(building: any, captures: any[], invento
   }
 
   for (const capture of captures) {
-    processedSweepIds.add(String(capture.sweepId));
+    analyzedSweepIds.add(String(capture.sweepId));
     const base64 = String(capture.imageDataUri || "").split(",")[1] || "";
     if (!base64) continue;
     const bytes = Uint8Array.from(atob(base64), ch => ch.charCodeAt(0));
@@ -164,8 +166,10 @@ export async function persistVisualBatch(building: any, captures: any[], invento
     updatedAt: new Date().toISOString(),
     summary: inventory.summary,
     itemCount: byKey.size,
-    processedSweepCount: processedSweepIds.size,
-    processedSweepIds: Array.from(processedSweepIds),
+    analyzedSweepCount: analyzedSweepIds.size,
+    analyzedSweepIds: Array.from(analyzedSweepIds),
+    processedSweepCount: analyzedSweepIds.size,
+    processedSweepIds: Array.from(analyzedSweepIds),
     items: Array.from(byKey.values())
   };
 
@@ -173,7 +177,7 @@ export async function persistVisualBatch(building: any, captures: any[], invento
     httpMetadata: { contentType: "application/json" }
   });
 
-  return { persisted: true, itemCount: byKey.size, processedSweepCount: processedSweepIds.size, processedSweepIds: Array.from(processedSweepIds) };
+  return { persisted: true, itemCount: byKey.size, analyzedSweepCount: analyzedSweepIds.size, analyzedSweepIds: Array.from(analyzedSweepIds), processedSweepCount: analyzedSweepIds.size, processedSweepIds: Array.from(analyzedSweepIds) };
 }
 
 
@@ -275,4 +279,49 @@ export async function listBuildingEvidenceAssets(building: any, env: any) {
   } while (cursor);
 
   return result;
+}
+
+
+function bytesToDataUri(bytes: Uint8Array, contentType = "image/jpeg") {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + chunk, bytes.length)));
+  }
+  return `data:${contentType};base64,${btoa(binary)}`;
+}
+
+export async function persistRawPanorama(building: any, sweepId: string, body: ReadableStream | ArrayBuffer | Uint8Array, env: any, metadata: any = {}) {
+  if (!env.BUILDING_DATA) throw new Error("R2 binding BUILDING_DATA is not configured.");
+  const safeSweep = String(sweepId || "").replace(/[^A-Za-z0-9_-]/g, "");
+  if (!safeSweep) throw new Error("Sweep ID is required.");
+  const key = `buildings/${building.id}/panos/${safeSweep}.jpg`;
+  await env.BUILDING_DATA.put(key, body as any, {
+    httpMetadata: { contentType: "image/jpeg" },
+    customMetadata: {
+      buildingId: building.id,
+      sweepId: safeSweep,
+      floor: metadata.floor == null ? "" : String(metadata.floor),
+      position: metadata.position ? JSON.stringify(metadata.position).slice(0, 400) : "",
+      capturedAt: new Date().toISOString()
+    }
+  });
+  return { persisted: true, key, sweepId: safeSweep };
+}
+
+export async function analyzeStoredPanorama(building: any, sweepId: string, env: any, metadata: any = {}) {
+  if (!env.BUILDING_DATA) throw new Error("R2 binding BUILDING_DATA is not configured.");
+  const safeSweep = String(sweepId || "").replace(/[^A-Za-z0-9_-]/g, "");
+  const object = await env.BUILDING_DATA.get(`buildings/${building.id}/panos/${safeSweep}.jpg`);
+  if (!object) throw new Error("Stored panorama was not found in R2.");
+  const bytes = new Uint8Array(await object.arrayBuffer());
+  const capture = {
+    sweepId: safeSweep,
+    floor: metadata.floor ?? null,
+    position: metadata.position ?? null,
+    imageDataUri: bytesToDataUri(bytes, "image/jpeg")
+  };
+  const inventory = await analyzeVisualCaptures(building, [capture], env);
+  const persistence = await persistVisualBatch(building, [capture], inventory, env);
+  return { summary: inventory.summary, batchItems: inventory.items?.length || 0, ...persistence };
 }
