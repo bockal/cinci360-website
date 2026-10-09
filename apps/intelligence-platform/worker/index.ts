@@ -200,7 +200,14 @@ function outputText(payload: any) {
 async function reasonAboutBuilding(building: Building, question: string, env: Env) {
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
   const persistedVisual = await loadPersistedVisualEvidence(building, env);
-  const combinedEvidence = persistedVisual ? { ...building.evidence, visualInventory: persistedVisual } : building.evidence;
+  const persistedGeometry = await loadPersistedGeometryEvidence(building, env);
+  const geometryAnalysis = await loadGeometryAnalysis(building, env);
+  const combinedEvidence = {
+    ...building.evidence,
+    ...(persistedVisual ? { visualInventory: persistedVisual } : {}),
+    geometryStorage: persistedGeometry,
+    geometryAnalysis
+  };
   const prompt = `You are Cinci360 Building Intelligence for ${building.id}, ${building.name}.
 
 Commercial use case: ${building.useCase}.
