@@ -291,6 +291,10 @@ type GeneratedCostSegStudy = {
   executiveSummary: string;
   totalReplacementCostLow: number | null;
   totalReplacementCostHigh: number | null;
+  envelopeReplacementCostLow: number | null;
+  envelopeReplacementCostHigh: number | null;
+  inventoryReplacementCostLow: number | null;
+  inventoryReplacementCostHigh: number | null;
   sections: CostSegSection[];
   missingInputs: string[];
   caveats: string[];
@@ -343,9 +347,11 @@ Evidence labels:
 - INFERRED = model interpretation from those facts
 
 For cost ranges:
-- return null when current evidence is too weak to support even a screening range.
-- otherwise make the range intentionally broad and explain the evidence basis.
-- do not allocate tax basis. Replacement-cost screening is not taxpayer basis.
+- For a visually supported movable asset with a supported quantity, provide a broad replacement-cost screening range whenever a reasonable generic market replacement range can be estimated. Do not omit movable contents merely because exact make/model is unknown.
+- Return null only when the asset identity or quantity is too weak to support even a broad screening range.
+- Keep building envelope/structure replacement value separate from movable contents/inventory value.
+- Do not allocate tax basis. Replacement-cost screening is not taxpayer basis.
+- If no external rate database is attached in BUILDING_EVIDENCE, describe the cost basis as "AI screening range — no external rate database applied" rather than implying a cited database source.
 
 For proposed classes:
 - use plain labels such as "5-year candidate", "7-year candidate", "15-year candidate", "39-year building candidate", "Mixed / CPA review", or "Insufficient evidence".
@@ -362,6 +368,10 @@ Return ONLY valid JSON with exactly this shape:
   "executiveSummary": "",
   "totalReplacementCostLow": null,
   "totalReplacementCostHigh": null,
+  "envelopeReplacementCostLow": null,
+  "envelopeReplacementCostHigh": null,
+  "inventoryReplacementCostLow": null,
+  "inventoryReplacementCostHigh": null,
   "sections": [
     {
       "title": "",
@@ -408,6 +418,29 @@ Include 3-8 useful sections when evidence supports them. Keep the study detailed
   const parsed = parseJsonObject(raw) as GeneratedCostSegStudy;
   parsed.buildingId = building.id;
   parsed.buildingName = building.name;
+
+  const sections = Array.isArray(parsed.sections) ? parsed.sections : [];
+  const envelopeSection = sections.find(section => String(section?.title || "").toLowerCase() === "building envelope & structure") || null;
+  const sumRange = (items: CostSegItem[]) => {
+    let low = 0, high = 0, anyLow = false, anyHigh = false;
+    for (const item of items || []) {
+      const lo = Number(item?.replacementCostLow);
+      const hi = Number(item?.replacementCostHigh);
+      if (Number.isFinite(lo) && lo >= 0) { low += lo; anyLow = true; }
+      if (Number.isFinite(hi) && hi >= 0) { high += hi; anyHigh = true; }
+    }
+    return { low: anyLow ? Math.round(low) : null, high: anyHigh ? Math.round(high) : null };
+  };
+  const envelopeRange = sumRange(envelopeSection?.items || []);
+  const inventoryItems = sections.filter(section => section !== envelopeSection).flatMap(section => Array.isArray(section?.items) ? section.items : []);
+  const inventoryRange = sumRange(inventoryItems);
+
+  parsed.envelopeReplacementCostLow = envelopeRange.low;
+  parsed.envelopeReplacementCostHigh = envelopeRange.high;
+  parsed.inventoryReplacementCostLow = inventoryRange.low;
+  parsed.inventoryReplacementCostHigh = inventoryRange.high;
+  parsed.totalReplacementCostLow = envelopeRange.low == null && inventoryRange.low == null ? null : (envelopeRange.low || 0) + (inventoryRange.low || 0);
+  parsed.totalReplacementCostHigh = envelopeRange.high == null && inventoryRange.high == null ? null : (envelopeRange.high || 0) + (inventoryRange.high || 0);
   return parsed;
 }
 
@@ -479,7 +512,7 @@ function render(data){
   const invHtml="<section class='schedule'><div class='schedule-head'><div><h2>Room totals</h2><p class='muted'>Running cost-seg total by room. Click any header to sort.</p></div><span>"+rooms.size+" rooms / areas</span></div><div class='table-wrap'><table class='sortable'><thead><tr><th>Room / area</th><th>Room dimensions</th><th data-number='1'>Components</th><th data-number='1'>Replacement-cost total</th><th>Proposed classes</th><th data-number='1'>Avg. confidence</th></tr></thead><tbody>"+roomRows+"</tbody></table></div><details class='no-print' style='padding:16px 20px'><summary style='cursor:pointer;font-weight:800'>Show detailed component inventory ("+inventory.length+" rows)</summary><div class='table-wrap' style='margin-top:12px'><table class='sortable'><thead><tr><th>Room / area</th><th>Room dimensions</th><th>Component</th><th>Qty / extent</th><th>Evidence basis</th><th data-number='1'>Replacement-cost range</th><th>Proposed class</th><th data-number='1'>Confidence</th></tr></thead><tbody>"+itemRows(inventory)+"</tbody></table></div></details></section>";
   let missing="";(data.missingInputs||[]).forEach(x=>missing+="<li>"+esc(x)+"</li>");
   let caveats="";(data.caveats||[]).forEach(x=>caveats+="<li>"+esc(x)+"</li>");
-  studyEl.innerHTML="<section class='schedule'><div class='schedule-head'><div><h2>Executive screening</h2><p class='muted'>"+esc(data.executiveSummary||"")+"</p></div><span>Overall confidence: "+esc(data.overallConfidence??0)+"%</span></div><div style='padding:18px 22px'><strong>Supported replacement-cost range: "+usd(data.totalReplacementCostLow)+" – "+usd(data.totalReplacementCostHigh)+"</strong><p class='muted'>Replacement-cost screening only; not taxpayer basis.</p></div></section>"+envHtml+invHtml+"<section class='notes'><div class='note-card'><h3>Missing inputs</h3><ul>"+(missing||"<li>None listed.</li>")+"</ul></div><div class='note-card'><h3>Caveats</h3><ul>"+(caveats||"<li>None listed.</li>")+"</ul></div></section>";
+  studyEl.innerHTML="<section class='schedule'><div class='schedule-head'><div><h2>Executive screening</h2><p class='muted'>"+esc(data.executiveSummary||"")+"</p></div><span>Overall confidence: "+esc(data.overallConfidence??0)+"%</span></div><div style='padding:18px 22px'><div class='room-summary'><div class='room-summary-card'><span>Building envelope & structure</span><strong>"+usd(data.envelopeReplacementCostLow)+" – "+usd(data.envelopeReplacementCostHigh)+"</strong><small>Kept separate from contents / movable inventory.</small></div><div class='room-summary-card'><span>Contents / movable inventory</span><strong>"+usd(data.inventoryReplacementCostLow)+" – "+usd(data.inventoryReplacementCostHigh)+"</strong><small>Equipment, furniture, specialty movable assets, and other non-envelope inventory.</small></div><div class='room-summary-card'><span>Combined supported replacement cost</span><strong>"+usd(data.totalReplacementCostLow)+" – "+usd(data.totalReplacementCostHigh)+"</strong><small>Screening total only; not taxpayer basis or insured value.</small></div></div><p class='muted'>Replacement-cost screening only. Where no external cost database is attached, ranges are AI screening estimates and should not be presented as database-cited rates.</p></div></section>"+envHtml+invHtml+"<section class='notes'><div class='note-card'><h3>Missing inputs</h3><ul>"+(missing||"<li>None listed.</li>")+"</ul></div><div class='note-card'><h3>Caveats</h3><ul>"+(caveats||"<li>None listed.</li>")+"</ul></div></section>";
   makeSortable(studyEl);
 }
 async function load(){
