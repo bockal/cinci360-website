@@ -216,3 +216,57 @@ export async function loadPersistedGeometryEvidence(building: any, env: any) {
 
   return result;
 }
+
+
+export async function listBuildingEvidenceAssets(building: any, env: any) {
+  const result: any = {
+    buildingId: building.id,
+    totalObjects: 0,
+    panoramaCount: 0,
+    categories: {
+      panoramas: [],
+      geometry: [],
+      textures: [],
+      documents: [],
+      analysis: [],
+      other: []
+    }
+  };
+  if (!env.BUILDING_DATA) return result;
+
+  const prefix = `buildings/${building.id}/`;
+  let cursor: string | undefined;
+  do {
+    const listed = await env.BUILDING_DATA.list({ prefix, cursor });
+    for (const item of listed.objects || []) {
+      const key = String(item.key || "");
+      const name = key.split("/").pop() || key;
+      const lower = name.toLowerCase();
+      const entry = {
+        key,
+        name,
+        size: Number(item.size || 0),
+        uploaded: item.uploaded || null,
+        etag: item.etag || null
+      };
+      result.totalObjects++;
+      if (/\/panos\/[^/]+\.(jpg|jpeg|png|webp)$/i.test(key)) {
+        result.panoramaCount++;
+        result.categories.panoramas.push(entry);
+      } else if (/\.(obj|mtl|ply|e57|xyz|las|laz)$/i.test(lower)) {
+        result.categories.geometry.push(entry);
+      } else if (/\.(jpg|jpeg|png|webp|tif|tiff)$/i.test(lower)) {
+        result.categories.textures.push(entry);
+      } else if (/\.(pdf|csv|xlsx?|docx?|txt)$/i.test(lower)) {
+        result.categories.documents.push(entry);
+      } else if (/\/(observations|geometry)\/.*\.(json|svg)$/i.test(key) || /(analysis|spatial|floor[-_ ]?plan)/i.test(lower)) {
+        result.categories.analysis.push(entry);
+      } else {
+        result.categories.other.push(entry);
+      }
+    }
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
+
+  return result;
+}
