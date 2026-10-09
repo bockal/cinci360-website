@@ -1,4 +1,5 @@
 import { analyzeVisualCaptures, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistVisualBatch } from "./visual-ingest";
+import { analyzeObjGeometry, loadGeometryAnalysis, loadFloorPlanSvg } from "./geometry-analysis";
 
 interface Env {
   OPENAI_API_KEY?: string;
@@ -246,6 +247,7 @@ What would confirm it: <one short sentence when confidence is below 90%>`;
 
 type CostSegItem = {
   room: string;
+  roomDimensions: string;
   component: string;
   quantity: string;
   evidenceBasis: string;
@@ -285,6 +287,7 @@ async function generateCostSegStudy(building: Building, env: Env): Promise<Gener
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
   const persistedVisual = await loadPersistedVisualEvidence(building, env);
   const persistedGeometry = await loadPersistedGeometryEvidence(building, env);
+  const geometryAnalysis = await loadGeometryAnalysis(building, env);
   const expectedSweepCount = Number((building.evidence as any).expectedSweepCount || 0) || null;
   const processedSweepCount = Number((persistedVisual as any)?.processedSweepCount || 0);
   const panoramaCompleteness = expectedSweepCount ? {
@@ -297,6 +300,7 @@ async function generateCostSegStudy(building: Building, env: Env): Promise<Gener
     ...building.evidence,
     ...(persistedVisual ? { visualInventory: persistedVisual } : {}),
     geometryStorage: persistedGeometry,
+    geometryAnalysis,
     panoramaCompleteness
   };
   const prompt = `You are Cinci360 Building Intelligence generating a COST SEGREGATION SCREENING STUDY.
@@ -343,6 +347,7 @@ Return ONLY valid JSON with exactly this shape:
       "items": [
         {
           "room": "",
+          "roomDimensions": "",
           "component": "",
           "quantity": "",
           "evidenceBasis": "",
@@ -360,6 +365,7 @@ Return ONLY valid JSON with exactly this shape:
 
 Confidence values are integers 0-100.
 For every item, set "room" to the most specific supported room/area (for example Main Hall, Foyer, Sitting Room, Exterior Entry, Whole Building / Unassigned). Use visual evidence descriptions and room fields when available; do not invent unsupported room names.
+Set "roomDimensions" only when dimensions are directly supported by published facts or geometry analysis; otherwise return an empty string. Never invent room dimensions from appearance alone.
 Create a dedicated first section titled exactly "Building Envelope & Structure" for the base building/structure/enclosure. Do not mix movable inventory or room-level personal property into that section.
 All other sections should represent shorter-life or separately reviewable inventory/components.
 Include 3-8 useful sections when evidence supports them. Keep the study detailed enough to evaluate a first-pass cost-segregation inventory.`;
@@ -754,6 +760,8 @@ const appWorker = {
     const ingestVisualApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/ingest-visual$/);
     const evidenceApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/evidence$/);
     const geometryApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry$/);
+    const geometryAnalyzeApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry\/analyze$/);
+    const floorPlanApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/floor-plan\.svg$/);
     const costSegApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/cost-seg$/);
     const apiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})(?:\/(ask))?$/);
 
@@ -801,11 +809,34 @@ const appWorker = {
       }
     }
 
+    if (geometryAnalyzeApiMatch && request.method === "POST") {
+      const building = BUILDINGS[geometryAnalyzeApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      if (!env.BUILDING_DATA) return json({ error: "R2 storage is not configured." }, 503);
+      const geometry = await loadPersistedGeometryEvidence(building, env);
+      if (!geometry.objPresent || !geometry.objKey) return json({ error: "Upload an OBJ file before running geometry analysis." }, 400);
+      try {
+        const analysis = await analyzeObjGeometry(building, env, geometry.objKey);
+        return json({ analyzed: true, analysis });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Geometry analysis failed." }, 502);
+      }
+    }
+
+    if (floorPlanApiMatch && request.method === "GET") {
+      const building = BUILDINGS[floorPlanApiMatch[1]];
+      if (!building) return new Response("Not found", { status: 404 });
+      const svg = await loadFloorPlanSvg(building, env);
+      if (!svg) return new Response("Floor-plan preview not generated.", { status: 404 });
+      return new Response(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "no-store" } });
+    }
+
     if (evidenceApiMatch && request.method === "GET") {
       const building = BUILDINGS[evidenceApiMatch[1]];
       if (!building) return json({ error: "Building not found." }, 404);
       const persisted = await loadPersistedVisualEvidence(building, env);
       const geometry = await loadPersistedGeometryEvidence(building, env);
+      const geometryAnalysis = await loadGeometryAnalysis(building, env);
       const expectedSweepCount = Number((building.evidence as any).expectedSweepCount || 0) || null;
       const processedSweepCount = Number((persisted as any)?.processedSweepCount || 0);
       const completeness = expectedSweepCount ? {
@@ -819,6 +850,8 @@ const appWorker = {
         r2Configured: Boolean(env.BUILDING_DATA),
         completeness,
         geometry,
+        geometryAnalysis,
+        floorPlanUrl: geometryAnalysis ? `/api/buildings/${building.id}/floor-plan.svg` : null,
         visualInventory: persisted
       });
     }
