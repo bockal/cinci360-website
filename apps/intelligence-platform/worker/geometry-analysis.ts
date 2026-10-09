@@ -57,6 +57,8 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
   let carry = "";
   let vertexCount = 0;
   let faceCount = 0;
+  const usedMaterials = new Set<string>();
+  const referencedMtlFiles = new Set<string>();
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
   const sample: Point[] = [];
@@ -82,6 +84,12 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
       }
     } else if (line.startsWith("f ")) {
       faceCount++;
+    } else if (line.startsWith("usemtl ")) {
+      const name = line.slice(7).trim();
+      if (name) usedMaterials.add(name);
+    } else if (line.startsWith("mtllib ")) {
+      const name = line.slice(7).trim();
+      if (name) referencedMtlFiles.add(name);
     }
   }
 
@@ -113,6 +121,29 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
   const grossFloorAreaEstimateFt2 = floors && footprintAreaM2 ? footprintAreaM2 * m2ToFt2 * floors : null;
   const envelopeVolumeM3 = footprintAreaM2 * heightM;
 
+  const prefix = `buildings/${building.id}/geometry/`;
+  const supportFiles: any = { mtlFiles: [], textureFiles: [], materialNames: Array.from(usedMaterials), referencedMtlFiles: Array.from(referencedMtlFiles) };
+  try {
+    let cursor: string | undefined;
+    do {
+      const listed = await env.BUILDING_DATA.list({ prefix, cursor });
+      for (const item of listed.objects || []) {
+        const key = String(item.key || "");
+        const name = key.split("/").pop() || "";
+        if (/\.mtl$/i.test(name)) {
+          const mtlObj = await env.BUILDING_DATA.get(key).catch(() => null);
+          const text = mtlObj ? await mtlObj.text().catch(() => "") : "";
+          const defined = text.split(/\r?\n/).filter((line: string) => /^newmtl\s+/i.test(line)).map((line: string) => line.replace(/^newmtl\s+/i, "").trim()).filter(Boolean);
+          const maps = text.split(/\r?\n/).filter((line: string) => /^map_Kd\s+/i.test(line)).map((line: string) => line.replace(/^map_Kd\s+/i, "").trim()).filter(Boolean);
+          supportFiles.mtlFiles.push({ key, name, materialCount: defined.length, materialNames: defined.slice(0, 250), textureReferences: maps.slice(0, 250) });
+        } else if (/\.(jpg|jpeg|png|webp)$/i.test(name)) {
+          supportFiles.textureFiles.push({ key, name, size: Number(item.size || 0) });
+        }
+      }
+      cursor = listed.truncated ? listed.cursor : undefined;
+    } while (cursor);
+  } catch {}
+
   const analysis = {
     buildingId: building.id,
     sourceObjKey: objKey,
@@ -125,6 +156,8 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     ],
     vertexCount,
     faceCount,
+    materialUsageCount: usedMaterials.size,
+    supportFiles,
     boundsMeters: {
       min: [round(minX, 4), round(minY, 4), round(minZ, 4)],
       max: [round(maxX, 4), round(maxY, 4), round(maxZ, 4)]
