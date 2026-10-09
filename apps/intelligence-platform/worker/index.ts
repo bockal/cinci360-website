@@ -1,4 +1,4 @@
-import { analyzeVisualCaptures, listBuildingEvidenceAssets, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistVisualBatch } from "./visual-ingest";
+import { analyzeStoredPanorama, analyzeVisualCaptures, listBuildingEvidenceAssets, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistRawPanorama, persistVisualBatch } from "./visual-ingest";
 import { analyzeObjGeometry, loadGeometryAnalysis, loadFloorPlanSvg } from "./geometry-analysis";
 
 interface Env {
@@ -401,7 +401,7 @@ function generatedCostSegHtml(building: Building) {
   const expectedSweeps = Number((building.evidence as any).expectedSweepCount || 0) || 0;
   const publishedSqFt = Number((building.evidence as any)?.publishedFacts?.sizeSquareFeet || 0) || null;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · Cost Segregation · ${building.name}</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f1eee7;color:#111618;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.shell{width:min(1420px,calc(100% - 28px));margin:0 auto;padding:24px 0 70px}header{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand a,.back{color:inherit;text-decoration:none;font-weight:850}.back{font-size:13px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:end;padding:52px 0 20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.hero h1{font-family:Georgia,serif;font-size:clamp(46px,6vw,78px);font-weight:400;letter-spacing:-.05em;line-height:.94;margin:10px 0 16px}.lede{max-width:760px;font-size:18px;line-height:1.55;color:#535956}.test-box{background:#e8f0e9;border:1px solid #c9d8ca;border-radius:16px;padding:16px;line-height:1.5;font-size:13px}.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0 24px}.metric{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:16px}.metric span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#747a76}.metric strong{display:block;font-family:Georgia,serif;font-size:23px;font-weight:400;margin-top:7px}.metric small{display:block;margin-top:5px;font-size:10px;color:#777}.status{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#111618;color:#fff;border-radius:18px;padding:16px 18px;margin:16px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status button,.button{border:0;border-radius:999px;background:#fff;color:#111618;padding:10px 14px;font-weight:850;cursor:pointer}.button.secondary{background:#e9e5dd}.study{display:grid;gap:16px}.room-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 16px}.room-summary-card{background:#fff;border:1px solid #d7d2c9;border-radius:16px;padding:14px}.room-summary-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76}.room-summary-card strong{display:block;font-family:Georgia,serif;font-size:20px;font-weight:400;margin-top:6px}.room-summary-card small{display:block;margin-top:5px;color:#6b716e}.report-progress{font-size:12px;color:#dfe4e1;white-space:nowrap}.schedule{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.schedule-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:19px 21px;border-bottom:1px solid #e6e1d8}.schedule-head h2{font-family:Georgia,serif;font-size:27px;font-weight:400;margin:0}.schedule-head span{font-size:12px;color:#6b716e}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1160px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #eee9e1;font-size:12px;vertical-align:top}th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76;background:#faf9f6;position:sticky;top:0;cursor:pointer;user-select:none}th:hover{color:#111618}.money{font-weight:800;white-space:nowrap}.room{font-weight:800}.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.note-card{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.note-card h3{margin:0 0 10px}.note-card ul{padding-left:18px;margin:0}.note-card li{margin:7px 0;line-height:1.45}.muted{font-size:12px;color:#6b716e;line-height:1.55}.warning{background:#fff4d7;border:1px solid #e4cf8d;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5}.good{color:#23663c}.bad{color:#9b3b2f}.pill{font-size:11px;border:1px solid #d8d3ca;border-radius:999px;padding:6px 9px;background:#faf9f6}.evidence-table{max-height:440px;overflow:auto}.floorplan-wrap{padding:18px 22px}.floorplan-wrap img{display:block;width:100%;max-height:620px;object-fit:contain;border:1px solid #ddd7cc;border-radius:14px;background:#f7f5ef}.obj-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px 22px}.obj-card{border:1px solid #e4dfd6;background:#faf9f6;border-radius:14px;padding:13px}.obj-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76}.obj-card strong{display:block;font-size:18px;margin-top:6px}.sweep-links{display:flex;flex-wrap:wrap;gap:5px}.sweep-links a{display:inline-block;border:1px solid #d8d3ca;border-radius:999px;padding:4px 7px;text-decoration:none;color:#111618;background:#fff;font-size:10px}.error{background:#fff0ee;border:1px solid #e3bdb7;color:#7c251c;border-radius:16px;padding:14px}@media print{header,.status,.no-print{display:none!important}.shell{width:100%;padding:0}.schedule{break-inside:avoid}.summary{grid-template-columns:repeat(6,1fr)}}@media(max-width:1100px){.summary{grid-template-columns:repeat(3,1fr)}}@media(max-width:950px){.hero{grid-template-columns:1fr}.notes{grid-template-columns:1fr}.schedule-head{flex-direction:column}.obj-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.summary{grid-template-columns:1fr 1fr}}
+*{box-sizing:border-box}body{margin:0;background:#f1eee7;color:#111618;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.shell{width:min(1420px,calc(100% - 28px));margin:0 auto;padding:24px 0 70px}header{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand a,.back{color:inherit;text-decoration:none;font-weight:850}.back{font-size:13px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:end;padding:52px 0 20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.hero h1{font-family:Georgia,serif;font-size:clamp(46px,6vw,78px);font-weight:400;letter-spacing:-.05em;line-height:.94;margin:10px 0 16px}.lede{max-width:760px;font-size:18px;line-height:1.55;color:#535956}.test-box{background:#e8f0e9;border:1px solid #c9d8ca;border-radius:16px;padding:16px;line-height:1.5;font-size:13px}.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0 24px}.metric{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:16px}.metric span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#747a76}.metric strong{display:block;font-family:Georgia,serif;font-size:23px;font-weight:400;margin-top:7px}.metric small{display:block;margin-top:5px;font-size:10px;color:#777}.status{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#111618;color:#fff;border-radius:18px;padding:16px 18px;margin:16px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status button,.button{border:0;border-radius:999px;background:#fff;color:#111618;padding:10px 14px;font-weight:850;cursor:pointer}.button.secondary{background:#e9e5dd}.study{display:grid;gap:16px}.room-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 16px}.room-summary-card{background:#fff;border:1px solid #d7d2c9;border-radius:16px;padding:14px}.room-summary-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76}.room-summary-card strong{display:block;font-family:Georgia,serif;font-size:20px;font-weight:400;margin-top:6px}.room-summary-card small{display:block;margin-top:5px;color:#6b716e}.report-progress{font-size:12px;color:#dfe4e1;white-space:nowrap}.schedule{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.schedule-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:19px 21px;border-bottom:1px solid #e6e1d8}.schedule-head h2{font-family:Georgia,serif;font-size:27px;font-weight:400;margin:0}.schedule-head span{font-size:12px;color:#6b716e}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1160px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #eee9e1;font-size:12px;vertical-align:top}th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76;background:#faf9f6;position:sticky;top:0;cursor:pointer;user-select:none}th:hover{color:#111618}.money{font-weight:800;white-space:nowrap}.room{font-weight:800}.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.note-card{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.note-card h3{margin:0 0 10px}.note-card ul{padding-left:18px;margin:0}.note-card li{margin:7px 0;line-height:1.45}.muted{font-size:12px;color:#6b716e;line-height:1.55}.warning{background:#fff4d7;border:1px solid #e4cf8d;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5}.good{color:#23663c}.bad{color:#9b3b2f}.pill{font-size:11px;border:1px solid #d8d3ca;border-radius:999px;padding:6px 9px;background:#faf9f6}.evidence-table{max-height:440px;overflow:auto}.floorplan-wrap{padding:18px 22px}.floorplan-wrap img{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border:1px solid #ddd7cc;border-radius:14px;background:#fff}.obj-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px 22px}.obj-card{border:1px solid #e4dfd6;background:#faf9f6;border-radius:14px;padding:13px}.obj-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76}.obj-card strong{display:block;font-size:18px;margin-top:6px}.sweep-links{display:flex;flex-wrap:wrap;gap:5px}.sweep-links a{display:inline-block;border:1px solid #d8d3ca;border-radius:999px;padding:4px 7px;text-decoration:none;color:#111618;background:#fff;font-size:10px}.error{background:#fff0ee;border:1px solid #e3bdb7;color:#7c251c;border-radius:16px;padding:14px}@media print{header,.status,.no-print{display:none!important}.shell{width:100%;padding:0}.schedule{break-inside:avoid}.summary{grid-template-columns:repeat(6,1fr)}}@media(max-width:1100px){.summary{grid-template-columns:repeat(3,1fr)}}@media(max-width:950px){.hero{grid-template-columns:1fr}.notes{grid-template-columns:1fr}.schedule-head{flex-direction:column}.obj-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.summary{grid-template-columns:1fr 1fr}}
 </style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><a class="back" href="/${building.slug}">← Back to ${building.id}</a></header><section class="hero"><div><p class="eyebrow">${building.id} · cost segregation screening</p><h1>Cost segregation inventory.</h1><p class="lede">A room-aware first-pass inventory built from panorama evidence and uploaded geometry, with the building envelope separated from shorter-life assets.</p></div><div class="test-box"><strong>Screening study</strong><br>Replacement-cost ranges and proposed recovery classes are working estimates for review. They are not taxpayer basis, a certified appraisal, or tax advice.</div></section><section class="summary"><div class="metric"><span>Geometry-derived area</span><strong id="buildingArea">Checking…</strong><small id="buildingAreaSource">${publishedSqFt ? "Published comparison: "+publishedSqFt.toLocaleString("en-US")+" sq ft" : "Laser/photogrammetry evidence"}</small></div><div class="metric"><span>Panorama completeness</span><strong id="panoPct">Checking…</strong><small id="panoCount">— / ${expectedSweeps || "?"}</small></div><div class="metric"><span>Missing panos</span><strong id="panoMissing">—</strong><small>Visual evidence gap</small></div><div class="metric"><span>OBJ in R2</span><strong id="objStatus">Checking…</strong><small id="objName">Geometry source</small></div><div class="metric"><span>Geometry analysis</span><strong id="analysisStatus">Checking…</strong><small>Derived dimensions + plan</small></div><div class="metric"><span>Model envelope volume</span><strong id="volumeValue">—</strong><small>Screening only; not HVAC load volume</small></div></section><div id="geometryWarning" class="warning">Checking stored geometry evidence…</div><div class="actions no-print" style="margin:12px 0"><a class="button secondary" style="text-decoration:none" href="/${building.slug}/ingest">Open Intelligence ingestion workflow →</a></div><section class="schedule no-print" style="margin-top:12px"><div class="schedule-head"><div><h2>Geometry evidence</h2><p class="muted">Upload the MatterPak geometry package here — OBJ plus MTL and texture images when present — then analyze the OBJ.</p></div><span id="uploadState">Ready</span></div><div style="padding:18px 22px"><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button class="button secondary" id="uploadObj" type="button">Upload MatterPak ZIP / files to R2</button><button class="button secondary" id="analyzeObj" type="button">Analyze OBJ</button></div></div></section><section id="floorPlanSection" class="schedule" style="margin-top:16px;display:none"><div class="schedule-head"><div><h2>Evidence-derived floor plan</h2><p class="muted">Reconstructed from horizontal floor evidence and vertical wall slices in the MatterPak OBJ, with exterior/context geometry filtered out. This is an automated screening plan, not a signed architectural drawing.</p></div><span id="planStatus">Generated</span></div><div class="floorplan-wrap"><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div></section><section id="objEvidenceSection" class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>OBJ-derived evidence</h2><p class="muted">Measured or directly derived geometry from the uploaded OBJ and companion MatterPak files. This is separate from panorama observations.</p></div><span id="objEvidenceStatus">Checking…</span></div><div id="objEvidenceBody"><div class="obj-grid"><div class="obj-card"><span>OBJ file</span><strong id="objEvidenceFile">—</strong></div><div class="obj-card"><span>Mesh</span><strong id="objMesh">—</strong></div><div class="obj-card"><span>Model extents</span><strong id="objExtents">—</strong></div><div class="obj-card"><span>Footprint screening</span><strong id="objFootprint">—</strong></div><div class="obj-card"><span>Envelope volume</span><strong id="objVolume">—</strong></div><div class="obj-card"><span>Materials used</span><strong id="objMaterials">—</strong></div><div class="obj-card"><span>MTL files</span><strong id="objMtl">—</strong></div><div class="obj-card"><span>Texture files</span><strong id="objTextures">—</strong></div></div><div style="padding:0 22px 18px"><p id="objLimitations" class="muted"></p></div></div></section><section class="status"><div><div id="statusText">Generating a first-pass study from current evidence…</div><div id="reportProgress" class="report-progress">Checking evidence completeness…</div></div><div class="actions"><a id="resumePanos" class="button secondary" style="display:none;text-decoration:none" href="/${building.slug}/ingest">Resume pano collection</a><button id="regen" type="button">Regenerate</button><button id="csv" type="button">Export CSV</button><button id="print" type="button">Print / Save PDF</button></div></section><div id="roomSummary" class="room-summary"></div><div id="study" class="study"></div><section class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>Evidence library</h2><p class="muted">Everything currently stored in R2 for this building that can support analysis: panoramas, geometry, materials/textures, documents, and derived analysis.</p></div><span id="assetCount">Checking…</span></div><div id="assetSummary" style="padding:14px 20px"></div><div class="table-wrap evidence-table"><table class="sortable"><thead><tr><th>Type</th><th>File / asset</th><th data-number="1">Size</th><th>R2 path</th></tr></thead><tbody id="assetRows"></tbody></table></div></section><section class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>Panorama-derived evidence</h2><p class="muted">The visual inventory available to the study. Click any header to sort.</p></div><span id="evidenceCount">Checking…</span></div><div class="table-wrap evidence-table"><table class="sortable"><thead><tr><th>Room / area</th><th>Asset / component</th><th>Category</th><th data-number="1">Qty</th><th data-number="1">Confidence</th><th>Evidence sweeps</th></tr></thead><tbody id="evidenceRows"></tbody></table></div></section></main><script>
 const studyEl=document.getElementById("study"),statusText=document.getElementById("statusText"),reportProgress=document.getElementById("reportProgress"),resumePanos=document.getElementById("resumePanos"),roomSummary=document.getElementById("roomSummary"),regen=document.getElementById("regen"),csv=document.getElementById("csv"),printBtn=document.getElementById("print"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),uploadState=document.getElementById("uploadState");
 const usd=n=>n==null?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
@@ -664,13 +664,11 @@ openSweep();
 function ingestionHtml(building: Building, sdkKey: string) {
   const key = JSON.stringify(sdkKey || "");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Visual ingestion · ${building.name}</title><style>
-body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.step{background:#fff;border:1px solid #d8d3ca;border-radius:16px;padding:14px}.step span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#777}.step strong{display:block;font-size:20px;margin-top:6px}.step small{display:block;color:#6b716e;margin-top:5px}.floorplan{display:none}.floorplan img{width:100%;max-height:520px;object-fit:contain;border:1px solid #ddd7cc;border-radius:12px;background:#f7f5ef}@media(max-width:850px){.workflow{grid-template-columns:1fr 1fr}}
-</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload MatterPak .obj</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload the MatterPak geometry package as part of this same workflow. Include the OBJ plus MTL and texture images when available, then analyze the OBJ.</p><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button id="uploadObj" type="button">Upload MatterPak ZIP / files</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div id="floorPlanCard" class="card floorplan"><h2 style="margin-top:0">OBJ floor-plan preview</h2><p class="muted">Screening projection only — useful for orientation and dimensional review, not a signed architectural plan.</p><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div><div class="card"><div id="keyPanel" style="display:none;margin-bottom:14px"><label for="sdkInput" style="display:block;font-weight:800;margin-bottom:6px">Matterport SDK application key</label><div class="actions"><input id="sdkInput" type="password" autocomplete="off" placeholder="Paste SDK key for this browser" style="flex:1;min-width:280px;border:1px solid #d8d3ca;border-radius:12px;padding:11px 12px;font:inherit"><button id="saveKey" type="button">Use this key</button></div><p class="muted" style="font-size:12px">Stored only in this browser's localStorage for the ingestion console. It is not written to GitHub or R2. Ingestion is resume-safe: already persisted sweeps are skipped on restart.</p></div><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
+body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.step{background:#fff;border:1px solid #d8d3ca;border-radius:16px;padding:14px}.step span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#777}.step strong{display:block;font-size:20px;margin-top:6px}.step small{display:block;color:#6b716e;margin-top:5px}.floorplan{display:none}.floorplan img{width:100%;height:auto;max-height:none;object-fit:contain;border:1px solid #ddd7cc;border-radius:12px;background:#fff}@media(max-width:850px){.workflow{grid-template-columns:1fr 1fr}}
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload MatterPak .obj</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload the MatterPak geometry package as part of this same workflow. Include the OBJ plus MTL and texture images when available, then analyze the OBJ.</p><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button id="uploadObj" type="button">Upload MatterPak ZIP / files</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div id="floorPlanCard" class="card floorplan"><h2 style="margin-top:0">OBJ floor-plan preview</h2><p class="muted">Screening projection only — useful for orientation and dimensional review, not a signed architectural plan.</p><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div><div class="card"><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
 const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
-let sdkKey=${key} || localStorage.getItem("cinci360:matterport-sdk-key") || "";
-const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log"),keyPanel=document.getElementById("keyPanel"),sdkInput=document.getElementById("sdkInput"),saveKey=document.getElementById("saveKey"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),geoStatus=document.getElementById("geoStatus");
-if(!sdkKey)keyPanel.style.display="block";
-saveKey.onclick=()=>{const v=sdkInput.value.trim();if(!v)return;sdkKey=v;localStorage.setItem("cinci360:matterport-sdk-key",v);keyPanel.style.display="none";say("Matterport SDK key loaded for this browser.");};
+const sdkKey=${key};
+const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),geoStatus=document.getElementById("geoStatus");
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let stopped=false;
 async function compressPano(dataUri,maxWidth=2048,quality=.78){
   try{
@@ -775,35 +773,50 @@ async function getPersistedSweepSet(){
     return new Set([...explicit,...inferred]);
   }catch{return new Set()}
 }
-async function sendBatch(captures){
-  const targetIds=captures.map(x=>x.sweepId);
-  const waits=[0,8000,20000,45000];
-  let lastError="Ingestion failed.";
+async function uploadCapturedPano(capture){
+  const base64=String(capture.imageDataUri||"").split(",")[1]||"";
+  if(!base64)throw new Error("Panorama capture was empty.");
+  const binary=atob(base64),bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  const waits=[0,2000,5000,10000];
+  let last="";
+  for(let attempt=0;attempt<waits.length;attempt++){
+    if(waits[attempt])await sleep(waits[attempt]);
+    try{
+      const r=await fetch("/api/buildings/${building.id}/ingest-pano",{method:"POST",headers:{
+        "content-type":"image/jpeg",
+        "x-sweep-id":capture.sweepId,
+        "x-floor":capture.floor==null?"":String(capture.floor),
+        "x-position":encodeURIComponent(JSON.stringify(capture.position||null))
+      },body:bytes});
+      const raw=await r.text();let data=null;try{data=JSON.parse(raw)}catch{}
+      if(r.ok&&data)return data;
+      last=data&&data.error?data.error:("HTTP "+r.status);
+    }catch(e){last=e&&e.message?e.message:String(e)}
+  }
+  throw new Error("Could not persist pano "+capture.sweepId+": "+last);
+}
+async function analyzeStoredSweep(capture){
+  const waits=[0,5000,15000,30000];
+  let last="";
   for(let attempt=0;attempt<waits.length;attempt++){
     if(stopped)throw new Error("Stopped.");
-    if(waits[attempt]){say("Cooling down "+Math.round(waits[attempt]/1000)+"s before retry "+attempt+"…");await sleep(waits[attempt]);}
+    if(waits[attempt])await sleep(waits[attempt]);
     try{
-      const r=await fetch("/api/buildings/${building.id}/ingest-visual",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({captures})});
-      const raw=await r.text();
-      let data=null;
-      try{data=JSON.parse(raw)}catch{}
+      const r=await fetch("/api/buildings/${building.id}/analyze-pano",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sweepId:capture.sweepId,floor:capture.floor,position:capture.position})});
+      const raw=await r.text();let data=null;try{data=JSON.parse(raw)}catch{}
       if(r.ok&&data)return data;
-      lastError=data&&data.error?data.error:("Ingestion API returned HTTP "+r.status+(raw.startsWith("<")?" (HTML error page)":""));
-    }catch(e){lastError=e&&e.message?e.message:String(e)}
-    const persisted=await getPersistedSweepSet();
-    if(targetIds.every(id=>persisted.has(id))){
-      say("Batch response failed, but R2 confirms these sweeps were saved. Continuing without reprocessing.");
-      return {batchItems:0,itemCount:"preserved",processedSweepIds:Array.from(persisted),recovered:true};
-    }
-    say("Transient batch failure: "+lastError);
+      last=data&&data.error?data.error:("HTTP "+r.status+(raw.startsWith("<")?" HTML":""));
+    }catch(e){last=e&&e.message?e.message:String(e)}
+    say("Analysis retry for "+capture.sweepId+": "+last);
   }
-  throw new Error(lastError+" after automatic retries.");
+  throw new Error("Visual analysis could not finish for "+capture.sweepId+": "+last);
 }
 function say(s){status.textContent=s;log.textContent+=s+"\\n";log.scrollTop=log.scrollHeight}
 stop.onclick=()=>{stopped=true;say("Stop requested…")};
 refreshWorkflow();
 run.onclick=async()=>{
-  if(!sdkKey){keyPanel.style.display="block";say("Matterport SDK key is not configured. Paste it above for this browser.");return}
+  if(!sdkKey){say("Matterport SDK key is not configured in the Worker runtime.");return}
   stopped=false;run.disabled=true;stop.disabled=false;
   try{
     say("Connecting to Matterport…");
@@ -822,30 +835,32 @@ run.onclick=async()=>{
     bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
     if(!pending.length){say("All sweeps are already persisted.");return;}
 
-    const batchSize=2;
-    for(let i=0;i<pending.length&&!stopped;i+=batchSize){
-      const batch=pending.slice(i,i+batchSize),captures=[];
-      for(const sweep of batch){
-        if(stopped)break;
-        await sdk.Sweep.moveTo(sweep.sid,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});
-        await sleep(300);
-        const rawPano=await sdk.Renderer.takeEquirectangular();
-        const imageDataUri=await compressPano(rawPano);
-        captures.push({sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri});
-      }
-      if(!captures.length)break;
-      const first=i+1,last=Math.min(i+captures.length,pending.length);
-      say("Analyzing remaining sweeps "+first+"-"+last+"…");
-      const data=await sendBatch(captures);
-      const confirmed=await getPersistedSweepSet();
-      captures.forEach(x=>{if(confirmed.has(x.sweepId))doneSet.add(x.sweepId)});
-      if(captures.some(x=>!doneSet.has(x.sweepId)))throw new Error("Batch returned, but R2 did not confirm every sweep.");
-      say("Batch complete: "+(data.batchItems||0)+" observations; persistent total "+(data.itemCount??"unknown")+"; sweeps saved "+doneSet.size+"/"+sweeps.length);
-      refreshWorkflow();
+    const captured=[];
+    for(let i=0;i<pending.length&&!stopped;i++){
+      const sweep=pending[i];
+      say("Capturing missing pano "+(i+1)+"/"+pending.length+"…");
+      await sdk.Sweep.moveTo(sweep.sid,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});
+      await sleep(450);
+      const rawPano=await sdk.Renderer.takeEquirectangular();
+      const imageDataUri=await compressPano(rawPano);
+      const capture={sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri};
+      await uploadCapturedPano(capture);
+      doneSet.add(capture.sweepId);
+      captured.push({sweepId:capture.sweepId,floor:capture.floor,position:capture.position});
       bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
-      if(((i/batchSize)+1)%5===0 && i+batchSize<pending.length){say("Short cooldown to keep the long ingestion stable…");await sleep(10000);}
+      say("Saved pano "+doneSet.size+"/"+sweeps.length+" to R2.");
+      if((i+1)%8===0&&i+1<pending.length){say("Brief renderer cooldown…");await sleep(4000);}
     }
-    say(stopped?"Ingestion stopped.":"Visual ingestion complete.");
+    refreshWorkflow();
+    if(stopped){say("Capture stopped. Saved panos remain checkpointed in R2.");return}
+    say("Panorama capture complete. Starting visual analysis separately so capture progress cannot be lost.");
+    for(let i=0;i<captured.length&&!stopped;i++){
+      say("Analyzing stored pano "+(i+1)+"/"+captured.length+"…");
+      const data=await analyzeStoredSweep(captured[i]);
+      say("Analysis complete: "+(data.batchItems||0)+" observations; inventory total "+(data.itemCount??"unknown")+".");
+      if((i+1)%4===0&&i+1<captured.length){say("Brief analysis cooldown…");await sleep(5000);}
+    }
+    say(stopped?"Analysis stopped; captured panos remain safely stored.":"Visual ingestion complete.");
   }catch(e){say("ERROR: "+(e&&e.message?e.message:String(e)))}finally{run.disabled=false;stop.disabled=true}
 };
 </script></body></html>`;
@@ -1027,12 +1042,43 @@ const appWorker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const ingestVisualApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/ingest-visual$/);
+    const ingestPanoApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/ingest-pano$/);
+    const analyzePanoApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/analyze-pano$/);
     const evidenceApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/evidence$/);
     const geometryApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry$/);
     const geometryAnalyzeApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry\/analyze$/);
     const floorPlanApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/floor-plan\.svg$/);
     const costSegApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/cost-seg$/);
     const apiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})(?:\/(ask))?$/);
+
+    if (ingestPanoApiMatch && request.method === "POST") {
+      const building = BUILDINGS[ingestPanoApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      if (!request.body) return json({ error: "Panorama body is missing." }, 400);
+      const sweepId = request.headers.get("x-sweep-id") || "";
+      const floor = request.headers.get("x-floor");
+      let position: any = null;
+      try { position = JSON.parse(decodeURIComponent(request.headers.get("x-position") || "")); } catch {}
+      try {
+        const persisted = await persistRawPanorama(building, sweepId, request.body, env, { floor, position });
+        return json(persisted);
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Panorama persistence failed." }, 502);
+      }
+    }
+
+    if (analyzePanoApiMatch && request.method === "POST") {
+      const building = BUILDINGS[analyzePanoApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      const body = await request.json().catch(() => null) as any;
+      if (!body?.sweepId) return json({ error: "sweepId is required." }, 400);
+      try {
+        const result = await analyzeStoredPanorama(building, body.sweepId, env, { floor: body.floor, position: body.position });
+        return json(result);
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Stored panorama analysis failed." }, 502);
+      }
+    }
 
     if (ingestVisualApiMatch && request.method === "POST") {
       const building = BUILDINGS[ingestVisualApiMatch[1]];
