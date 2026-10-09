@@ -1,4 +1,4 @@
-import { analyzeVisualCaptures, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistVisualBatch } from "./visual-ingest";
+import { analyzeVisualCaptures, listBuildingEvidenceAssets, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistVisualBatch } from "./visual-ingest";
 import { analyzeObjGeometry, loadGeometryAnalysis, loadFloorPlanSvg } from "./geometry-analysis";
 
 interface Env {
@@ -53,6 +53,7 @@ const BUILDINGS: Record<string, Building> = {
       "What maintenance or building-condition issues deserve a closer look?"
     ],
     evidence: {
+      expectedSweepCount: 55,
       building: { id: "BLDG-001", name: "Cincinnati Rowing Club", matterportSid: "qM1n2tF3CAQ", scan: "SCAN-001 interior Pro3 baseline" },
       geometry: {
         source: "Matterport MatterPak OBJ",
@@ -852,13 +853,19 @@ const appWorker = {
 
       const rawName = decodeURIComponent(request.headers.get("x-file-name") || "building.obj").trim();
       const safeName = rawName.replace(/[^A-Za-z0-9._ -]/g, "_").replace(/\s+/g, "-").slice(0, 180);
-      if (!/\.obj$/i.test(safeName)) return json({ error: "Upload must be an .obj file." }, 400);
-      if (!request.body) return json({ error: "OBJ file body is missing." }, 400);
+      const allowed = /\.(obj|mtl|jpg|jpeg|png|webp)$/i.test(safeName);
+      if (!allowed) return json({ error: "Geometry upload supports .obj, .mtl, .jpg, .jpeg, .png, and .webp files." }, 400);
+      if (!request.body) return json({ error: "File body is missing." }, 400);
 
       const key = `buildings/${building.id}/geometry/${safeName}`;
+      const lower = safeName.toLowerCase();
+      const contentType = lower.endsWith(".obj") || lower.endsWith(".mtl") ? "text/plain; charset=utf-8"
+        : lower.endsWith(".png") ? "image/png"
+        : lower.endsWith(".webp") ? "image/webp"
+        : "image/jpeg";
       try {
         await env.BUILDING_DATA.put(key, request.body, {
-          httpMetadata: { contentType: "text/plain; charset=utf-8" },
+          httpMetadata: { contentType },
           customMetadata: {
             buildingId: building.id,
             originalFileName: rawName,
@@ -899,6 +906,7 @@ const appWorker = {
       const persisted = await loadPersistedVisualEvidence(building, env);
       const geometry = await loadPersistedGeometryEvidence(building, env);
       const geometryAnalysis = await loadGeometryAnalysis(building, env);
+      const assetManifest = await listBuildingEvidenceAssets(building, env);
       const expectedSweepCount = Number((building.evidence as any).expectedSweepCount || 0) || null;
       const processedSweepCount = Number((persisted as any)?.processedSweepCount || 0);
       const completeness = expectedSweepCount ? {
@@ -914,6 +922,7 @@ const appWorker = {
         geometry,
         geometryAnalysis,
         floorPlanUrl: geometryAnalysis ? `/api/buildings/${building.id}/floor-plan.svg` : null,
+        assetManifest,
         visualInventory: persisted
       });
     }
