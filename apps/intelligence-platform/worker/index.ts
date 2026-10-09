@@ -1,4 +1,4 @@
-import { analyzeVisualCaptures, loadPersistedVisualEvidence, persistVisualBatch } from "./visual-ingest";
+import { analyzeVisualCaptures, loadPersistedVisualEvidence, loadPersistedGeometryEvidence, persistVisualBatch } from "./visual-ingest";
 
 interface Env {
   OPENAI_API_KEY?: string;
@@ -95,6 +95,7 @@ const BUILDINGS: Record<string, Building> = {
       "What should a planner verify before signing a contract for this venue?"
     ],
     evidence: {
+      expectedSweepCount: 86,
       building: { id: "BLDG-002", name: "Bell Event Centre", matterportSid: "RRUh81GAFtt" },
       geometry: {
         source: "Matterport MatterPak OBJ",
@@ -244,6 +245,7 @@ What would confirm it: <one short sentence when confidence is below 90%>`;
 
 
 type CostSegItem = {
+  room: string;
   component: string;
   quantity: string;
   evidenceBasis: string;
@@ -282,7 +284,21 @@ function parseJsonObject(text: string) {
 async function generateCostSegStudy(building: Building, env: Env): Promise<GeneratedCostSegStudy> {
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
   const persistedVisual = await loadPersistedVisualEvidence(building, env);
-  const combinedEvidence = persistedVisual ? { ...building.evidence, visualInventory: persistedVisual } : building.evidence;
+  const persistedGeometry = await loadPersistedGeometryEvidence(building, env);
+  const expectedSweepCount = Number((building.evidence as any).expectedSweepCount || 0) || null;
+  const processedSweepCount = Number((persistedVisual as any)?.processedSweepCount || 0);
+  const panoramaCompleteness = expectedSweepCount ? {
+    processed: processedSweepCount,
+    expected: expectedSweepCount,
+    missing: Math.max(expectedSweepCount - processedSweepCount, 0),
+    percent: Math.round((processedSweepCount / expectedSweepCount) * 1000) / 10
+  } : null;
+  const combinedEvidence = {
+    ...building.evidence,
+    ...(persistedVisual ? { visualInventory: persistedVisual } : {}),
+    geometryStorage: persistedGeometry,
+    panoramaCompleteness
+  };
   const prompt = `You are Cinci360 Building Intelligence generating a COST SEGREGATION SCREENING STUDY.
 
 TEST RULE: Use ONLY the property-specific data inside BUILDING_EVIDENCE below. Do not use web search, prior knowledge about this named property, owner documents, prior cost segregation reports, or any property-specific facts not present in BUILDING_EVIDENCE.
@@ -295,8 +311,8 @@ You may use general professional knowledge to:
 Do not invent quantities, counts, square footage, equipment, finishes, systems, ages, or conditions that are not in the evidence. If an asset category is merely plausible but not evidenced, omit it rather than fabricate it.
 
 Evidence labels:
-- MEASURED = directly from attached MatterPak/OBJ geometry
-- OBSERVED = explicitly listed in evidence
+- MEASURED = directly from attached and available MatterPak/OBJ geometry. Do NOT call something MEASURED if geometryStorage.objPresent and geometryStorage.spatialIndexPresent are both false.
+- OBSERVED = explicitly listed in panorama-derived visual evidence
 - PUBLISHED = explicitly supplied in the building record
 - INFERRED = model interpretation from those facts
 
@@ -326,6 +342,7 @@ Return ONLY valid JSON with exactly this shape:
       "sectionConfidence": 0,
       "items": [
         {
+          "room": "",
           "component": "",
           "quantity": "",
           "evidenceBasis": "",
@@ -341,7 +358,11 @@ Return ONLY valid JSON with exactly this shape:
   "caveats": []
 }
 
-Confidence values are integers 0-100. Include 3-6 useful sections when evidence supports them. Keep the study concise enough for a web page but detailed enough to evaluate whether the app can produce a useful first-pass study.`;
+Confidence values are integers 0-100.
+For every item, set "room" to the most specific supported room/area (for example Main Hall, Foyer, Sitting Room, Exterior Entry, Whole Building / Unassigned). Use visual evidence descriptions and room fields when available; do not invent unsupported room names.
+Create a dedicated first section titled exactly "Building Envelope & Structure" for the base building/structure/enclosure. Do not mix movable inventory or room-level personal property into that section.
+All other sections should represent shorter-life or separately reviewable inventory/components.
+Include 3-8 useful sections when evidence supports them. Keep the study detailed enough to evaluate a first-pass cost-segregation inventory.`;
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
