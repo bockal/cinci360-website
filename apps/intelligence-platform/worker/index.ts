@@ -1276,7 +1276,7 @@ const appWorker = {
         /^(MATTERPORT|OPENAI|BUILDING_DATA|SKIP_)/.test(name)
       ).sort();
       return json({
-        diagnosticVersion: "bindings-2026-10-09-a",
+        diagnosticVersion: "bindings-2026-10-09-b",
         matterportSdkConfigured: Boolean(matterportSdkKey(env)),
         matterportSecretBindingPresent: Object.prototype.hasOwnProperty.call(env || {}, "MATTERPORT_SDK_KEY"),
         matterportPublicBindingPresent: Object.prototype.hasOwnProperty.call(env || {}, "MATTERPORT_SDK_KEY_PUBLIC"),
