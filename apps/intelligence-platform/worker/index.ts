@@ -877,21 +877,61 @@ run.onclick=async()=>{
     say("Resume check: "+doneSet.size+" captured; "+analyzedSet.size+" analyzed; "+pending.length+" captures remaining.");
     bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
 
+    const withTimeout=(promise,ms,label)=>Promise.race([
+      promise,
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+" timed out after "+Math.round(ms/1000)+"s.")),ms))
+    ]);
+    async function captureOneSweep(sweep,index,total){
+      const waits=[0,1500,4000];
+      let last="";
+      for(let attempt=0;attempt<waits.length;attempt++){
+        if(stopped)throw new Error("Stopped.");
+        if(waits[attempt])await sleep(waits[attempt]);
+        try{
+          say("Capturing missing pano "+(index+1)+"/"+total+(attempt?" · retry "+attempt:"")+"…");
+          await withTimeout(
+            sdk.Sweep.moveTo(sweep.sid,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0}),
+            12000,
+            "Sweep.moveTo "+sweep.sid
+          );
+          await sleep(500);
+          const rawPano=await withTimeout(
+            sdk.Renderer.takeEquirectangular(),
+            18000,
+            "Renderer.takeEquirectangular "+sweep.sid
+          );
+          const imageDataUri=await withTimeout(compressPano(rawPano),12000,"Panorama compression "+sweep.sid);
+          const capture={sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri};
+          await withTimeout(uploadCapturedPano(capture),25000,"R2 pano upload "+sweep.sid);
+          return capture;
+        }catch(e){
+          last=e&&e.message?e.message:String(e);
+          say("Capture attempt failed for "+sweep.sid+": "+last);
+          try{await sdk.Sweep.moveTo(sweeps[0].sid,{transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});await sleep(700)}catch{}
+        }
+      }
+      throw new Error("Capture failed for "+sweep.sid+" after retries: "+last);
+    }
+
     const captured=[];
+    const failedCaptures=[];
     for(let i=0;i<pending.length&&!stopped;i++){
       const sweep=pending[i];
-      say("Capturing missing pano "+(i+1)+"/"+pending.length+"…");
-      await sdk.Sweep.moveTo(sweep.sid,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});
-      await sleep(450);
-      const rawPano=await sdk.Renderer.takeEquirectangular();
-      const imageDataUri=await compressPano(rawPano);
-      const capture={sweepId:sweep.sid,floor:typeof sweep.floor==="number"?sweep.floor:null,position:sweep.position||null,imageDataUri};
-      await uploadCapturedPano(capture);
-      doneSet.add(capture.sweepId);
-      captured.push({sweepId:capture.sweepId,floor:capture.floor,position:capture.position});
-      bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
-      say("Saved pano "+doneSet.size+"/"+sweeps.length+" to R2.");
-      if((i+1)%8===0&&i+1<pending.length){say("Brief renderer cooldown…");await sleep(4000);}
+      try{
+        const capture=await captureOneSweep(sweep,i,pending.length);
+        doneSet.add(capture.sweepId);
+        captured.push({sweepId:capture.sweepId,floor:capture.floor,position:capture.position});
+        bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
+        say("Saved pano "+doneSet.size+"/"+sweeps.length+" to R2.");
+      }catch(e){
+        const message=e&&e.message?e.message:String(e);
+        failedCaptures.push({sweepId:sweep.sid,error:message});
+        say("Skipped stalled sweep "+sweep.sid+"; continuing. "+message);
+      }
+      if((i+1)%6===0&&i+1<pending.length){say("Brief renderer cooldown…");await sleep(3500);}
+    }
+    if(failedCaptures.length){
+      say("Capture pass finished with "+failedCaptures.length+" stalled sweep"+(failedCaptures.length===1?"":"s")+". Re-run Resume to retry only those missing panos.");
     }
     refreshWorkflow();
     if(stopped){say("Capture stopped. Saved panos remain checkpointed in R2.");return}
