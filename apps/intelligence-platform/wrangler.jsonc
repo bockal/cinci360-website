@@ -4,6 +4,10 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-07",
   "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
+  "secrets": {
+    "required": ["MATTERPORT_SDK_KEY", "OPENAI_API_KEY"]
+  },
   "r2_buckets": [
     {
       "binding": "BUILDING_DATA",
