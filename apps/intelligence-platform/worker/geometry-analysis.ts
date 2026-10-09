@@ -295,6 +295,12 @@ function buildFloorPlan(
     .sort((a, b) => b.length - a.length)
     .slice(0, 40);
 
+  const roomMasks = roomComponents.map(cells => {
+    const mask = new Uint8Array(cropW * cropH);
+    for (const cellIndex of cells) mask[cellIndex] = 1;
+    return mask;
+  });
+
   const roomCandidates = roomComponents.map((cells, idx) => {
     let loX = cropW, loY = cropH, hiX = 0, hiY = 0, sumX = 0, sumY = 0;
     for (const cellIndex of cells) {
@@ -327,6 +333,12 @@ function buildFloorPlan(
   const ox = (svgW - drawW) / 2, oy = (svgH - drawH) / 2 + 12;
   const title = escapeXml(building.name);
 
+  let roomFills = "";
+  for (let i = 0; i < roomMasks.length; i++) {
+    const fill = i % 2 === 0 ? "#f2f1ed" : "#f8f7f3";
+    roomFills += runsToSvg(roomMasks[i], cropW, cropH, px, ox, oy, fill);
+  }
+
   let labels = "";
   for (const room of roomCandidates.slice(0, 16)) {
     if (room.areaFt2 < 55) continue;
@@ -339,7 +351,8 @@ function buildFloorPlan(
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="38" y="38" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="#111618">${title}</text>
 <text x="38" y="60" font-family="system-ui,sans-serif" font-size="12" fill="#5f6763">Floor ${floorIndex} · MatterPak wall-slice reconstruction · ${round(areaM2 * M2_TO_FT2, 0).toLocaleString("en-US")} sq ft geometry estimate</text>
-${runsToSvg(croppedFoot, cropW, cropH, px, ox, oy, "#fbfbf9")}
+${runsToSvg(croppedFoot, cropW, cropH, px, ox, oy, "#ffffff")}
+${roomFills}
 ${runsToSvg(boundary, cropW, cropH, px, ox, oy, "#111618")}
 ${runsToSvg(croppedWalls, cropW, cropH, px, ox, oy, "#111618")}
 ${labels}
@@ -519,7 +532,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     buildingId: building.id,
     sourceObjKey: objKey,
     analyzedAt: new Date().toISOString(),
-    algorithmVersion: "wall-slice-v2",
+    algorithmVersion: "wall-slice-v2.1-room-fill",
     classification: "MEASURED / SCREENING",
     limitations: [
       "Floor plans are reconstructed from OBJ mesh wall intersections and are not signed architectural drawings.",
