@@ -19,21 +19,27 @@ export async function loadPersistedVisualEvidence(building: any, env: any) {
   const data: any = await object.json().catch(() => null);
   if (!data) return null;
 
-  const processed = new Set<string>(Array.isArray(data.processedSweepIds) ? data.processedSweepIds : []);
+  const storedProcessed = new Set<string>(Array.isArray(data.processedSweepIds) ? data.processedSweepIds : []);
+  const persistedPanos = new Set<string>();
+  let panoListingSucceeded = false;
   try {
     let cursor: string | undefined;
     do {
       const listed = await env.BUILDING_DATA.list({ prefix: `${prefix}/panos/`, cursor });
+      panoListingSucceeded = true;
       for (const item of listed.objects || []) {
         const name = String(item.key || "").split("/").pop() || "";
-        if (name.endsWith(".jpg")) processed.add(name.slice(0, -4));
+        if (/\.jpg$/i.test(name)) persistedPanos.add(name.slice(0, -4));
       }
       cursor = listed.truncated ? listed.cursor : undefined;
     } while (cursor);
   } catch {
-    // Observation JSON remains usable even if object listing is temporarily unavailable.
+    // Fall back to the observation checkpoint only if R2 listing is unavailable.
   }
 
+  // A panorama only counts as complete when the actual pano object exists in R2.
+  // This prevents stale/truncated checkpoint IDs from overstating completeness.
+  const processed = panoListingSucceeded ? persistedPanos : storedProcessed;
   data.processedSweepIds = Array.from(processed);
   data.processedSweepCount = processed.size;
   return data;
