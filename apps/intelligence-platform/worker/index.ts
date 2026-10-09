@@ -599,6 +599,36 @@ regen.addEventListener("click",load);loadEvidence();load();
 </script></body></html>`;
 }
 
+function evidenceLocationHtml(building: Building, sdkKey: string) {
+  const key = JSON.stringify(sdkKey || "");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Evidence location · ${building.name}</title><style>
+body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:650px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}.muted{color:#666d69}.pill{display:inline-block;font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button{border:0;border-radius:999px;padding:11px 15px;font-weight:850;background:#111618;color:#fff;cursor:pointer}input{flex:1;min-width:280px;border:1px solid #d8d3ca;border-radius:12px;padding:11px 12px;font:inherit}
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · evidence location</div><h1 style="margin-bottom:6px">${building.name}</h1><p id="status" class="muted">Opening the referenced Matterport sweep…</p></div><a href="/${building.slug}/cost-seg">Back to cost seg</a></div><div id="keyPanel" class="card" style="display:none"><strong>Matterport SDK application key</strong><p class="muted">Use the same browser-local key as the ingestion workflow.</p><div class="actions"><input id="sdkInput" type="password" autocomplete="off" placeholder="Paste SDK key"><button id="saveKey" type="button">Use this key</button></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div></main><script type="module">
+const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
+const params=new URLSearchParams(location.search),sweep=params.get("sweep")||"";
+let sdkKey=${key}||localStorage.getItem("cinci360:matterport-sdk-key")||"";
+const iframe=document.getElementById("mp"),status=document.getElementById("status"),keyPanel=document.getElementById("keyPanel"),sdkInput=document.getElementById("sdkInput"),saveKey=document.getElementById("saveKey");
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setStatus(s){status.textContent=s}
+async function openSweep(){
+  if(!sweep){setStatus("No sweep ID was supplied.");return}
+  if(!sdkKey){keyPanel.style.display="block";setStatus("Matterport SDK key is required to jump to this evidence location.");return}
+  try{
+    const nextSrc="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey="+encodeURIComponent(sdkKey);
+    if(!iframe.src.includes("applicationKey="+encodeURIComponent(sdkKey))){iframe.src=nextSrc;await sleep(1200)}
+    const mod=await import(SDK_BOOTSTRAP+"?applicationKey="+encodeURIComponent(sdkKey));
+    const sdk=await mod.connect(iframe);
+    await sdk.App.state.waitUntil(s=>s.phase===sdk.App.Phase.PLAYING);
+    await sdk.Sweep.moveTo(sweep,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});
+    setStatus("Evidence sweep opened: "+sweep);
+  }catch(e){setStatus("Could not open this sweep: "+(e&&e.message?e.message:String(e)))}
+}
+saveKey.onclick=()=>{const v=sdkInput.value.trim();if(!v)return;sdkKey=v;localStorage.setItem("cinci360:matterport-sdk-key",v);keyPanel.style.display="none";openSweep()};
+openSweep();
+</script></body></html>`;
+}
+
+
 function ingestionHtml(building: Building, sdkKey: string) {
   const key = JSON.stringify(sdkKey || "");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Visual ingestion · ${building.name}</title><style>
@@ -1135,6 +1165,12 @@ const appWorker = {
     if (ingestPageMatch) {
       const building = BUILDINGS_BY_SLUG[ingestPageMatch[1]];
       return new Response(ingestionHtml(building, env.MATTERPORT_SDK_KEY || ""), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+    }
+
+    const evidenceLocationMatch = url.pathname.match(/^\/(crc|bell|vues)\/evidence$/);
+    if (evidenceLocationMatch) {
+      const building = BUILDINGS_BY_SLUG[evidenceLocationMatch[1]];
+      return new Response(evidenceLocationHtml(building, env.MATTERPORT_SDK_KEY || ""), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     if (url.pathname === "/crc/cost-seg" || url.pathname === "/crc/cost-segregation") {
