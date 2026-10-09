@@ -560,7 +560,7 @@ let autoAnalysisAttempted=false;
 async function loadEvidence(){
   try{
     let r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});let data=await r.json();
-    const needsGeometryRefresh=data.geometry&&data.geometry.objPresent&&(!data.geometryAnalysis||data.geometryAnalysis.algorithmVersion!=="wall-slice-v2");
+    const needsGeometryRefresh=data.geometry&&data.geometry.objPresent&&(!data.geometryAnalysis||data.geometryAnalysis.algorithmVersion!=="wall-slice-v2.1-room-fill");
     if(needsGeometryRefresh&&!autoAnalysisAttempted){
       autoAnalysisAttempted=true;
       reportProgress.textContent=data.geometryAnalysis?"Upgrading floor-plan reconstruction from stored MatterPak…":"OBJ found · deriving geometry evidence…";
