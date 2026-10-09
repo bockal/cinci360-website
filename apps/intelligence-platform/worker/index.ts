@@ -572,7 +572,8 @@ async function loadEvidence(){
     document.getElementById("panoCount").textContent=comp?(comp.processed+" / "+comp.expected):((vi&&vi.processedSweepCount)||0)+" / ?";
     document.getElementById("panoMissing").textContent=comp?String(comp.missing):"Unknown";
     if(comp&&comp.missing>0){resumePanos.style.display="inline-block";resumePanos.textContent="Resume panos ("+comp.missing+" remaining)"}else{resumePanos.style.display="none"}
-    reportProgress.textContent=(comp?(comp.processed+"/"+comp.expected+" panos · "+comp.percent+"% complete"):"Pano completeness unknown")+" · "+(geo.objPresent?"OBJ ✓":"OBJ missing")+" · "+(ga?("geometry ✓"+(ga.detectedFloorCount?(" · "+ga.detectedFloorCount+" floors"):"")):"geometry pending");
+    const analyzedCount=vi&&Array.isArray(vi.analyzedSweepIds)?vi.analyzedSweepIds.length:0;
+    reportProgress.textContent=(comp?(comp.processed+"/"+comp.expected+" panos captured · "+analyzedCount+" analyzed"):"Pano completeness unknown")+" · "+(geo.objPresent?"OBJ ✓":"OBJ missing")+" · "+(ga?("geometry ✓"+(ga.detectedFloorCount?(" · "+ga.detectedFloorCount+" floors"):"")):"geometry pending");
     document.getElementById("objStatus").textContent=geo.objPresent?"Present":"Missing";document.getElementById("objStatus").className=geo.objPresent?"good":"bad";document.getElementById("objName").textContent=geo.objFileName||"Geometry source";
     document.getElementById("analysisStatus").textContent=ga?"Ready":"Not run";document.getElementById("analysisStatus").className=ga?"good":"bad";
     document.getElementById("volumeValue").textContent=ga&&ga.modelEnvelopeVolumeFt3?num(ga.modelEnvelopeVolumeFt3)+" ft³":"—";
@@ -664,7 +665,7 @@ function ingestionHtml(building: Building, sdkKey: string) {
   const key = JSON.stringify(sdkKey || "");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Visual ingestion · ${building.name}</title><style>
 body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.step{background:#fff;border:1px solid #d8d3ca;border-radius:16px;padding:14px}.step span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#777}.step strong{display:block;font-size:20px;margin-top:6px}.step small{display:block;color:#6b716e;margin-top:5px}.floorplan{display:none}.floorplan img{width:100%;height:auto;max-height:none;object-fit:contain;border:1px solid #ddd7cc;border-radius:12px;background:#fff}@media(max-width:850px){.workflow{grid-template-columns:1fr 1fr}}
-</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload MatterPak .obj</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload the MatterPak geometry package as part of this same workflow. Include the OBJ plus MTL and texture images when available, then analyze the OBJ.</p><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button id="uploadObj" type="button">Upload MatterPak ZIP / files</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div id="floorPlanCard" class="card floorplan"><h2 style="margin-top:0">OBJ floor-plan preview</h2><p class="muted">Screening projection only — useful for orientation and dimensional review, not a signed architectural plan.</p><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div><div class="card"><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload MatterPak .obj</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload the MatterPak geometry package as part of this same workflow. Include the OBJ plus MTL and texture images when available, then analyze the OBJ.</p><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button id="uploadObj" type="button">Upload MatterPak ZIP / files</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div id="floorPlanCard" class="card floorplan"><h2 style="margin-top:0">Evidence-derived floor plan</h2><p class="muted">Landscape room reconstruction from MatterPak floor and wall evidence; not a signed architectural plan.</p><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div><div class="card"><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
 const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
 const sdkKey=${key};
 const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),geoStatus=document.getElementById("geoStatus");
@@ -687,11 +688,22 @@ async function compressPano(dataUri,maxWidth=2048,quality=.78){
 async function refreshWorkflow(){
   try{
     const r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});const d=await r.json();
-    const comp=d.completeness||null,geo=d.geometry||{},ga=d.geometryAnalysis||null,manifest=d.assetManifest||null;
+    const comp=d.completeness||null,geo=d.geometry||{},ga=d.geometryAnalysis||null,manifest=d.assetManifest||null,vi=d.visualInventory||null;
+    const analyzedIds=new Set(vi&&Array.isArray(vi.analyzedSweepIds)?vi.analyzedSweepIds:[]);
+    const analyzedCount=analyzedIds.size;
     document.getElementById("wfPanos").textContent=comp?comp.percent+"%":"Unknown";
-    document.getElementById("wfPanoSub").textContent=comp?(comp.processed+" of "+comp.expected+" panoramas · "+comp.missing+" missing"):"Panorama total not yet known";
-    if(comp&&comp.missing>0){run.disabled=false;run.textContent=comp.processed>0?("Resume visual ingestion · "+comp.missing+" remaining"):"Start visual ingestion";status.textContent=comp.processed>0?("Ready to resume from R2 checkpoint: "+comp.processed+"/"+comp.expected+" saved."):"Ready."}
-    else if(comp&&comp.missing===0){run.textContent="Visual ingestion complete";run.disabled=true;status.textContent="All "+comp.expected+" panoramas are persisted."}
+    document.getElementById("wfPanoSub").textContent=comp?(comp.processed+" of "+comp.expected+" captured · "+analyzedCount+" analyzed"):"Panorama total not yet known";
+    if(comp&&comp.missing>0){
+      run.disabled=false;
+      run.textContent=comp.processed>0?("Resume pano capture · "+comp.missing+" remaining"):"Start pano capture";
+      status.textContent=comp.processed>0?("Ready to resume from R2 checkpoint: "+comp.processed+"/"+comp.expected+" captured."):"Ready.";
+    }else if(comp&&comp.missing===0&&analyzedCount<comp.expected){
+      run.disabled=false;
+      run.textContent="Resume visual analysis · "+(comp.expected-analyzedCount)+" remaining";
+      status.textContent="All panoramas are safely in R2. Visual analysis can resume independently.";
+    }else if(comp&&comp.missing===0){
+      run.textContent="Visual ingestion complete";run.disabled=true;status.textContent="All "+comp.expected+" panoramas are captured and analyzed.";
+    }
     document.getElementById("wfObj").textContent=geo.objPresent?"Present":"Missing";
     document.getElementById("wfObjSub").textContent=geo.objFileName||"Upload MatterPak .obj";
     document.getElementById("wfAnalysis").textContent=ga?"Ready":"Not run";
@@ -768,8 +780,18 @@ async function getPersistedSweepSet(){
     const ed=JSON.parse(et);
     const vi=ed.visualInventory||null;
     const explicit=vi&&Array.isArray(vi.processedSweepIds)?vi.processedSweepIds:[];
+    return new Set(explicit);
+  }catch{return new Set()}
+}
+async function getAnalyzedSweepSet(){
+  try{
+    const er=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});
+    const ed=await er.json();
+    const vi=ed.visualInventory||null;
+    const explicit=vi&&Array.isArray(vi.analyzedSweepIds)?vi.analyzedSweepIds:[];
+    if(explicit.length)return new Set(explicit);
     const inferred=vi&&Array.isArray(vi.items)?vi.items.flatMap(item=>Array.isArray(item.evidenceSweepIds)?item.evidenceSweepIds:[]):[];
-    return new Set([...explicit,...inferred]);
+    return new Set(inferred);
   }catch{return new Set()}
 }
 async function uploadCapturedPano(capture){
@@ -829,10 +851,10 @@ run.onclick=async()=>{
     say("Connected: "+sweeps.length+" sweeps.");
 
     let doneSet=await getPersistedSweepSet();
+    let analyzedSet=await getAnalyzedSweepSet();
     const pending=sweeps.filter(s=>!doneSet.has(s.sid));
-    say("Resume check: "+doneSet.size+" sweeps already persisted; "+pending.length+" remaining.");
+    say("Resume check: "+doneSet.size+" captured; "+analyzedSet.size+" analyzed; "+pending.length+" captures remaining.");
     bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
-    if(!pending.length){say("All sweeps are already persisted.");return;}
 
     const captured=[];
     for(let i=0;i<pending.length&&!stopped;i++){
@@ -852,12 +874,21 @@ run.onclick=async()=>{
     }
     refreshWorkflow();
     if(stopped){say("Capture stopped. Saved panos remain checkpointed in R2.");return}
-    say("Panorama capture complete. Starting visual analysis separately so capture progress cannot be lost.");
-    for(let i=0;i<captured.length&&!stopped;i++){
-      say("Analyzing stored pano "+(i+1)+"/"+captured.length+"…");
-      const data=await analyzeStoredSweep(captured[i]);
-      say("Analysis complete: "+(data.batchItems||0)+" observations; inventory total "+(data.itemCount??"unknown")+".");
-      if((i+1)%4===0&&i+1<captured.length){say("Brief analysis cooldown…");await sleep(5000);}
+    analyzedSet=await getAnalyzedSweepSet();
+    const analysisQueue=sweeps.filter(s=>doneSet.has(s.sid)&&!analyzedSet.has(s.sid)).map(s=>({
+      sweepId:s.sid,
+      floor:typeof s.floor==="number"?s.floor:null,
+      position:s.position||null
+    }));
+    if(!analysisQueue.length){say("All captured panoramas are already analyzed.");return}
+    say("Capture checkpoint safe. Starting/resuming visual analysis for "+analysisQueue.length+" stored panos.");
+    for(let i=0;i<analysisQueue.length&&!stopped;i++){
+      say("Analyzing stored pano "+(i+1)+"/"+analysisQueue.length+"…");
+      const data=await analyzeStoredSweep(analysisQueue[i]);
+      analyzedSet.add(analysisQueue[i].sweepId);
+      say("Analysis complete: "+(data.batchItems||0)+" observations; inventory total "+(data.itemCount??"unknown")+"; analyzed "+analyzedSet.size+"/"+sweeps.length+".");
+      refreshWorkflow();
+      if((i+1)%4===0&&i+1<analysisQueue.length){say("Brief analysis cooldown…");await sleep(5000);}
     }
     say(stopped?"Analysis stopped; captured panos remain safely stored.":"Visual ingestion complete.");
   }catch(e){say("ERROR: "+(e&&e.message?e.message:String(e)))}finally{run.disabled=false;stop.disabled=true}
