@@ -493,11 +493,11 @@ regen.addEventListener("click",load);loadEvidence();load();
 function ingestionHtml(building: Building, sdkKey: string) {
   const key = JSON.stringify(sdkKey || "");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Visual ingestion · ${building.name}</title><style>
-body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap}
-</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><div id="keyPanel" style="display:none;margin-bottom:14px"><label for="sdkInput" style="display:block;font-weight:800;margin-bottom:6px">Matterport SDK application key</label><div class="actions"><input id="sdkInput" type="password" autocomplete="off" placeholder="Paste SDK key for this browser" style="flex:1;min-width:280px;border:1px solid #d8d3ca;border-radius:12px;padding:11px 12px;font:inherit"><button id="saveKey" type="button">Use this key</button></div><p class="muted" style="font-size:12px">Stored only in this browser's localStorage for the ingestion console. It is not written to GitHub or R2. Ingestion is resume-safe: already persisted sweeps are skipped on restart.</p></div><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
+body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.step{background:#fff;border:1px solid #d8d3ca;border-radius:16px;padding:14px}.step span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#777}.step strong{display:block;font-size:20px;margin-top:6px}.step small{display:block;color:#6b716e;margin-top:5px}.floorplan{display:none}.floorplan img{width:100%;max-height:520px;object-fit:contain;border:1px solid #ddd7cc;border-radius:12px;background:#f7f5ef}@media(max-width:850px){.workflow{grid-template-columns:1fr 1fr}}
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div><a href="/${building.slug}">Back to building</a></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload MatterPak .obj</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload the MatterPak OBJ as part of the same ingestion workflow, then analyze it to generate geometry metrics and a top-down plan preview.</p><div class="actions"><input id="objFile" type="file" accept=".obj,text/plain"><button id="uploadObj" type="button">Upload OBJ</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div id="floorPlanCard" class="card floorplan"><h2 style="margin-top:0">OBJ floor-plan preview</h2><p class="muted">Screening projection only — useful for orientation and dimensional review, not a signed architectural plan.</p><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div><div class="card"><div id="keyPanel" style="display:none;margin-bottom:14px"><label for="sdkInput" style="display:block;font-weight:800;margin-bottom:6px">Matterport SDK application key</label><div class="actions"><input id="sdkInput" type="password" autocomplete="off" placeholder="Paste SDK key for this browser" style="flex:1;min-width:280px;border:1px solid #d8d3ca;border-radius:12px;padding:11px 12px;font:inherit"><button id="saveKey" type="button">Use this key</button></div><p class="muted" style="font-size:12px">Stored only in this browser's localStorage for the ingestion console. It is not written to GitHub or R2. Ingestion is resume-safe: already persisted sweeps are skipped on restart.</p></div><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div></main><script type="module">
 const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
 let sdkKey=${key} || localStorage.getItem("cinci360:matterport-sdk-key") || "";
-const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log"),keyPanel=document.getElementById("keyPanel"),sdkInput=document.getElementById("sdkInput"),saveKey=document.getElementById("saveKey");
+const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log"),keyPanel=document.getElementById("keyPanel"),sdkInput=document.getElementById("sdkInput"),saveKey=document.getElementById("saveKey"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),geoStatus=document.getElementById("geoStatus");
 if(!sdkKey)keyPanel.style.display="block";
 saveKey.onclick=()=>{const v=sdkInput.value.trim();if(!v)return;sdkKey=v;localStorage.setItem("cinci360:matterport-sdk-key",v);keyPanel.style.display="none";say("Matterport SDK key loaded for this browser.");};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)); let stopped=false;
@@ -516,6 +516,40 @@ async function compressPano(dataUri,maxWidth=2048,quality=.78){
     return canvas.toDataURL("image/jpeg",quality);
   }catch{return dataUri}
 }
+async function refreshWorkflow(){
+  try{
+    const r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});const d=await r.json();
+    const comp=d.completeness||null,geo=d.geometry||{},ga=d.geometryAnalysis||null;
+    document.getElementById("wfPanos").textContent=comp?comp.percent+"%":"Unknown";
+    document.getElementById("wfPanoSub").textContent=comp?(comp.processed+" of "+comp.expected+" panoramas · "+comp.missing+" missing"):"Panorama total not yet known";
+    document.getElementById("wfObj").textContent=geo.objPresent?"Present":"Missing";
+    document.getElementById("wfObjSub").textContent=geo.objFileName||"Upload MatterPak .obj";
+    document.getElementById("wfAnalysis").textContent=ga?"Ready":"Not run";
+    document.getElementById("wfAnalysisSub").textContent=ga?(Math.round(ga.footprintHullAreaFt2||0).toLocaleString()+" ft² footprint screening · "+Math.round(ga.modelEnvelopeVolumeFt3||0).toLocaleString()+" ft³ envelope"):"Dimensions + area + volume";
+    document.getElementById("wfPlan").textContent=d.floorPlanUrl?"Ready":"Not generated";
+    const card=document.getElementById("floorPlanCard");
+    if(d.floorPlanUrl){document.getElementById("floorPlanImg").src=d.floorPlanUrl+"?t="+Date.now();card.style.display="block"}else card.style.display="none";
+    geoStatus.textContent=geo.objPresent?("OBJ ready: "+(geo.objFileName||"stored in R2")+(ga?" · geometry analyzed":" · run Analyze geometry")):"No OBJ stored yet.";
+  }catch{geoStatus.textContent="Could not load geometry status."}
+}
+uploadObj.onclick=async()=>{
+  const file=objFile.files&&objFile.files[0];
+  if(!file){geoStatus.textContent="Choose an .obj file first.";return}
+  if(!/\.obj$/i.test(file.name)){geoStatus.textContent="That file is not an .obj.";return}
+  uploadObj.disabled=true;geoStatus.textContent="Uploading "+file.name+"…";
+  try{
+    const r=await fetch("/api/buildings/${building.id}/geometry",{method:"POST",headers:{"x-file-name":encodeURIComponent(file.name),"content-type":"text/plain"},body:file});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||"Upload failed.");
+    geoStatus.textContent="Uploaded "+d.fileName+". Run geometry analysis next.";await refreshWorkflow();
+  }catch(e){geoStatus.textContent="Upload failed: "+(e&&e.message?e.message:String(e))}finally{uploadObj.disabled=false}
+};
+analyzeObj.onclick=async()=>{
+  analyzeObj.disabled=true;geoStatus.textContent="Analyzing OBJ geometry…";
+  try{
+    const r=await fetch("/api/buildings/${building.id}/geometry/analyze",{method:"POST"});const d=await r.json();if(!r.ok)throw new Error(d.error||"Geometry analysis failed.");
+    geoStatus.textContent="Geometry analysis complete.";await refreshWorkflow();
+  }catch(e){geoStatus.textContent="Analysis failed: "+(e&&e.message?e.message:String(e))}finally{analyzeObj.disabled=false}
+};
 async function getPersistedSweepSet(){
   try{
     const er=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});
@@ -553,6 +587,7 @@ async function sendBatch(captures){
 }
 function say(s){status.textContent=s;log.textContent+=s+"\\n";log.scrollTop=log.scrollHeight}
 stop.onclick=()=>{stopped=true;say("Stop requested…")};
+refreshWorkflow();
 run.onclick=async()=>{
   if(!sdkKey){keyPanel.style.display="block";say("Matterport SDK key is not configured. Paste it above for this browser.");return}
   stopped=false;run.disabled=true;stop.disabled=false;
@@ -592,6 +627,7 @@ run.onclick=async()=>{
       captures.forEach(x=>{if(confirmed.has(x.sweepId))doneSet.add(x.sweepId)});
       if(captures.some(x=>!doneSet.has(x.sweepId)))throw new Error("Batch returned, but R2 did not confirm every sweep.");
       say("Batch complete: "+(data.batchItems||0)+" observations; persistent total "+(data.itemCount??"unknown")+"; sweeps saved "+doneSet.size+"/"+sweeps.length);
+      refreshWorkflow();
       bar.style.width=Math.round((doneSet.size/Math.max(sweeps.length,1))*100)+"%";
       if(((i/batchSize)+1)%5===0 && i+batchSize<pending.length){say("Short cooldown to keep the long ingestion stable…");await sleep(10000);}
     }
