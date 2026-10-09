@@ -89,7 +89,8 @@ export function consolidateVisualInventory(building: any, observations: any[]): 
   for (const item of Array.isArray(observations) ? observations : []) {
     const canonicalType = canonicalAssetType(item);
     const room = canonicalRoom(item, canonicalType);
-    const key = canonicalType + "|" + cleanWords(room);
+    const globalType = canonicalType === "rowing-shell" || canonicalType === "rowing-ergometer";
+    const key = globalType ? canonicalType : canonicalType + "|" + cleanWords(room);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(item);
   }
@@ -97,7 +98,11 @@ export function consolidateVisualInventory(building: any, observations: any[]): 
   const out: ConsolidatedInventoryRecord[] = [];
   for (const [key, group] of groups) {
     const canonicalType = canonicalAssetType(group[0]);
-    const room = canonicalRoom(group[0], canonicalType);
+    const room = canonicalType === "rowing-shell"
+      ? "Boat Storage / Whole Building"
+      : canonicalType === "rowing-ergometer"
+        ? "Main Hall / Whole Building"
+        : canonicalRoom(group[0], canonicalType);
     const quantities = group.map(x => Number(x?.quantity || 0)).filter(x => Number.isFinite(x) && x > 0);
     // Repeated panoramas are alternate observations of the same room-level inventory.
     // Never sum repeated grouped counts; use the most complete observed count.
@@ -112,12 +117,17 @@ export function consolidateVisualInventory(building: any, observations: any[]): 
       : canonicalType === "rowing-ergometer"
         ? "Rowing ergometers"
         : String(strongest?.visibleName || strongest?.category || "Observed asset");
+    const category = canonicalType === "rowing-shell"
+      ? "Movable equipment - rowing shells"
+      : canonicalType === "rowing-ergometer"
+        ? "Movable equipment - rowing ergometers"
+        : String(strongest?.category || "");
     out.push({
       inventoryId: "INV-" + String(building?.id || "BLDG").replace(/[^A-Za-z0-9]/g, "") + "-" + fnv1a(key),
       canonicalType,
       room,
       visibleName,
-      category: String(strongest?.category || ""),
+      category,
       quantity,
       confidence,
       evidenceSweepIds,
