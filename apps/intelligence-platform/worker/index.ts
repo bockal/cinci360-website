@@ -387,8 +387,8 @@ function generatedCostSegHtml(building: Building) {
   const expectedSweeps = Number((building.evidence as any).expectedSweepCount || 0) || 0;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · Cost Segregation · ${building.name}</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f1eee7;color:#111618;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.shell{width:min(1380px,calc(100% - 28px));margin:0 auto;padding:24px 0 70px}header{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand a,.back{color:inherit;text-decoration:none;font-weight:850}.back{font-size:13px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:end;padding:54px 0 22px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.hero h1{font-family:Georgia,serif;font-size:clamp(46px,6vw,80px);font-weight:400;letter-spacing:-.05em;line-height:.94;margin:10px 0 16px}.lede{max-width:760px;font-size:18px;line-height:1.55;color:#535956}.test-box{background:#e8f0e9;border:1px solid #c9d8ca;border-radius:16px;padding:16px;line-height:1.5;font-size:13px}.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}.metric{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:16px}.metric span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#747a76}.metric strong{display:block;font-family:Georgia,serif;font-size:24px;font-weight:400;margin-top:7px}.status{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#111618;color:#fff;border-radius:18px;padding:16px 18px;margin:16px 0}.actions{display:flex;gap:8px;flex-wrap:wrap}.status button,.button{border:0;border-radius:999px;background:#fff;color:#111618;padding:10px 14px;font-weight:850;cursor:pointer}.button.secondary{background:#e9e5dd}.study{display:grid;gap:16px}.schedule{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.schedule-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:19px 21px;border-bottom:1px solid #e6e1d8}.schedule-head h2{font-family:Georgia,serif;font-size:27px;font-weight:400;margin:0}.schedule-head span{font-size:12px;color:#6b716e}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #eee9e1;font-size:12px;vertical-align:top}th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76;background:#faf9f6;position:sticky;top:0}.money{font-weight:800;white-space:nowrap}.room{font-weight:800}.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.note-card{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.note-card h3{margin:0 0 10px}.note-card ul{padding-left:18px;margin:0}.note-card li{margin:7px 0;line-height:1.45}.muted{font-size:12px;color:#6b716e;line-height:1.55}.warning{background:#fff4d7;border:1px solid #e4cf8d;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5}.good{color:#23663c}.bad{color:#9b3b2f}.evidence-table{max-height:440px;overflow:auto}.error{background:#fff0ee;border:1px solid #e3bdb7;color:#7c251c;border-radius:16px;padding:14px}@media print{header,.status,.no-print{display:none!important}.shell{width:100%;padding:0}.schedule{break-inside:avoid}.summary{grid-template-columns:repeat(5,1fr)}}@media(max-width:950px){.hero{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.notes{grid-template-columns:1fr}.schedule-head{flex-direction:column}}@media(max-width:520px){.summary{grid-template-columns:1fr}}
-</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><a class="back" href="/${building.slug}">← Back to ${building.id}</a></header><section class="hero"><div><p class="eyebrow">${building.id} · cost segregation screening</p><h1>Cost segregation inventory.</h1><p class="lede">A readable first-pass inventory built from the evidence currently available for ${building.name}, with the building envelope separated from room-level inventory.</p></div><div class="test-box"><strong>Screening study</strong><br>Replacement-cost ranges and proposed recovery classes are working estimates for review. They are not taxpayer basis, a certified appraisal, or tax advice.</div></section><section class="summary"><div class="metric"><span>Panorama completeness</span><strong id="panoPct">Checking…</strong></div><div class="metric"><span>Panoramas</span><strong id="panoCount">— / ${expectedSweeps || "?"}</strong></div><div class="metric"><span>Missing panos</span><strong id="panoMissing">—</strong></div><div class="metric"><span>OBJ in R2</span><strong id="objStatus">Checking…</strong></div><div class="metric"><span>Spatial index in R2</span><strong id="indexStatus">Checking…</strong></div></section><div id="geometryWarning" class="warning">Checking stored geometry evidence…</div><section class="status"><div id="statusText">Generating a first-pass study from current evidence…</div><div class="actions"><button id="regen" type="button">Regenerate</button><button id="csv" type="button">Export CSV</button><button id="print" type="button">Print / Save PDF</button></div></section><div id="study" class="study"></div><section class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>Panorama-derived evidence</h2><p class="muted">The visual inventory currently available to the study. Future ingestion batches include explicit room labels.</p></div><span id="evidenceCount">Checking…</span></div><div class="table-wrap evidence-table"><table><thead><tr><th>Room / area</th><th>Asset / component</th><th>Category</th><th>Qty</th><th>Confidence</th><th>Evidence sweeps</th></tr></thead><tbody id="evidenceRows"></tbody></table></div></section></main><script>
-const studyEl=document.getElementById("study"),statusText=document.getElementById("statusText"),regen=document.getElementById("regen"),csv=document.getElementById("csv"),printBtn=document.getElementById("print");
+</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><a class="back" href="/${building.slug}">← Back to ${building.id}</a></header><section class="hero"><div><p class="eyebrow">${building.id} · cost segregation screening</p><h1>Cost segregation inventory.</h1><p class="lede">A readable first-pass inventory built from the evidence currently available for ${building.name}, with the building envelope separated from room-level inventory.</p></div><div class="test-box"><strong>Screening study</strong><br>Replacement-cost ranges and proposed recovery classes are working estimates for review. They are not taxpayer basis, a certified appraisal, or tax advice.</div></section><section class="summary"><div class="metric"><span>Panorama completeness</span><strong id="panoPct">Checking…</strong></div><div class="metric"><span>Panoramas</span><strong id="panoCount">— / ${expectedSweeps || "?"}</strong></div><div class="metric"><span>Missing panos</span><strong id="panoMissing">—</strong></div><div class="metric"><span>OBJ in R2</span><strong id="objStatus">Checking…</strong></div><div class="metric"><span>Spatial index in R2</span><strong id="indexStatus">Checking…</strong></div></section><div id="geometryWarning" class="warning">Checking stored geometry evidence…</div><section class="schedule no-print" style="margin-top:12px"><div class="schedule-head"><div><h2>Geometry evidence</h2><p class="muted">Upload the MatterPak OBJ for this building. The original filename is preserved in R2; any filename ending in .obj is detected.</p></div><span id="uploadState">No upload running</span></div><div style="padding:18px 22px"><div class="actions"><input id="objFile" type="file" accept=".obj,text/plain"><button class="button secondary" id="uploadObj" type="button">Upload OBJ to R2</button></div><p class="muted">The OBJ is stored under this building's geometry folder and immediately becomes eligible as geometry evidence. Spatial-index generation is a separate step.</p></div></section><section class="status"><div id="statusText">Generating a first-pass study from current evidence…</div><div class="actions"><button id="regen" type="button">Regenerate</button><button id="csv" type="button">Export CSV</button><button id="print" type="button">Print / Save PDF</button></div></section><div id="study" class="study"></div><section class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>Panorama-derived evidence</h2><p class="muted">The visual inventory currently available to the study. Future ingestion batches include explicit room labels.</p></div><span id="evidenceCount">Checking…</span></div><div class="table-wrap evidence-table"><table><thead><tr><th>Room / area</th><th>Asset / component</th><th>Category</th><th>Qty</th><th>Confidence</th><th>Evidence sweeps</th></tr></thead><tbody id="evidenceRows"></tbody></table></div></section></main><script>
+const studyEl=document.getElementById("study"),statusText=document.getElementById("statusText"),regen=document.getElementById("regen"),csv=document.getElementById("csv"),printBtn=document.getElementById("print"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),uploadState=document.getElementById("uploadState");
 const usd=n=>n==null?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
 let currentStudy=null;
@@ -426,6 +426,20 @@ csv.onclick=()=>{
   rows.sort((a,b)=>a[0]==="Section"?-1:String(a[1]).localeCompare(String(b[1]))||String(a[2]).localeCompare(String(b[2])));
   const blob=new Blob([rows.map(r=>r.map(csvCell).join(",")).join("\\n")],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="${building.slug}-cost-seg-screening.csv";a.click();URL.revokeObjectURL(a.href);
+};
+uploadObj.onclick=async()=>{
+  const file=objFile.files&&objFile.files[0];
+  if(!file){uploadState.textContent="Choose an .obj file first.";return}
+  if(!/\.obj$/i.test(file.name)){uploadState.textContent="That file is not an .obj.";return}
+  uploadObj.disabled=true;uploadState.textContent="Uploading "+file.name+"…";
+  try{
+    const r=await fetch("/api/buildings/${building.id}/geometry",{method:"POST",headers:{"x-file-name":encodeURIComponent(file.name),"content-type":"text/plain"},body:file});
+    const data=await r.json();
+    if(!r.ok)throw new Error(data.error||"Upload failed.");
+    uploadState.textContent="Uploaded: "+data.fileName;
+    await loadEvidence();
+  }catch(e){uploadState.textContent="Upload failed: "+(e&&e.message?e.message:String(e))}
+  finally{uploadObj.disabled=false}
 };
 printBtn.onclick=()=>window.print();
 async function loadEvidence(){
@@ -739,6 +753,7 @@ const appWorker = {
     const url = new URL(request.url);
     const ingestVisualApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/ingest-visual$/);
     const evidenceApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/evidence$/);
+    const geometryApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/geometry$/);
     const costSegApiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})\/cost-seg$/);
     const apiMatch = url.pathname.match(/^\/api\/buildings\/(BLDG-\d{3})(?:\/(ask))?$/);
 
@@ -754,6 +769,35 @@ const appWorker = {
         return json({ summary: inventory.summary, batchItems: inventory.items?.length || 0, ...persistence });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Visual ingestion failed." }, 502);
+      }
+    }
+
+    if (geometryApiMatch && request.method === "POST") {
+      const building = BUILDINGS[geometryApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      if (!env.BUILDING_DATA) return json({ error: "R2 storage is not configured." }, 503);
+
+      const origin = request.headers.get("origin");
+      if (origin && origin !== "https://app.cinci360.com") return json({ error: "Cross-origin uploads are not allowed." }, 403);
+
+      const rawName = decodeURIComponent(request.headers.get("x-file-name") || "building.obj").trim();
+      const safeName = rawName.replace(/[^A-Za-z0-9._ -]/g, "_").replace(/\s+/g, "-").slice(0, 180);
+      if (!/\.obj$/i.test(safeName)) return json({ error: "Upload must be an .obj file." }, 400);
+      if (!request.body) return json({ error: "OBJ file body is missing." }, 400);
+
+      const key = `buildings/${building.id}/geometry/${safeName}`;
+      try {
+        await env.BUILDING_DATA.put(key, request.body, {
+          httpMetadata: { contentType: "text/plain; charset=utf-8" },
+          customMetadata: {
+            buildingId: building.id,
+            originalFileName: rawName,
+            uploadedAt: new Date().toISOString()
+          }
+        });
+        return json({ uploaded: true, key, fileName: safeName });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "OBJ upload failed." }, 502);
       }
     }
 
