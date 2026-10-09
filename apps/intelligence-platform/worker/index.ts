@@ -8,6 +8,16 @@ interface Env {
   BUILDING_DATA?: any;
 }
 
+function matterportSdkKey(env: Env) {
+  const direct = env.MATTERPORT_SDK_KEY;
+  if (direct) return direct;
+  try {
+    const nodeValue = typeof process !== "undefined" ? process.env?.MATTERPORT_SDK_KEY : undefined;
+    if (nodeValue) return nodeValue;
+  } catch {}
+  return "";
+}
+
 type Building = {
   id: string;
   slug: string;
@@ -1254,7 +1264,7 @@ const appWorker = {
 
     if (url.pathname === "/api/config-status" && request.method === "GET") {
       return json({
-        matterportSdkConfigured: Boolean(env.MATTERPORT_SDK_KEY),
+        matterportSdkConfigured: Boolean(matterportSdkKey(env)),
         openAiConfigured: Boolean(env.OPENAI_API_KEY),
         r2Configured: Boolean(env.BUILDING_DATA)
       });
@@ -1274,13 +1284,13 @@ const appWorker = {
     const ingestPageMatch = url.pathname.match(/^\/(crc|bell|vues)\/ingest$/);
     if (ingestPageMatch) {
       const building = BUILDINGS_BY_SLUG[ingestPageMatch[1]];
-      return new Response(ingestionHtml(building, env.MATTERPORT_SDK_KEY || ""), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return new Response(ingestionHtml(building, matterportSdkKey(env)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     const evidenceLocationMatch = url.pathname.match(/^\/(crc|bell|vues)\/evidence$/);
     if (evidenceLocationMatch) {
       const building = BUILDINGS_BY_SLUG[evidenceLocationMatch[1]];
-      return new Response(evidenceLocationHtml(building, env.MATTERPORT_SDK_KEY || ""), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return new Response(evidenceLocationHtml(building, matterportSdkKey(env)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     if (url.pathname === "/crc/cost-seg" || url.pathname === "/crc/cost-segregation") {
