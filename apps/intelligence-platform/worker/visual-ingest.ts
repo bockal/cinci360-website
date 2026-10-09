@@ -177,38 +177,42 @@ export async function loadPersistedGeometryEvidence(building: any, env: any) {
     objPresent: false,
     spatialIndexPresent: false,
     objKey: null,
+    objFileName: null,
     spatialIndexKey: null,
     spatialIndex: null
   };
   if (!env.BUILDING_DATA) return result;
 
-  const prefix = `buildings/${building.id}/geometry`;
-  const objCandidates = [
-    `${prefix}/model.obj`,
-    `${prefix}/matterpak.obj`,
-    `${prefix}/mesh.obj`
-  ];
-  for (const key of objCandidates) {
-    const head = await env.BUILDING_DATA.head(key).catch(() => null);
-    if (head) {
-      result.objPresent = true;
-      result.objKey = key;
-      break;
-    }
+  const prefix = `buildings/${building.id}/geometry/`;
+
+  // Geometry filenames are not standardized. Discover by extension instead of
+  // assuming model.obj / matterpak.obj / mesh.obj.
+  try {
+    let cursor: string | undefined;
+    do {
+      const listed = await env.BUILDING_DATA.list({ prefix, cursor });
+      for (const item of listed.objects || []) {
+        const key = String(item.key || "");
+        const name = key.split("/").pop() || "";
+        if (!result.objPresent && /\.obj$/i.test(name)) {
+          result.objPresent = true;
+          result.objKey = key;
+          result.objFileName = name;
+        }
+        if (!result.spatialIndexPresent && /(?:spatial[-_ ]?index|geometry[-_ ]?summary).*\.json$/i.test(name)) {
+          const object = await env.BUILDING_DATA.get(key).catch(() => null);
+          if (object) {
+            result.spatialIndexPresent = true;
+            result.spatialIndexKey = key;
+            result.spatialIndex = await object.json().catch(() => null);
+          }
+        }
+      }
+      cursor = listed.truncated ? listed.cursor : undefined;
+    } while (cursor && (!result.objPresent || !result.spatialIndexPresent));
+  } catch {
+    // Keep an explicit "missing" status if R2 listing temporarily fails.
   }
 
-  const indexCandidates = [
-    `${prefix}/spatial-index.json`,
-    `${prefix}/geometry-summary.json`
-  ];
-  for (const key of indexCandidates) {
-    const object = await env.BUILDING_DATA.get(key).catch(() => null);
-    if (object) {
-      result.spatialIndexPresent = true;
-      result.spatialIndexKey = key;
-      result.spatialIndex = await object.json().catch(() => null);
-      break;
-    }
-  }
   return result;
 }
