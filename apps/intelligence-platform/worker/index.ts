@@ -1266,10 +1266,27 @@ const appWorker = {
     }
 
     if (url.pathname === "/api/config-status" && request.method === "GET") {
+      let processMatterport = false;
+      let processMatterportPublic = false;
+      try {
+        processMatterport = Boolean(typeof process !== "undefined" && process.env?.MATTERPORT_SDK_KEY);
+        processMatterportPublic = Boolean(typeof process !== "undefined" && process.env?.MATTERPORT_SDK_KEY_PUBLIC);
+      } catch {}
+      const runtimeBindingNames = Object.keys(env || {}).filter(name =>
+        /^(MATTERPORT|OPENAI|BUILDING_DATA|SKIP_)/.test(name)
+      ).sort();
       return json({
+        diagnosticVersion: "bindings-2026-10-09-a",
         matterportSdkConfigured: Boolean(matterportSdkKey(env)),
+        matterportSecretBindingPresent: Object.prototype.hasOwnProperty.call(env || {}, "MATTERPORT_SDK_KEY"),
+        matterportPublicBindingPresent: Object.prototype.hasOwnProperty.call(env || {}, "MATTERPORT_SDK_KEY_PUBLIC"),
+        matterportSecretBindingNonEmpty: Boolean(env.MATTERPORT_SDK_KEY),
+        matterportPublicBindingNonEmpty: Boolean(env.MATTERPORT_SDK_KEY_PUBLIC),
+        processMatterportConfigured: processMatterport,
+        processMatterportPublicConfigured: processMatterportPublic,
         openAiConfigured: Boolean(env.OPENAI_API_KEY),
-        r2Configured: Boolean(env.BUILDING_DATA)
+        r2Configured: Boolean(env.BUILDING_DATA),
+        runtimeBindingNames
       });
     }
 
