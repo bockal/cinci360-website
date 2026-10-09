@@ -5,14 +5,17 @@ interface Env {
   OPENAI_API_KEY?: string;
   OPENAI_GBI_MODEL?: string;
   MATTERPORT_SDK_KEY?: string;
+  MATTERPORT_SDK_KEY_PUBLIC?: string;
   BUILDING_DATA?: any;
 }
 
 function matterportSdkKey(env: Env) {
-  const direct = env.MATTERPORT_SDK_KEY;
-  if (direct) return direct;
+  const browserKey = env.MATTERPORT_SDK_KEY_PUBLIC || env.MATTERPORT_SDK_KEY;
+  if (browserKey) return browserKey;
   try {
-    const nodeValue = typeof process !== "undefined" ? process.env?.MATTERPORT_SDK_KEY : undefined;
+    const nodeValue = typeof process !== "undefined"
+      ? (process.env?.MATTERPORT_SDK_KEY_PUBLIC || process.env?.MATTERPORT_SDK_KEY)
+      : undefined;
     if (nodeValue) return nodeValue;
   } catch {}
   return "";
