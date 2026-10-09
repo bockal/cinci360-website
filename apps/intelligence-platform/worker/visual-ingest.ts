@@ -9,7 +9,123 @@ export type VisualObservation = {
   evidenceSweepIds: string[];
   duplicateGroup: string;
   notes: string;
+  spatialAnchors?: Array<{ sweepId: string; x: number; y: number; z: number; floor?: number | null }>;
 };
+
+
+type ConsolidatedInventoryRecord = {
+  inventoryId: string;
+  canonicalType: string;
+  room: string;
+  visibleName: string;
+  category: string;
+  quantity: number;
+  confidence: number;
+  evidenceSweepIds: string[];
+  observationIds: string[];
+  spatialAnchors: Array<{ sweepId: string; x: number; y: number; z: number; floor?: number | null }>;
+  countMethod: "max-observed-deduplicated" | "single-observation";
+  notes: string;
+};
+
+function cleanWords(value: any) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function canonicalAssetType(item: any) {
+  const text = cleanWords([item.visibleName, item.category, item.description].filter(Boolean).join(" "));
+  if (/\b(rowing shell|rowing shells|racing shell|racing shells|boat shell|boat shells|rowing boat|rowing boats)\b/.test(text)) return "rowing-shell";
+  if (/\b(ergometer|ergometers|rowing erg|rowing ergs|indoor rowing machine|indoor rowing machines|concept2)\b/.test(text)) return "rowing-ergometer";
+  if (/\b(boat rack|boat racks|shell rack|shell racks|rowing rack|rowing racks)\b/.test(text)) return "rowing-shell-rack";
+  const name = cleanWords(item.visibleName || item.category || "observed-asset")
+    .replace(/\b(movable|equipment|sports|fitness|visible|observed|indoor)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return name.replace(/\s+/g, "-") || "observed-asset";
+}
+
+function canonicalRoom(item: any, canonicalType: string) {
+  const room = cleanWords(item.room || "Whole Building / Unassigned");
+  if (canonicalType === "rowing-shell" && /(boat|boathouse|workshop).*(storage|hall|bay)|(storage|hall|bay).*(boat|boathouse|workshop)/.test(room)) {
+    return "Boat Storage Hall";
+  }
+  if (canonicalType === "rowing-ergometer" && /main hall/.test(room)) return "Main Hall";
+  if (!room || room === "whole building unassigned") return "Whole Building / Unassigned";
+  return String(item.room || "Whole Building / Unassigned").trim();
+}
+
+function fnv1a(value: string) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36).toUpperCase();
+}
+
+function mergeAnchors(items: any[]) {
+  const seen = new Set<string>();
+  const anchors: any[] = [];
+  for (const item of items) {
+    for (const a of Array.isArray(item?.spatialAnchors) ? item.spatialAnchors : []) {
+      const x = Number(a?.x), y = Number(a?.y), z = Number(a?.z);
+      if (![x,y,z].every(Number.isFinite)) continue;
+      const key = String(a?.sweepId || "") + ":" + x.toFixed(2) + ":" + y.toFixed(2) + ":" + z.toFixed(2);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      anchors.push({ sweepId: String(a?.sweepId || ""), x, y, z, floor: a?.floor ?? null });
+    }
+  }
+  return anchors;
+}
+
+export function consolidateVisualInventory(building: any, observations: any[]): ConsolidatedInventoryRecord[] {
+  const groups = new Map<string, any[]>();
+  for (const item of Array.isArray(observations) ? observations : []) {
+    const canonicalType = canonicalAssetType(item);
+    const room = canonicalRoom(item, canonicalType);
+    const key = canonicalType + "|" + cleanWords(room);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(item);
+  }
+
+  const out: ConsolidatedInventoryRecord[] = [];
+  for (const [key, group] of groups) {
+    const canonicalType = canonicalAssetType(group[0]);
+    const room = canonicalRoom(group[0], canonicalType);
+    const quantities = group.map(x => Number(x?.quantity || 0)).filter(x => Number.isFinite(x) && x > 0);
+    // Repeated panoramas are alternate observations of the same room-level inventory.
+    // Never sum repeated grouped counts; use the most complete observed count.
+    const quantity = quantities.length ? Math.max(...quantities) : 1;
+    const confidence = group.reduce((best, x) => Math.max(best, Number(x?.confidence || 0)), 0);
+    const evidenceSweepIds = Array.from(new Set(group.flatMap(x => Array.isArray(x?.evidenceSweepIds) ? x.evidenceSweepIds.map(String) : [])));
+    const observationIds = Array.from(new Set(group.map((x, i) => String(x?.assetId || x?.duplicateGroup || "obs-" + i))));
+    const spatialAnchors = mergeAnchors(group);
+    const strongest = [...group].sort((a,b) => Number(b?.confidence || 0) - Number(a?.confidence || 0))[0] || group[0];
+    const visibleName = canonicalType === "rowing-shell"
+      ? "Rowing shells"
+      : canonicalType === "rowing-ergometer"
+        ? "Rowing ergometers"
+        : String(strongest?.visibleName || strongest?.category || "Observed asset");
+    out.push({
+      inventoryId: "INV-" + String(building?.id || "BLDG").replace(/[^A-Za-z0-9]/g, "") + "-" + fnv1a(key),
+      canonicalType,
+      room,
+      visibleName,
+      category: String(strongest?.category || ""),
+      quantity,
+      confidence,
+      evidenceSweepIds,
+      observationIds,
+      spatialAnchors,
+      countMethod: group.length > 1 ? "max-observed-deduplicated" : "single-observation",
+      notes: group.length > 1
+        ? "Consolidated from " + group.length + " panorama observations; repeated counts were not summed."
+        : String(strongest?.notes || "")
+    });
+  }
+  return out.sort((a,b) => a.room.localeCompare(b.room) || a.visibleName.localeCompare(b.visibleName));
+}
 
 export async function loadPersistedVisualEvidence(building: any, env: any) {
   if (!env.BUILDING_DATA) return null;
@@ -42,6 +158,9 @@ export async function loadPersistedVisualEvidence(building: any, env: any) {
   const processed = panoListingSucceeded ? persistedPanos : storedProcessed;
   data.processedSweepIds = Array.from(processed);
   data.processedSweepCount = processed.size;
+  const observations = Array.isArray(data.items) ? data.items : [];
+  data.consolidatedInventory = consolidateVisualInventory(building, observations);
+  data.consolidatedItemCount = data.consolidatedInventory.length;
   return data;
 }
 
@@ -144,8 +263,18 @@ export async function persistVisualBatch(building: any, captures: any[], invento
       : Array.from(new Set(existing.flatMap((item: any) => Array.isArray(item?.evidenceSweepIds) ? item.evidenceSweepIds : [])));
   const analyzedSweepIds = new Set<string>(priorAnalyzed);
   const byKey = new Map<string, any>();
+  const captureBySweep = new Map<string, any>(captures.map((capture: any) => [String(capture.sweepId), capture]));
+  const incoming = (inventory.items || []).map((item: any) => {
+    const anchors = (item.evidenceSweepIds || []).map((sid: any) => {
+      const capture = captureBySweep.get(String(sid));
+      const p = capture?.position;
+      if (!p || ![Number(p.x), Number(p.y), Number(p.z)].every(Number.isFinite)) return null;
+      return { sweepId: String(sid), x: Number(p.x), y: Number(p.y), z: Number(p.z), floor: capture?.floor ?? null };
+    }).filter(Boolean);
+    return { ...item, spatialAnchors: anchors };
+  });
 
-  for (const item of [...existing, ...(inventory.items || [])]) {
+  for (const item of [...existing, ...incoming]) {
     const key = (item.duplicateGroup || item.assetId || `${item.category}:${item.visibleName}:${item.description}`).toLowerCase();
     const current = byKey.get(key);
     if (!current || item.confidence > current.confidence) byKey.set(key, item);
@@ -160,24 +289,28 @@ export async function persistVisualBatch(building: any, captures: any[], invento
     await env.BUILDING_DATA.put(`${prefix}/panos/${capture.sweepId}.jpg`, bytes, { httpMetadata: { contentType: "image/jpeg" } });
   }
 
+  const rawItems = Array.from(byKey.values());
+  const consolidatedInventory = consolidateVisualInventory(building, rawItems);
   const combined = {
     buildingId: building.id,
     matterportSid: building.matterportSid,
     updatedAt: new Date().toISOString(),
     summary: inventory.summary,
-    itemCount: byKey.size,
+    itemCount: rawItems.length,
+    consolidatedItemCount: consolidatedInventory.length,
     analyzedSweepCount: analyzedSweepIds.size,
     analyzedSweepIds: Array.from(analyzedSweepIds),
     processedSweepCount: analyzedSweepIds.size,
     processedSweepIds: Array.from(analyzedSweepIds),
-    items: Array.from(byKey.values())
+    items: rawItems,
+    consolidatedInventory
   };
 
   await env.BUILDING_DATA.put(`${prefix}/observations/latest.json`, JSON.stringify(combined, null, 2), {
     httpMetadata: { contentType: "application/json" }
   });
 
-  return { persisted: true, itemCount: byKey.size, analyzedSweepCount: analyzedSweepIds.size, analyzedSweepIds: Array.from(analyzedSweepIds), processedSweepCount: analyzedSweepIds.size, processedSweepIds: Array.from(analyzedSweepIds) };
+  return { persisted: true, itemCount: rawItems.length, consolidatedItemCount: consolidatedInventory.length, analyzedSweepCount: analyzedSweepIds.size, analyzedSweepIds: Array.from(analyzedSweepIds), processedSweepCount: analyzedSweepIds.size, processedSweepIds: Array.from(analyzedSweepIds) };
 }
 
 
@@ -315,10 +448,17 @@ export async function analyzeStoredPanorama(building: any, sweepId: string, env:
   const object = await env.BUILDING_DATA.get(`buildings/${building.id}/panos/${safeSweep}.jpg`);
   if (!object) throw new Error("Stored panorama was not found in R2.");
   const bytes = new Uint8Array(await object.arrayBuffer());
+  let storedPosition: any = null;
+  let storedFloor: any = null;
+  try {
+    const custom = object.customMetadata || {};
+    if (custom.position) storedPosition = JSON.parse(custom.position);
+    if (custom.floor !== "" && custom.floor != null) storedFloor = Number(custom.floor);
+  } catch {}
   const capture = {
     sweepId: safeSweep,
-    floor: metadata.floor ?? null,
-    position: metadata.position ?? null,
+    floor: metadata.floor ?? storedFloor ?? null,
+    position: metadata.position ?? storedPosition ?? null,
     imageDataUri: bytesToDataUri(bytes, "image/jpeg")
   };
   const inventory = await analyzeVisualCaptures(building, [capture], env);
