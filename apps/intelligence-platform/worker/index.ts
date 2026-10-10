@@ -408,8 +408,8 @@ When BUILDING_EVIDENCE.geometryAnalysis.envelopeTakeoff is present, you MUST use
 - exterior perimeter,
 - gross and net exterior wall area,
 - roof area and roof slope,
-- door-like opening candidates,
-- window-like opening candidates.
+- door-like opening candidates, including each candidate width × height when available,
+- window-like opening candidates, including each candidate width × height when available.
 Put the measured quantity directly in each row's "quantity" field using feet, square feet, count, and dimensions as appropriate. Preserve the distinction between geometry-measured quantities and semantic opening candidates that still require visual confirmation.
 Do not replace measured envelope quantities with generic assumptions.
 All other sections should represent shorter-life or separately reviewable inventory/components.
@@ -463,8 +463,17 @@ Include 3-8 useful sections when evidence supports them. Keep the study detailed
     if (takeoff.grossExteriorWallAreaFt2) addMeasured("Measured gross exterior wall area", Math.round(Number(takeoff.grossExteriorWallAreaFt2)).toLocaleString("en-US") + " sf", "MEASURED / SCREENING from perimeter × geometry-derived story heights.", 84);
     if (takeoff.netExteriorWallAreaFt2) addMeasured("Measured net exterior wall area", Math.round(Number(takeoff.netExteriorWallAreaFt2)).toLocaleString("en-US") + " sf", "MEASURED / SCREENING gross wall area less detected opening screen area.", 74);
     if (takeoff.roofAreaFt2) addMeasured("Measured roof surface area", Math.round(Number(takeoff.roofAreaFt2)).toLocaleString("en-US") + " sf · avg slope " + Number(takeoff.roofAverageSlopeDegrees || 0).toFixed(1) + "°", "MEASURED / SCREENING from roof mesh surfaces present in MatterPak OBJ.", 78);
-    if (Number(takeoff.doorLikeOpeningCount || 0) > 0) addMeasured("Door-like opening candidates", String(takeoff.doorLikeOpeningCount) + " candidates", "MEASURED opening widths from multi-height OBJ wall slices; semantic door identity requires panorama confirmation.", 62);
-    if (Number(takeoff.windowLikeOpeningCount || 0) > 0) addMeasured("Window-like opening candidates", String(takeoff.windowLikeOpeningCount) + " candidates", "MEASURED opening widths from multi-height OBJ wall slices; semantic window identity requires panorama confirmation.", 58);
+    const openings = Array.isArray(takeoff.openingCandidates) ? takeoff.openingCandidates : [];
+    const doorCandidates = openings.filter((x: any) => x.kind === "door-like opening");
+    const windowCandidates = openings.filter((x: any) => x.kind === "window-like opening");
+    if (doorCandidates.length) {
+      const dims = doorCandidates.slice(0, 12).map((x: any) => Number(x.widthFt).toFixed(2) + " × " + Number(x.estimatedHeightFt).toFixed(2) + " ft").join("; ");
+      addMeasured("Door-like opening candidates", doorCandidates.length + " candidates · " + dims, "MEASURED opening widths from multi-height OBJ wall slices; candidate heights are screening estimates and semantic door identity requires panorama confirmation.", 62);
+    }
+    if (windowCandidates.length) {
+      const dims = windowCandidates.slice(0, 12).map((x: any) => Number(x.widthFt).toFixed(2) + " × " + Number(x.estimatedHeightFt).toFixed(2) + " ft").join("; ");
+      addMeasured("Window-like opening candidates", windowCandidates.length + " candidates · " + dims, "MEASURED opening widths from multi-height OBJ wall slices; candidate heights are screening estimates and semantic window identity requires panorama confirmation.", 58);
+    }
   }
   const sumRange = (items: CostSegItem[]) => {
     let low = 0, high = 0, anyLow = false, anyHigh = false;
@@ -732,13 +741,12 @@ async function loadEvidence(){
     document.getElementById("objFootprint").textContent=firstFloorArea?(num(firstFloorArea)+" sq ft · floor 1"):ga&&ga.footprintHullAreaFt2?(num(ga.footprintHullAreaFt2)+" sq ft"):"—";
     document.getElementById("objVolume").textContent=ga&&ga.modelEnvelopeVolumeFt3?(num(ga.modelEnvelopeVolumeFt3)+" ft³"):"—";
     const et=ga&&ga.envelopeTakeoff?ga.envelopeTakeoff:null;
-    if(et){
-      document.getElementById("objLimitations").textContent=((ga.limitations||[]).join(" "))+" Envelope takeoff: "+num(et.exteriorPerimeterFt)+" lf perimeter · "+num(et.grossExteriorWallAreaFt2)+" sf gross wall · "+num(et.roofAreaFt2)+" sf roof · "+(et.doorLikeOpeningCount||0)+" door-like / "+(et.windowLikeOpeningCount||0)+" window-like opening candidates.";
-    }
     document.getElementById("objMaterials").textContent=ga&&ga.materialUsageCount!=null?num(ga.materialUsageCount):"—";
     document.getElementById("objMtl").textContent=ga&&ga.supportFiles?num((ga.supportFiles.mtlFiles||[]).length):"—";
     document.getElementById("objTextures").textContent=ga&&ga.supportFiles?num((ga.supportFiles.textureFiles||[]).length):"—";
-    document.getElementById("objLimitations").textContent=ga&&Array.isArray(ga.limitations)?ga.limitations.join(" · "):"OBJ evidence will populate after geometry analysis.";
+    document.getElementById("objLimitations").textContent=ga&&Array.isArray(ga.limitations)
+      ? ga.limitations.join(" · ")+(et?(" · Envelope takeoff: "+num(et.exteriorPerimeterFt)+" lf perimeter · "+num(et.grossExteriorWallAreaFt2)+" sf gross wall · "+num(et.roofAreaFt2)+" sf roof · "+(et.doorLikeOpeningCount||0)+" door-like / "+(et.windowLikeOpeningCount||0)+" window-like opening candidates."):"")
+      :"OBJ evidence will populate after geometry analysis.";
     const geometryArea=ga&&(ga.grossFloorAreaEstimateFt2||ga.footprintHullAreaFt2);
     if(geometryArea){
       document.getElementById("buildingArea").textContent=num(geometryArea)+" sq ft";
