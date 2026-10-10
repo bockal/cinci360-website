@@ -402,6 +402,16 @@ Confidence values are integers 0-100.
 For every item, set "room" to the most specific supported room/area (for example Main Hall, Foyer, Sitting Room, Exterior Entry, Whole Building / Unassigned). Use visual evidence descriptions and room fields when available; do not invent unsupported room names.
 Set "roomDimensions" only when dimensions are directly supported by published facts or geometry analysis; otherwise return an empty string. Never invent room dimensions from appearance alone.
 Create a dedicated first section titled exactly "Building Envelope & Structure" for the base building/structure/enclosure. Do not mix movable inventory or room-level personal property into that section.
+When BUILDING_EVIDENCE.geometryAnalysis.envelopeTakeoff is present, you MUST use its measured quantities in this section. Include separate rows when supported for:
+- gross floor/slab area,
+- ceiling area,
+- exterior perimeter,
+- gross and net exterior wall area,
+- roof area and roof slope,
+- door-like opening candidates,
+- window-like opening candidates.
+Put the measured quantity directly in each row's "quantity" field using feet, square feet, count, and dimensions as appropriate. Preserve the distinction between geometry-measured quantities and semantic opening candidates that still require visual confirmation.
+Do not replace measured envelope quantities with generic assumptions.
 All other sections should represent shorter-life or separately reviewable inventory/components.
 Include 3-8 useful sections when evidence supports them. Keep the study detailed enough to evaluate a first-pass cost-segregation inventory.`;
 
@@ -423,7 +433,39 @@ Include 3-8 useful sections when evidence supports them. Keep the study detailed
   parsed.buildingName = building.name;
 
   const sections = Array.isArray(parsed.sections) ? parsed.sections : [];
-  const envelopeSection = sections.find(section => String(section?.title || "").toLowerCase() === "building envelope & structure") || null;
+  let envelopeSection = sections.find(section => String(section?.title || "").toLowerCase() === "building envelope & structure") || null;
+  if (!envelopeSection) {
+    envelopeSection = { title: "Building Envelope & Structure", sectionConfidence: 70, items: [] };
+    sections.unshift(envelopeSection);
+    parsed.sections = sections;
+  }
+  const takeoff = (geometryAnalysis as any)?.envelopeTakeoff || null;
+  if (takeoff) {
+    const existing = new Set((envelopeSection.items || []).map((item: any) => String(item?.component || "").toLowerCase()));
+    const addMeasured = (component: string, quantity: string, basis: string, confidence = 82) => {
+      if (existing.has(component.toLowerCase())) return;
+      envelopeSection.items.push({
+        room: "Whole Building / Envelope",
+        roomDimensions: "",
+        component,
+        quantity,
+        evidenceBasis: basis,
+        replacementCostLow: null,
+        replacementCostHigh: null,
+        proposedClass: "39-year building candidate",
+        confidence
+      });
+      existing.add(component.toLowerCase());
+    };
+    if (takeoff.floorAreaFt2) addMeasured("Measured floor / slab area", Math.round(Number(takeoff.floorAreaFt2)).toLocaleString("en-US") + " sf", "MEASURED from MatterPak OBJ floor reconstruction.", 92);
+    if (takeoff.ceilingAreaFt2) addMeasured("Measured ceiling area", Math.round(Number(takeoff.ceilingAreaFt2)).toLocaleString("en-US") + " sf", "MEASURED / SCREENING from reconstructed floor area; verify vaulted/open-to-below conditions.", 82);
+    if (takeoff.exteriorPerimeterFt) addMeasured("Measured exterior perimeter", Number(takeoff.exteriorPerimeterFt).toLocaleString("en-US") + " lf", "MEASURED from evidence-derived footprint boundary.", 88);
+    if (takeoff.grossExteriorWallAreaFt2) addMeasured("Measured gross exterior wall area", Math.round(Number(takeoff.grossExteriorWallAreaFt2)).toLocaleString("en-US") + " sf", "MEASURED / SCREENING from perimeter × geometry-derived story heights.", 84);
+    if (takeoff.netExteriorWallAreaFt2) addMeasured("Measured net exterior wall area", Math.round(Number(takeoff.netExteriorWallAreaFt2)).toLocaleString("en-US") + " sf", "MEASURED / SCREENING gross wall area less detected opening screen area.", 74);
+    if (takeoff.roofAreaFt2) addMeasured("Measured roof surface area", Math.round(Number(takeoff.roofAreaFt2)).toLocaleString("en-US") + " sf · avg slope " + Number(takeoff.roofAverageSlopeDegrees || 0).toFixed(1) + "°", "MEASURED / SCREENING from roof mesh surfaces present in MatterPak OBJ.", 78);
+    if (Number(takeoff.doorLikeOpeningCount || 0) > 0) addMeasured("Door-like opening candidates", String(takeoff.doorLikeOpeningCount) + " candidates", "MEASURED opening widths from multi-height OBJ wall slices; semantic door identity requires panorama confirmation.", 62);
+    if (Number(takeoff.windowLikeOpeningCount || 0) > 0) addMeasured("Window-like opening candidates", String(takeoff.windowLikeOpeningCount) + " candidates", "MEASURED opening widths from multi-height OBJ wall slices; semantic window identity requires panorama confirmation.", 58);
+  }
   const sumRange = (items: CostSegItem[]) => {
     let low = 0, high = 0, anyLow = false, anyHigh = false;
     for (const item of items || []) {
@@ -664,7 +706,7 @@ let autoAnalysisAttempted=false;
 async function loadEvidence(){
   try{
     let r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});let data=await r.json();
-    const needsGeometryRefresh=data.geometry&&data.geometry.objPresent&&(!data.geometryAnalysis||data.geometryAnalysis.algorithmVersion!=="wall-slice-v2.3-spatial-objects");
+    const needsGeometryRefresh=data.geometry&&data.geometry.objPresent&&(!data.geometryAnalysis||data.geometryAnalysis.algorithmVersion!=="wall-slice-v2.4-envelope-takeoff");
     if(needsGeometryRefresh&&!autoAnalysisAttempted){
       autoAnalysisAttempted=true;
       reportProgress.textContent=data.geometryAnalysis?"Upgrading floor-plan reconstruction from stored MatterPak…":"OBJ found · deriving geometry evidence…";
@@ -689,6 +731,10 @@ async function loadEvidence(){
     const firstFloorArea=floorPlans.length?floorPlans[0].areaFt2:null;
     document.getElementById("objFootprint").textContent=firstFloorArea?(num(firstFloorArea)+" sq ft · floor 1"):ga&&ga.footprintHullAreaFt2?(num(ga.footprintHullAreaFt2)+" sq ft"):"—";
     document.getElementById("objVolume").textContent=ga&&ga.modelEnvelopeVolumeFt3?(num(ga.modelEnvelopeVolumeFt3)+" ft³"):"—";
+    const et=ga&&ga.envelopeTakeoff?ga.envelopeTakeoff:null;
+    if(et){
+      document.getElementById("objLimitations").textContent=((ga.limitations||[]).join(" "))+" Envelope takeoff: "+num(et.exteriorPerimeterFt)+" lf perimeter · "+num(et.grossExteriorWallAreaFt2)+" sf gross wall · "+num(et.roofAreaFt2)+" sf roof · "+(et.doorLikeOpeningCount||0)+" door-like / "+(et.windowLikeOpeningCount||0)+" window-like opening candidates.";
+    }
     document.getElementById("objMaterials").textContent=ga&&ga.materialUsageCount!=null?num(ga.materialUsageCount):"—";
     document.getElementById("objMtl").textContent=ga&&ga.supportFiles?num((ga.supportFiles.mtlFiles||[]).length):"—";
     document.getElementById("objTextures").textContent=ga&&ga.supportFiles?num((ga.supportFiles.textureFiles||[]).length):"—";
