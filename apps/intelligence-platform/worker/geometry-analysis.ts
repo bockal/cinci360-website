@@ -10,6 +10,19 @@ type FloorPlanResult = {
   depthM: number;
   widthFt: number;
   depthFt: number;
+  perimeterM: number;
+  perimeterFt: number;
+  worldBoundsMeters: { minX: number; minY: number; maxX: number; maxY: number };
+  openingCandidates: Array<{
+    id: string;
+    kind: "door-like opening" | "window-like opening";
+    widthM: number;
+    widthFt: number;
+    estimatedHeightM: number;
+    estimatedHeightFt: number;
+    centerMeters: [number, number, number];
+    confidence: number;
+  }>;
   roomCandidates: Array<{
     id: string;
     areaM2: number;
@@ -186,6 +199,41 @@ function runsToSvg(mask: Uint8Array, width: number, height: number, cellPx: numb
   return out;
 }
 
+
+function maskHasNearby(mask: Uint8Array, width: number, height: number, x: number, y: number, radius = 1) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    const yy = y + dy;
+    if (yy < 0 || yy >= height) continue;
+    for (let dx = -radius; dx <= radius; dx++) {
+      const xx = x + dx;
+      if (xx < 0 || xx >= width) continue;
+      if (mask[yy * width + xx]) return true;
+    }
+  }
+  return false;
+}
+
+function componentPrincipalWidth(cells: number[], width: number, cellM: number) {
+  if (!cells.length) return 0;
+  let cx = 0, cy = 0;
+  for (const idx of cells) { cx += idx % width; cy += Math.floor(idx / width); }
+  cx /= cells.length; cy /= cells.length;
+  let cxx = 0, cyy = 0, cxy = 0;
+  for (const idx of cells) {
+    const dx = (idx % width) - cx, dy = Math.floor(idx / width) - cy;
+    cxx += dx * dx; cyy += dy * dy; cxy += dx * dy;
+  }
+  const angle = 0.5 * Math.atan2(2 * cxy, cxx - cyy);
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  let min = Infinity, max = -Infinity;
+  for (const idx of cells) {
+    const dx = (idx % width) - cx, dy = Math.floor(idx / width) - cy;
+    const u = dx * ux + dy * uy;
+    min = Math.min(min, u); max = Math.max(max, u);
+  }
+  return Math.max(cellM, (max - min + 1) * cellM);
+}
+
 function buildFloorPlan(
   building: any,
   floorIndex: number,
@@ -285,6 +333,75 @@ function buildFloorPlan(
     }
   }
 
+  // Multi-height wall slices provide a geometry-only screen for exterior openings.
+  // These are candidates until panorama evidence confirms door/window semantics.
+  const sliceOffsets = [0.25, 0.8, 1.3, 1.8, 2.2, 2.5];
+  const heightSlices = sliceOffsets.map(offset => {
+    const grid = new Uint8Array(width * height);
+    const z = floorZ + offset;
+    for (let i = 0; i < verticalFaces.length; i += 3) {
+      const ia = verticalFaces[i], ib = verticalFaces[i + 1], ic = verticalFaces[i + 2];
+      const az = vertices[ia * 3 + 2], bz = vertices[ib * 3 + 2], cz = vertices[ic * 3 + 2];
+      if (z < Math.min(az, bz, cz) || z > Math.max(az, bz, cz)) continue;
+      const seg = intersectTriangleAtZ(vertices, ia, ib, ic, z);
+      if (!seg) continue;
+      const len = Math.hypot(seg[1].x - seg[0].x, seg[1].y - seg[0].y);
+      if (len < 0.06 || len > 12) continue;
+      drawGridLine(
+        grid, width, height,
+        (seg[0].x - minX) / effectiveCell, (maxY - seg[0].y) / effectiveCell,
+        (seg[1].x - minX) / effectiveCell, (maxY - seg[1].y) / effectiveCell
+      );
+    }
+    const cropped = new Uint8Array(cropW * cropH);
+    for (let y = minGY; y <= maxGY; y++) for (let x = minGX; x <= maxGX; x++) {
+      if (grid[y * width + x]) cropped[(y - minGY) * cropW + (x - minGX)] = 1;
+    }
+    return dilate(cropped, cropW, cropH, 1);
+  });
+
+  const doorMask = new Uint8Array(boundary.length);
+  const windowMask = new Uint8Array(boundary.length);
+  for (let y = 1; y < cropH - 1; y++) for (let x = 1; x < cropW - 1; x++) {
+    const idx = y * cropW + x;
+    if (!boundary[idx]) continue;
+    const occ = heightSlices.map(mask => maskHasNearby(mask, cropW, cropH, x, y, 1));
+    const highClosure = occ[4] || occ[5];
+    if (!highClosure) continue;
+    if (!occ[0] && !occ[1] && !occ[2] && !occ[3]) doorMask[idx] = 1;
+    else if ((occ[0] || occ[1]) && !occ[2] && !occ[3]) windowMask[idx] = 1;
+  }
+
+  const openingCandidates: FloorPlanResult["openingCandidates"] = [];
+  function addOpenings(mask: Uint8Array, kind: "door-like opening" | "window-like opening") {
+    const components = connectedComponents(mask, cropW, cropH);
+    let sequence = 0;
+    for (const cells of components) {
+      if (cells.length < 2) continue;
+      const widthM = componentPrincipalWidth(cells, cropW, effectiveCell);
+      if (widthM < 0.55 || widthM > 6.5) continue;
+      let sx = 0, sy = 0;
+      for (const idx of cells) { sx += idx % cropW; sy += Math.floor(idx / cropW); }
+      const gx = minGX + sx / cells.length;
+      const gy = minGY + sy / cells.length;
+      const worldX = minX + gx * effectiveCell;
+      const worldY = maxY - gy * effectiveCell;
+      const estimatedHeightM = kind === "door-like opening" ? 2.15 : 1.35;
+      openingCandidates.push({
+        id: `ENV-${String(building?.id || "BLDG").replace(/[^A-Za-z0-9]/g, "")}-F${floorIndex}-OPEN-${++sequence}`,
+        kind,
+        widthM: round(widthM, 2),
+        widthFt: round(widthM * M_TO_FT, 2),
+        estimatedHeightM,
+        estimatedHeightFt: round(estimatedHeightM * M_TO_FT, 2),
+        centerMeters: [round(worldX, 3), round(worldY, 3), round(floorZ + estimatedHeightM / 2, 3)],
+        confidence: kind === "door-like opening" ? 0.58 : 0.52
+      });
+    }
+  }
+  addOpenings(doorMask, "door-like opening");
+  addOpenings(windowMask, "window-like opening");
+
   // Room candidates: close smaller gaps in the interior-wall network and flood
   // the footprint. These are geometric spaces, not semantic room names.
   const roomWalls = dilate(croppedWalls, cropW, cropH, Math.max(1, Math.round(0.35 / effectiveCell)));
@@ -326,6 +443,21 @@ function buildFloorPlan(
   const areaM2 = mainCells.length * effectiveCell * effectiveCell;
   const widthM = (maxGX - minGX + 1) * effectiveCell;
   const depthM = (maxGY - minGY + 1) * effectiveCell;
+  let perimeterEdges = 0;
+  for (const idx of mainCells) {
+    const x = idx % width, y = Math.floor(idx / width);
+    if (x === 0 || !mainSet[idx - 1]) perimeterEdges++;
+    if (x === width - 1 || !mainSet[idx + 1]) perimeterEdges++;
+    if (y === 0 || !mainSet[idx - width]) perimeterEdges++;
+    if (y === height - 1 || !mainSet[idx + width]) perimeterEdges++;
+  }
+  const perimeterM = perimeterEdges * effectiveCell;
+  const worldBoundsMeters = {
+    minX: round(minX + minGX * effectiveCell, 3),
+    minY: round(maxY - maxGY * effectiveCell, 3),
+    maxX: round(minX + maxGX * effectiveCell, 3),
+    maxY: round(maxY - minGY * effectiveCell, 3)
+  };
 
   const svgW = 1100, svgH = 760, pad = 64;
   const px = Math.min((svgW - pad * 2) / cropW, (svgH - pad * 2) / cropH);
@@ -369,6 +501,10 @@ ${labels}
     depthM: round(depthM, 2),
     widthFt: round(widthM * M_TO_FT, 1),
     depthFt: round(depthM * M_TO_FT, 1),
+    perimeterM: round(perimeterM, 2),
+    perimeterFt: round(perimeterM * M_TO_FT, 1),
+    worldBoundsMeters,
+    openingCandidates,
     roomCandidates,
     svg
   };
@@ -613,6 +749,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
   let faceCount = 0;
   const vertices: number[] = [];
   const verticalFaces: number[] = [];
+  const surfaceFaces: number[] = [];
   const horizontalHistogram = new Map<number, number>();
   const binSize = 0.15;
   const usedMaterials = new Set<string>();
@@ -627,6 +764,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     faceCount++;
     if (m.absNz > 0.88 && m.area > 0.003) addHistogram(horizontalHistogram, m.centroidZ, m.area, binSize);
     if (m.absNz < 0.72 && m.maxZ - m.minZ > 0.18) verticalFaces.push(ia, ib, ic);
+    if (m.absNz > 0.18) surfaceFaces.push(ia, ib, ic);
   }
 
   function handleLine(line: string) {
@@ -714,18 +852,91 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
   const representativeFootprintM2 = floors.length ? floors[0].areaM2 : 0;
   const envelopeVolumeM3 = representativeFootprintM2 * heightM;
 
+  const storyHeightsM = floors.map((floor, index) => {
+    const next = floors[index + 1];
+    if (next) return Math.max(2.2, Math.min(6.5, next.floorZ - floor.floorZ));
+    const fallback = Math.max(2.4, Math.min(5.5, (maxZ - floor.floorZ) * 0.45));
+    return fallback;
+  });
+  const exteriorPerimeterM = floors.reduce((sum, floor) => sum + Number(floor.perimeterM || 0), 0);
+  const exteriorWallAreaM2 = floors.reduce((sum, floor, index) => sum + Number(floor.perimeterM || 0) * storyHeightsM[index], 0);
+
+  let roofAreaM2 = 0, roofHorizontalProjectionM2 = 0, roofSlopeWeighted = 0;
+  const topFloor = floors[floors.length - 1];
+  if (topFloor) {
+    const roofMinZ = topFloor.floorZ + Math.max(1.8, (storyHeightsM[storyHeightsM.length - 1] || 2.8) * 0.45);
+    const wb = topFloor.worldBoundsMeters;
+    for (let i = 0; i < surfaceFaces.length; i += 3) {
+      const ia = surfaceFaces[i], ib = surfaceFaces[i + 1], ic = surfaceFaces[i + 2];
+      const m = triangleMetrics(vertices, ia, ib, ic);
+      const cx = (m.ax + m.bx + m.cx) / 3, cy = (m.ay + m.by + m.cy) / 3;
+      if (m.centroidZ < roofMinZ) continue;
+      if (cx < wb.minX - 1.5 || cx > wb.maxX + 1.5 || cy < wb.minY - 1.5 || cy > wb.maxY + 1.5) continue;
+      if (m.absNz < 0.18) continue;
+      roofAreaM2 += m.area;
+      const projected = m.area * m.absNz;
+      roofHorizontalProjectionM2 += projected;
+      roofSlopeWeighted += projected * Math.acos(Math.min(1, Math.max(0, m.absNz)));
+    }
+  }
+  const roofAvgSlopeDeg = roofHorizontalProjectionM2 > 0 ? roofSlopeWeighted / roofHorizontalProjectionM2 * 180 / Math.PI : 0;
+
+  const allOpenings = floors.flatMap(floor => floor.openingCandidates.map(opening => ({ ...opening, floor: floor.floor })));
+  const doorLike = allOpenings.filter(x => x.kind === "door-like opening");
+  const windowLike = allOpenings.filter(x => x.kind === "window-like opening");
+  const openingAreaM2 = allOpenings.reduce((sum, x) => sum + x.widthM * x.estimatedHeightM, 0);
+
+  const envelopeTakeoff = {
+    algorithmVersion: "envelope-takeoff-v1",
+    classification: "MEASURED / SCREENING",
+    floorAreaM2: round(grossFloorAreaEstimateM2, 2),
+    floorAreaFt2: round(grossFloorAreaEstimateFt2, 0),
+    ceilingAreaM2: round(grossFloorAreaEstimateM2, 2),
+    ceilingAreaFt2: round(grossFloorAreaEstimateFt2, 0),
+    exteriorPerimeterM: round(exteriorPerimeterM, 2),
+    exteriorPerimeterFt: round(exteriorPerimeterM * M_TO_FT, 1),
+    grossExteriorWallAreaM2: round(exteriorWallAreaM2, 2),
+    grossExteriorWallAreaFt2: round(exteriorWallAreaM2 * M2_TO_FT2, 0),
+    openingScreenAreaM2: round(openingAreaM2, 2),
+    openingScreenAreaFt2: round(openingAreaM2 * M2_TO_FT2, 0),
+    netExteriorWallAreaM2: round(Math.max(0, exteriorWallAreaM2 - openingAreaM2), 2),
+    netExteriorWallAreaFt2: round(Math.max(0, exteriorWallAreaM2 - openingAreaM2) * M2_TO_FT2, 0),
+    roofAreaM2: round(roofAreaM2, 2),
+    roofAreaFt2: round(roofAreaM2 * M2_TO_FT2, 0),
+    roofHorizontalProjectionM2: round(roofHorizontalProjectionM2, 2),
+    roofHorizontalProjectionFt2: round(roofHorizontalProjectionM2 * M2_TO_FT2, 0),
+    roofAverageSlopeDegrees: round(roofAvgSlopeDeg, 1),
+    doorLikeOpeningCount: doorLike.length,
+    windowLikeOpeningCount: windowLike.length,
+    openingCandidates: allOpenings,
+    floors: floors.map((floor, index) => ({
+      floor: floor.floor,
+      floorAreaFt2: floor.areaFt2,
+      perimeterFt: floor.perimeterFt,
+      estimatedStoryHeightFt: round(storyHeightsM[index] * M_TO_FT, 1),
+      grossExteriorWallAreaFt2: round(floor.perimeterM * storyHeightsM[index] * M2_TO_FT2, 0)
+    })),
+    limitations: [
+      "Exterior wall, floor, ceiling, perimeter, and roof quantities are geometry-derived screening measurements from the OBJ mesh.",
+      "Door-like and window-like opening candidates are detected from multi-height wall-slice discontinuities and require panorama confirmation before being treated as semantic door/window counts.",
+      "Opening candidate heights are screening estimates; widths are geometry-derived from the detected wall opening.",
+      "Roof area depends on roof surfaces being present in the MatterPak mesh and can be incomplete where capture did not include the roof."
+    ]
+  };
+
   const analysis: any = {
     buildingId: building.id,
     sourceObjKey: objKey,
     analyzedAt: new Date().toISOString(),
-    algorithmVersion: "wall-slice-v2.3-spatial-objects",
+    algorithmVersion: "wall-slice-v2.4-envelope-takeoff",
     classification: "MEASURED / SCREENING",
     limitations: [
       "Floor plans are reconstructed from OBJ mesh wall intersections and are not signed architectural drawings.",
       "Floor elevations are detected from horizontal mesh evidence; published floor count is used only as a selection aid when available.",
       "Room candidates are geometric enclosed spaces and are not semantically named until matched to panorama evidence.",
       "Model envelope volume is not a conditioned HVAC load volume.",
-      "Spatial object candidates are OBJ-derived geometry screening results. Semantic identity and crew class require visual confirmation before being treated as verified inventory."
+      "Spatial object candidates are OBJ-derived geometry screening results. Semantic identity and crew class require visual confirmation before being treated as verified inventory.",
+      "Envelope takeoff quantities are screening measurements derived from the MatterPak mesh; semantic opening types and incomplete roof capture must be verified."
     ],
     vertexCount,
     faceCount,
@@ -749,6 +960,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
       rowingShellCandidateCount: rowingShellCandidates.length,
       rowingShellCandidates
     },
+    envelopeTakeoff,
     floorPlans: floors.map(({ svg, ...rest }) => rest)
   };
 
