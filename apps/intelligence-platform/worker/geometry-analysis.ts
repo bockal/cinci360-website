@@ -737,6 +737,28 @@ function detectRowingShellCandidates(
   return deduped.sort((a, b) => a.floor - b.floor || a.centerMeters[1] - b.centerMeters[1] || a.centerMeters[0] - b.centerMeters[0]);
 }
 
+function tableSurfaceHull(points:Point[]){const sorted=[...points].sort((a,b)=>a.x-b.x||a.y-b.y),cross=(o:Point,a:Point,b:Point)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x),lower:Point[]=[],upper:Point[]=[];for(const p of sorted){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p)}for(const p of sorted.reverse()){while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p)}lower.pop();upper.pop();return lower.concat(upper)}
+// Find elevated, circular horizontal mesh patches. Geometry identifies shape;
+// the visual asset class supplies semantic association, never object-count totals.
+export function detectRoundTableCandidates(vertices:number[],surfaceFaces:number[],floorLevels:number[]){
+ const grid=0.07,layers=new Map<string,Map<string,{x:number;y:number}>>();
+ for(let i=0;i<surfaceFaces.length;i+=3){const m=triangleMetrics(vertices,surfaceFaces[i],surfaceFaces[i+1],surfaceFaces[i+2]);if(m.absNz<0.94||m.maxZ-m.minZ>0.10||m.area<0.00005)continue;
+  const floor=floorLevels.findIndex(z=>m.centroidZ-z>=0.55&&m.centroidZ-z<=1.25);if(floor<0)continue;const level=Math.round(m.centroidZ/0.05),layerKey=floor+":"+level;let cells=layers.get(layerKey);if(!cells){cells=new Map();layers.set(layerKey,cells)}
+  const loX=Math.floor(Math.min(m.ax,m.bx,m.cx)/grid),hiX=Math.floor(Math.max(m.ax,m.bx,m.cx)/grid),loY=Math.floor(Math.min(m.ay,m.by,m.cy)/grid),hiY=Math.floor(Math.max(m.ay,m.by,m.cy)/grid);if((hiX-loX+1)*(hiY-loY+1)>20000)continue;
+  const den=(m.by-m.cy)*(m.ax-m.cx)+(m.cx-m.bx)*(m.ay-m.cy);if(Math.abs(den)<1e-12)continue;
+  for(let x=loX;x<=hiX;x++)for(let y=loY;y<=hiY;y++){const px=(x+.5)*grid,py=(y+.5)*grid,a=((m.by-m.cy)*(px-m.cx)+(m.cx-m.bx)*(py-m.cy))/den,b=((m.cy-m.ay)*(px-m.cx)+(m.ax-m.cx)*(py-m.cy))/den;if(a>=-.001&&b>=-.001&&a+b<=1.001)cells.set(x+","+y,{x,y});}
+ }
+ const candidates:any[]=[];
+ for(const [key,cells]of layers){const [floor,level]=key.split(":").map(Number),seen=new Set<string>();
+  for(const [start]of cells){if(seen.has(start))continue;const queue=[start],points:Array<{x:number;y:number}>=[];seen.add(start);for(let q=0;q<queue.length;q++){const cell=cells.get(queue[q])!;points.push({x:(cell.x+.5)*grid,y:(cell.y+.5)*grid});for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const next=(cell.x+dx)+","+(cell.y+dy);if(cells.has(next)&&!seen.has(next)){seen.add(next);queue.push(next)}}}if(points.length<45)continue;
+   const hull=tableSurfaceHull(points);if(hull.length<6)continue;let twiceArea=0,perimeter=0,minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(let j=0;j<hull.length;j++){const a=hull[j],b=hull[(j+1)%hull.length];twiceArea+=a.x*b.y-b.x*a.y;perimeter+=Math.hypot(b.x-a.x,b.y-a.y);minX=Math.min(minX,a.x);maxX=Math.max(maxX,a.x);minY=Math.min(minY,a.y);maxY=Math.max(maxY,a.y)}const area=Math.abs(twiceArea)/2,width=maxX-minX+grid,depth=maxY-minY+grid,circularity=4*Math.PI*area/(perimeter*perimeter),ratio=Math.min(width,depth)/Math.max(width,depth),coverage=points.length*grid*grid/(width*depth);if(circularity<.90||ratio<.85||coverage<.58||area<.30||area>5.5)continue;
+   const diameter=(width+depth)/2,height=level*.05-floorLevels[floor],center:[number,number,number]=[(minX+maxX)/2,(minY+maxY)/2,level*.05];if(candidates.some(c=>c.floor===floor+1&&Math.hypot(c.centerMeters[0]-center[0],c.centerMeters[1]-center[1])<.30&&Math.abs(c.centerMeters[2]-center[2])<.16))continue;
+   candidates.push({id:"TABLE-TOP-"+(floor+1)+"-"+candidates.length,floor:floor+1,centerMeters:center.map(v=>round(v,3)),diameterFt:round(diameter*M_TO_FT,2),heightFt:round(height*M_TO_FT,2),circularity:round(circularity,3),confidence:Math.min(88,Math.round(65+(circularity-.90)*180)),basis:"OBJ elevated circular horizontal surface; table identity associated through visual inventory"});
+  }
+ }
+ return candidates;
+}
+
 export async function analyzeObjGeometry(building: any, env: any, objKey: string) {
   if (!env.BUILDING_DATA) throw new Error("R2 storage is not configured.");
   const object = await env.BUILDING_DATA.get(objKey);
@@ -817,6 +839,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
   }
 
   const rowingShellCandidates = detectRowingShellCandidates(building, vertices, floorLevels, bounds);
+  const roundTableCandidates=detectRoundTableCandidates(vertices,surfaceFaces,floorLevels);
 
   const supportFiles: any = {
     mtlFiles: [],
@@ -928,7 +951,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     buildingId: building.id,
     sourceObjKey: objKey,
     analyzedAt: new Date().toISOString(),
-    algorithmVersion: "wall-slice-v2.4-envelope-takeoff",
+    algorithmVersion: "wall-slice-v2.5-asset-dimensions",
     classification: "MEASURED / SCREENING",
     limitations: [
       "Floor plans are reconstructed from OBJ mesh wall intersections and are not signed architectural drawings.",
@@ -957,6 +980,7 @@ export async function analyzeObjGeometry(building: any, env: any, objKey: string
     modelEnvelopeVolumeFt3: round(envelopeVolumeM3 * M3_TO_FT3, 0),
     spatialObjects: {
       algorithmVersion: "obj-voxel-pca-v1",
+      roundTableCandidates,
       rowingShellCandidateCount: rowingShellCandidates.length,
       rowingShellCandidates
     },
@@ -1010,3 +1034,4 @@ export async function loadFloorPlanSvg(building: any, env: any) {
   const object = await env.BUILDING_DATA.get(`buildings/${building.id}/geometry/floor-plan.svg`);
   return object ? object.text().catch(() => null) : null;
 }
+
