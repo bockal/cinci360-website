@@ -533,19 +533,16 @@ Include 3-8 useful sections when evidence supports them. Keep the study detailed
   return parsed;
 }
 
-function generatedCostSegHtml(building: Building) {
-  const expectedSweeps = Number((building.evidence as any).expectedSweepCount || 0) || 0;
-  const publishedSqFt = Number((building.evidence as any)?.publishedFacts?.sizeSquareFeet || 0) || null;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · Cost Segregation · ${building.name}</title><style>
+function generatedCostSegHtml(building: Building, sdkKey: string = "") {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cost Segregation · ${building.name}</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f1eee7;color:#111618;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.shell{width:min(1420px,calc(100% - 28px));margin:0 auto;padding:24px 0 70px}header{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand a,.back{color:inherit;text-decoration:none;font-weight:850}.back{font-size:13px}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:end;padding:52px 0 20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.hero h1{font-family:Georgia,serif;font-size:clamp(46px,6vw,78px);font-weight:400;letter-spacing:-.05em;line-height:.94;margin:10px 0 16px}.lede{max-width:760px;font-size:18px;line-height:1.55;color:#535956}.test-box{background:#e8f0e9;border:1px solid #c9d8ca;border-radius:16px;padding:16px;line-height:1.5;font-size:13px}.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0 24px}.metric{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:16px}.metric span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#747a76}.metric strong{display:block;font-family:Georgia,serif;font-size:23px;font-weight:400;margin-top:7px}.metric small{display:block;margin-top:5px;font-size:10px;color:#777}.status{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#111618;color:#fff;border-radius:18px;padding:16px 18px;margin:16px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status button,.button{border:0;border-radius:999px;background:#fff;color:#111618;padding:10px 14px;font-weight:850;cursor:pointer}.button.secondary{background:#e9e5dd}.study{display:grid;gap:16px}.room-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 16px}.room-summary-card{background:#fff;border:1px solid #d7d2c9;border-radius:16px;padding:14px}.room-summary-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76}.room-summary-card strong{display:block;font-family:Georgia,serif;font-size:20px;font-weight:400;margin-top:6px}.room-summary-card small{display:block;margin-top:5px;color:#6b716e}.report-progress{font-size:12px;color:#dfe4e1;white-space:normal}.regen-progress{display:none;margin-top:9px;min-width:280px;max-width:520px}.regen-progress.active{display:block}.regen-track{height:6px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden}.regen-bar{height:100%;width:34%;border-radius:999px;background:#fff;animation:regen-scan 1.25s ease-in-out infinite}.regen-meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:#dfe4e1}.regen-live{font-weight:800}@keyframes regen-scan{0%{transform:translateX(-110%)}50%{transform:translateX(190%)}100%{transform:translateX(410%)}}@media (prefers-reduced-motion:reduce){.regen-bar{animation:none;width:100%;opacity:.65}}.schedule{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.schedule-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:19px 21px;border-bottom:1px solid #e6e1d8}.schedule-head h2{font-family:Georgia,serif;font-size:27px;font-weight:400;margin:0}.schedule-head span{font-size:12px;color:#6b716e}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1160px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #eee9e1;font-size:12px;vertical-align:top}th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76;background:#faf9f6;position:sticky;top:0;cursor:pointer;user-select:none}th:hover{color:#111618}.money{font-weight:800;white-space:nowrap}.room{font-weight:800}.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.note-card{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.note-card h3{margin:0 0 10px}.note-card ul{padding-left:18px;margin:0}.note-card li{margin:7px 0;line-height:1.45}.muted{font-size:12px;color:#6b716e;line-height:1.55}.warning{background:#fff4d7;border:1px solid #e4cf8d;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5}.good{color:#23663c}.bad{color:#9b3b2f}.pill{font-size:11px;border:1px solid #d8d3ca;border-radius:999px;padding:6px 9px;background:#faf9f6}.evidence-table{max-height:440px;overflow:auto}.floorplan-wrap{padding:18px 22px}.floorplan-wrap img{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border:1px solid #ddd7cc;border-radius:14px;background:#fff}.obj-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px 22px}.obj-card{border:1px solid #e4dfd6;background:#faf9f6;border-radius:14px;padding:13px}.obj-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#747a76}.obj-card strong{display:block;font-size:18px;margin-top:6px}.sweep-links{display:flex;flex-wrap:wrap;gap:5px}.sweep-links a{display:inline-block;border:1px solid #d8d3ca;border-radius:999px;padding:4px 7px;text-decoration:none;color:#111618;background:#fff;font-size:10px}.error{background:#fff0ee;border:1px solid #e3bdb7;color:#7c251c;border-radius:16px;padding:14px}@media print{@page{size:letter landscape;margin:.35in}html,body{width:100%;margin:0;background:#fff;overflow:visible!important}header,.status,.no-print{display:none!important}.shell{width:100%!important;max-width:none;padding:0}.hero{padding:12px 0;grid-template-columns:1.1fr .9fr}.hero h1{font-size:32px}.lede{font-size:12px}.study{display:block}.schedule{overflow:visible!important;break-inside:auto;border-radius:0;margin-top:12px}.schedule-head{break-after:avoid;flex-direction:row;padding:10px}.schedule-head h2{font-size:20px}.table-wrap,.evidence-table{overflow:visible!important;max-height:none!important}table{width:100%!important;min-width:0!important;table-layout:fixed}th,td{position:static;white-space:normal!important;overflow-wrap:anywhere;padding:5px;font-size:9px;line-height:1.35}th{font-size:8px;letter-spacing:0}thead{display:table-header-group}tfoot{display:table-footer-group}tr{break-inside:avoid}.money{white-space:normal}.print-inventory>summary,#inventorySearch{display:none!important}#evidenceRows tr{display:table-row!important}.summary{grid-template-columns:repeat(6,1fr)}.notes{grid-template-columns:1fr 1fr}.metric{padding:8px}.metric strong{font-size:18px}.floorplan-wrap img{max-height:6in;object-fit:contain}.obj-grid{grid-template-columns:repeat(4,1fr)}}@media(max-width:1100px){.summary{grid-template-columns:repeat(3,1fr)}}@media(max-width:950px){.hero{grid-template-columns:1fr}.notes{grid-template-columns:1fr}.schedule-head{flex-direction:column}.obj-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.summary{grid-template-columns:1fr 1fr}}
-</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><a class="back" href="/${building.slug}">← Back to ${building.id}</a></header><section class="hero"><div><p class="eyebrow">${building.id} · cost segregation screening</p><h1>Cost segregation inventory.</h1><p class="lede">A room-aware first-pass inventory built from panorama evidence and uploaded geometry, with the building envelope separated from shorter-life assets.</p></div><div class="test-box"><strong>Screening study</strong><br>Replacement-cost ranges and proposed recovery classes are working estimates for review. They are not taxpayer basis, a certified appraisal, or tax advice.</div></section><section class="summary"><div class="metric"><span>Geometry-derived area</span><strong id="buildingArea">Checking…</strong><small id="buildingAreaSource">${publishedSqFt ? "Published comparison: "+publishedSqFt.toLocaleString("en-US")+" sq ft" : "Laser/photogrammetry evidence"}</small></div><div class="metric"><span>Panorama completeness</span><strong id="panoPct">Checking…</strong><small id="panoCount">— / ${expectedSweeps || "?"}</small></div><div class="metric"><span>Missing panos</span><strong id="panoMissing">—</strong><small>Visual evidence gap</small></div><div class="metric"><span>OBJ in R2</span><strong id="objStatus">Checking…</strong><small id="objName">Geometry source</small></div><div class="metric"><span>Geometry analysis</span><strong id="analysisStatus">Checking…</strong><small>Derived dimensions + plan</small></div><div class="metric"><span>Model envelope volume</span><strong id="volumeValue">—</strong><small>Screening only; not HVAC load volume</small></div></section><div id="geometryWarning" class="warning">Checking stored geometry evidence…</div><div class="actions no-print" style="margin:12px 0"><a class="button secondary" style="text-decoration:none" href="/${building.slug}/ingest">Open Intelligence ingestion workflow →</a></div><section class="schedule no-print" style="margin-top:12px"><div class="schedule-head"><div><h2>Geometry evidence</h2><p class="muted">Upload the MatterPak geometry package here — OBJ plus MTL and texture images when present — then analyze the OBJ.</p></div><span id="uploadState">Ready</span></div><div style="padding:18px 22px"><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button class="button secondary" id="uploadObj" type="button">Upload MatterPak ZIP / files to R2</button><button class="button secondary" id="analyzeObj" type="button">Analyze OBJ</button></div></div></section><section id="floorPlanSection" class="schedule" style="margin-top:16px;display:none"><div class="schedule-head"><div><h2>Evidence-derived floor plan</h2><p class="muted">Reconstructed from horizontal floor evidence and vertical wall slices in the MatterPak OBJ, with exterior/context geometry filtered out. This is an automated screening plan, not a signed architectural drawing.</p></div><span id="planStatus">Generated</span></div><div class="floorplan-wrap"><img id="floorPlanImg" alt="OBJ top-down floor-plan preview"></div></section><section id="objEvidenceSection" class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>OBJ-derived evidence</h2><p class="muted">Measured or directly derived geometry from the uploaded OBJ and companion MatterPak files. This is separate from panorama observations.</p></div><span id="objEvidenceStatus">Checking…</span></div><div id="objEvidenceBody"><div class="obj-grid"><div class="obj-card"><span>OBJ file</span><strong id="objEvidenceFile">—</strong></div><div class="obj-card"><span>Mesh</span><strong id="objMesh">—</strong></div><div class="obj-card"><span>Model extents</span><strong id="objExtents">—</strong></div><div class="obj-card"><span>Footprint screening</span><strong id="objFootprint">—</strong></div><div class="obj-card"><span>Envelope volume</span><strong id="objVolume">—</strong></div><div class="obj-card"><span>Materials used</span><strong id="objMaterials">—</strong></div><div class="obj-card"><span>MTL files</span><strong id="objMtl">—</strong></div><div class="obj-card"><span>Texture files</span><strong id="objTextures">—</strong></div></div><div style="padding:0 22px 18px"><p id="objLimitations" class="muted"></p></div></div></section><section class="status"><div style="min-width:0;flex:1"><div id="statusText">Generating a first-pass study from current evidence…</div><div id="reportProgress" class="report-progress">Checking evidence completeness…</div><div id="regenProgress" class="regen-progress" role="status" aria-live="polite"><div class="regen-track" aria-hidden="true"><div class="regen-bar"></div></div><div class="regen-meta"><span id="regenStage" class="regen-live">Preparing recalculation…</span><span id="regenElapsed">Elapsed 0s</span></div></div></div><div class="actions"><a id="resumePanos" class="button secondary" style="display:none;text-decoration:none" href="/${building.slug}/ingest">Resume pano collection</a><button id="regen" type="button">Regenerate</button><button id="csv" type="button">Export CSV</button><button id="print" type="button">Print / Save PDF</button></div></section><div id="roomSummary" class="room-summary"></div><div id="study" class="study"></div><section class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>Consolidated panorama inventory</h2><p class="muted">Repeated panorama observations are reconciled into one inventory record per asset class / area; counts are not summed across duplicate views. Click any header to sort.</p></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end"><input id="inventorySearch" type="search" placeholder="Search inventory…" aria-label="Search consolidated inventory" style="min-width:220px;border:1px solid #d7d2c9;border-radius:999px;padding:9px 12px;font:inherit;background:#fff;color:#111618"><span id="evidenceCount">Checking…</span></div></div><div class="table-wrap evidence-table"><table class="sortable"><thead><tr><th>Room / area</th><th>Asset / component</th><th>Category</th><th data-number="1">Qty</th><th>Spatial / OBJ check</th><th data-number="1">Confidence</th><th>Evidence sweeps</th></tr></thead><tbody id="evidenceRows"></tbody></table></div></section><section class="schedule" style="margin-top:16px"><div class="schedule-head"><div><h2>Evidence library</h2><p class="muted">Everything currently stored in R2 for this building that can support analysis: panoramas, geometry, materials/textures, documents, and derived analysis.</p></div><span id="assetCount">Checking…</span></div><div id="assetSummary" style="padding:14px 20px"></div><div class="table-wrap evidence-table"><table class="sortable"><thead><tr><th>Type</th><th>File / asset</th><th data-number="1">Size</th><th>R2 path</th></tr></thead><tbody id="assetRows"></tbody></table></div></section></main><script>
-const studyEl=document.getElementById("study"),statusText=document.getElementById("statusText"),reportProgress=document.getElementById("reportProgress"),resumePanos=document.getElementById("resumePanos"),roomSummary=document.getElementById("roomSummary"),regen=document.getElementById("regen"),csv=document.getElementById("csv"),printBtn=document.getElementById("print"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),uploadState=document.getElementById("uploadState"),regenProgress=document.getElementById("regenProgress"),regenStage=document.getElementById("regenStage"),regenElapsed=document.getElementById("regenElapsed"),inventorySearch=document.getElementById("inventorySearch");
+
+.viewer{height:560px;background:#111}.viewer iframe{width:100%;height:100%;border:0}.sweep-links button{border:1px solid #d8d3ca;border-radius:999px;padding:5px 8px;background:#fff;cursor:pointer}.schedule[hidden]{display:none}.table-wrap{max-height:none}.filter{padding:10px 12px;border:1px solid #d7d2c9;border-radius:999px;font:inherit}.hero{padding:24px 0 16px}.hero h1{font-size:42px}.hero p{font-size:14px}.nav{display:flex;gap:12px;margin:16px 0}.nav a{color:inherit}.review-note{padding:12px;font-size:12px;line-height:1.5}@media print{#adjusterRows tr{display:table-row!important}.nav,#evidenceViewer,.sweep-links,.filter{display:none!important}}
+</style></head><body><main class="shell"><header><a class="back" href="/">Cinci360 Intelligence</a><span>${building.id} · ${building.name}</span></header><nav class="nav no-print"><a href="/${building.slug}">Building Intelligence</a><a href="/${building.slug}/evidence">Evidence</a><a href="/${building.slug}/ingest">Update evidence</a></nav><section class="hero"><div><h1>Cost segregation study.</h1><p>${building.name} · Asset quantities, dimensions, and replacement-cost screening for review.</p></div></section><div class="status"><div><strong id="statusText" role="status">Loading study…</strong><div id="reportProgress" class="report-progress" aria-live="polite"></div></div><div class="actions"><button id="regen">Regenerate</button><button id="csv" disabled>Download CSV</button><button id="print" disabled>Print / PDF</button></div></div><section class="schedule"><div class="schedule-head"><h2>Adjuster work table</h2><input class="filter no-print" id="inventorySearch" type="search" placeholder="Search inventory…" aria-label="Search inventory"></div><div class="table-wrap"><table class="sortable"><thead><tr><th>Room / area</th><th>Dimensions</th><th>Asset / component</th><th>Qty / extent</th><th>Evidence basis</th><th data-number="1">Replacement-cost range</th><th>Proposed class</th><th data-number="1">Confidence</th><th class="no-print">Evidence</th></tr></thead><tbody id="adjusterRows"></tbody></table></div><div id="reviewNotes" class="review-note"></div></section><section id="evidenceViewer" class="schedule no-print" hidden style="margin-top:16px"><div class="schedule-head"><div><h2>Selected evidence location</h2><p id="viewerStatus" role="status">Opening model…</p></div><button class="button secondary" id="closeViewer">Hide model</button></div><div class="viewer"><iframe id="evidenceModel" title="Selected building evidence" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe></div></section></main><script type="module">
+const rows=document.getElementById("adjusterRows"),statusText=document.getElementById("statusText"),reportProgress=document.getElementById("reportProgress"),regen=document.getElementById("regen"),csv=document.getElementById("csv"),printBtn=document.getElementById("print"),search=document.getElementById("inventorySearch");
+const esc=v=>String(v??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
 const usd=n=>n==null?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
-const num=n=>n==null?"—":new Intl.NumberFormat("en-US",{maximumFractionDigits:0}).format(n);
-const bytes=n=>{n=Number(n||0);if(n<1024)return n+" B";if(n<1048576)return (n/1024).toFixed(1)+" KB";if(n<1073741824)return (n/1048576).toFixed(1)+" MB";return (n/1073741824).toFixed(2)+" GB"};
-const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
-const sweepLinks=ids=>"<div class='sweep-links'>"+(ids||[]).map((sid,i)=>"<a href='/${building.slug}/evidence?sweep="+encodeURIComponent(sid)+"' target='_blank' rel='noopener' title='Open this evidence location'>View "+(i+1)+"</a>").join("")+"</div>";
-let currentStudy=null;
+let currentStudy=null,evidenceItems=[],displayedItems=[];
 function makeSortable(root=document){
   root.querySelectorAll("table.sortable").forEach(table=>{
     if(table.dataset.sortReady)return;table.dataset.sortReady="1";
@@ -565,291 +562,58 @@ function makeSortable(root=document){
     });
   });
 }
-function itemRows(items){
-  return items.map(item=>"<tr><td class='room'>"+esc(item.room||"Whole Building / Unassigned")+"</td><td>"+esc(item.roomDimensions||"—")+"</td><td><strong>"+esc(item.component||"")+"</strong></td><td>"+esc(item.quantity||"—")+"</td><td>"+esc(item.evidenceBasis||"")+"</td><td class='money' data-sort='"+esc(item.replacementCostLow??0)+"'>"+usd(item.replacementCostLow)+" – "+usd(item.replacementCostHigh)+"</td><td>"+esc(item.proposedClass||"")+"</td><td data-sort='"+esc(item.confidence??0)+"'>"+esc(item.confidence??0)+"%</td></tr>").join("");
-}
-function costTable(title,subtitle,items,confidence){
-  return "<section class='schedule'><div class='schedule-head'><div><h2>"+esc(title)+"</h2><p class='muted'>"+esc(subtitle)+"</p></div><span>"+(confidence==null?items.length+" rows":"Section confidence: "+esc(confidence)+"%")+"</span></div><div class='table-wrap'><table class='sortable'><thead><tr><th>Room / area</th><th>Room dimensions</th><th>Component</th><th>Qty / extent</th><th>Evidence basis</th><th data-number='1'>Replacement-cost range</th><th>Proposed class</th><th data-number='1'>Confidence</th></tr></thead><tbody>"+itemRows(items)+"</tbody></table></div></section>";
-}
-function render(data){
-  currentStudy=data;
-  const sections=data.sections||[];
-  const envelope=sections.find(s=>(s.title||"").toLowerCase()==="building envelope & structure")||null;
-  const inventory=[];
-  sections.filter(s=>s!==envelope).forEach(s=>(s.items||[]).forEach(item=>inventory.push({...item,section:s.title||"Inventory"})));
-  inventory.sort((a,b)=>String(a.room||"Whole Building / Unassigned").localeCompare(String(b.room||"Whole Building / Unassigned"))||String(a.component||"").localeCompare(String(b.component||"")));
-  const envHtml=envelope?costTable("Building Envelope & Structure","Base-building value is kept separate from room-level and shorter-life inventory.",envelope.items||[],envelope.sectionConfidence):"";
 
-  const rooms=new Map();
-  inventory.forEach(item=>{
-    const room=item.room||"Whole Building / Unassigned";
-    if(!rooms.has(room))rooms.set(room,{room,dimensions:new Set(),components:0,low:0,high:0,classes:new Set(),confidenceTotal:0,confidenceCount:0});
-    const r=rooms.get(room);r.components++;
-    if(item.roomDimensions)r.dimensions.add(item.roomDimensions);
-    if(Number.isFinite(Number(item.replacementCostLow)))r.low+=Number(item.replacementCostLow);
-    if(Number.isFinite(Number(item.replacementCostHigh)))r.high+=Number(item.replacementCostHigh);
-    if(item.proposedClass)r.classes.add(item.proposedClass);
-    if(Number.isFinite(Number(item.confidence))){r.confidenceTotal+=Number(item.confidence);r.confidenceCount++}
-  });
-  const roomRows=[...rooms.values()].sort((a,b)=>a.room.localeCompare(b.room)).map(r=>{
-    const avg=r.confidenceCount?Math.round(r.confidenceTotal/r.confidenceCount):0;
-    const dims=[...r.dimensions].join("; ")||"—";
-    const classes=[...r.classes].join(", ")||"—";
-    return "<tr><td class='room'>"+esc(r.room)+"</td><td>"+esc(dims)+"</td><td data-sort='"+r.components+"'>"+r.components+"</td><td class='money' data-sort='"+r.low+"'>"+usd(r.low||null)+" – "+usd(r.high||null)+"</td><td>"+esc(classes)+"</td><td data-sort='"+avg+"'>"+avg+"%</td></tr>";
-  }).join("");
-  roomSummary.innerHTML=[...rooms.values()].sort((a,b)=>b.high-a.high).slice(0,8).map(r=>"<div class='room-summary-card'><span>"+esc(r.room)+"</span><strong>"+usd(r.low||null)+" – "+usd(r.high||null)+"</strong><small>"+r.components+" components · "+(r.confidenceCount?Math.round(r.confidenceTotal/r.confidenceCount):0)+"% avg confidence</small></div>").join("");
-  const invHtml="<section class='schedule'><div class='schedule-head'><div><h2>Room totals</h2><p class='muted'>Running cost-seg total by room. Click any header to sort.</p></div><span>"+rooms.size+" rooms / areas</span></div><div class='table-wrap'><table class='sortable'><thead><tr><th>Room / area</th><th>Room dimensions</th><th data-number='1'>Components</th><th data-number='1'>Replacement-cost total</th><th>Proposed classes</th><th data-number='1'>Avg. confidence</th></tr></thead><tbody>"+roomRows+"</tbody></table></div><details class='print-inventory' style='padding:16px 20px'><summary style='cursor:pointer;font-weight:800'>Show detailed component inventory ("+inventory.length+" rows)</summary><div class='table-wrap' style='margin-top:12px'><table class='sortable'><thead><tr><th>Room / area</th><th>Room dimensions</th><th>Component</th><th>Qty / extent</th><th>Evidence basis</th><th data-number='1'>Replacement-cost range</th><th>Proposed class</th><th data-number='1'>Confidence</th></tr></thead><tbody>"+itemRows(inventory)+"</tbody></table></div></details></section>";
-  let missing="";(data.missingInputs||[]).forEach(x=>missing+="<li>"+esc(x)+"</li>");
-  let caveats="";(data.caveats||[]).forEach(x=>caveats+="<li>"+esc(x)+"</li>");
-  studyEl.innerHTML="<section class='schedule'><div class='schedule-head'><div><h2>Executive screening</h2><p class='muted'>"+esc(data.executiveSummary||"")+"</p></div><span>Overall confidence: "+esc(data.overallConfidence??0)+"%</span></div><div style='padding:18px 22px'><div class='room-summary'><div class='room-summary-card'><span>Building envelope & structure</span><strong>"+usd(data.envelopeReplacementCostLow)+" – "+usd(data.envelopeReplacementCostHigh)+"</strong><small>Kept separate from contents / movable inventory.</small></div><div class='room-summary-card'><span>Contents / movable inventory</span><strong>"+usd(data.inventoryReplacementCostLow)+" – "+usd(data.inventoryReplacementCostHigh)+"</strong><small>Equipment, furniture, specialty movable assets, and other non-envelope inventory.</small></div><div class='room-summary-card'><span>Combined supported replacement cost</span><strong>"+usd(data.totalReplacementCostLow)+" – "+usd(data.totalReplacementCostHigh)+"</strong><small>Screening total only; not taxpayer basis or insured value.</small></div></div><p class='muted'>Replacement-cost screening only. Where no external cost database is attached, ranges are AI screening estimates and should not be presented as database-cited rates.</p></div></section>"+envHtml+invHtml+"<section class='notes'><div class='note-card'><h3>Missing inputs</h3><ul>"+(missing||"<li>None listed.</li>")+"</ul></div><div class='note-card'><h3>Caveats</h3><ul>"+(caveats||"<li>None listed.</li>")+"</ul></div></section>";
-  makeSortable(studyEl);
+const norm=v=>String(v||"").trim().toLowerCase();
+function evidenceFor(item){return evidenceItems.filter(e=>norm(e.room||"Whole Building / Unassigned")===norm(item.room||"Whole Building / Unassigned")&&[e.visibleName,e.category].some(n=>n&&norm(n)===norm(item.component)))}
+function render(data){
+ currentStudy=data;
+ const items=(data.sections||[]).flatMap(section=>(section.items||[]).map(i=>({...i,section:section.title})));
+ const displayed=[...items];
+ evidenceItems.forEach(e=>{if(!items.some(i=>evidenceFor(i).includes(e)))displayed.push({room:e.room,component:e.visibleName||e.category,quantity:e.quantity,roomDimensions:Array.isArray(e.geometryLengthRangeFeet)?e.geometryLengthRangeFeet.join("–")+" ft":"",evidenceBasis:e.geometryReconciliationStatus||"Panorama observation; replacement-cost estimate pending",confidence:Math.round(Number(e.confidence||0)*100),sourceEvidence:e})});
+ displayed.sort((a,b)=>String(a.room||"").localeCompare(String(b.room||""))||String(a.component||"").localeCompare(String(b.component||"")));
+ displayedItems=displayed;
+ rows.innerHTML=displayed.map(i=>{
+  const sources=i.sourceEvidence?[i.sourceEvidence]:evidenceFor(i);
+  const ids=[...new Set(sources.flatMap(e=>e.evidenceSweepIds||[]))];
+  const views=ids.map((id,n)=>"<button type='button' data-sweep='"+esc(id)+"'>View "+(n+1)+"</button>").join("");
+  return "<tr><td class='room'>"+esc(i.room||"Whole Building / Unassigned")+"</td><td>"+esc(i.roomDimensions||"—")+"</td><td><strong>"+esc(i.component)+"</strong></td><td>"+esc(i.quantity??"—")+"</td><td>"+esc(i.evidenceBasis)+"</td><td data-sort='"+esc(i.replacementCostLow??0)+"'>"+usd(i.replacementCostLow)+" – "+usd(i.replacementCostHigh)+"</td><td>"+esc(i.proposedClass||"Awaiting estimate")+"</td><td data-sort='"+esc(i.confidence??0)+"'>"+esc(i.confidence??"—")+"%</td><td class='no-print'><div class='sweep-links'>"+(views||"No linked sweep")+"</div></td></tr>";
+ }).join("");
+ document.getElementById("reviewNotes").innerHTML="<strong>Review notes:</strong> "+[data.executiveSummary,...(data.missingInputs||[]),...(data.caveats||[]),"Replacement-cost ranges are screening estimates, not taxpayer basis or a certified insured value."].filter(Boolean).map(esc).join(" · ");
+ makeSortable(document);applySearch();csv.disabled=false;printBtn.disabled=false;
 }
-let regenTimer=null,regenStartedAt=0;
-function setRegenUi(active){
-  if(!regenProgress)return;
-  regenProgress.classList.toggle("active",active);
-  if(!active&&regenTimer){clearInterval(regenTimer);regenTimer=null}
-}
-function regenStageFor(seconds){
-  if(seconds<6)return "Collecting current building evidence…";
-  if(seconds<16)return "Reconciling geometry and inventory…";
-  if(seconds<32)return "Recalculating replacement-cost assumptions…";
-  if(seconds<50)return "Building the updated screening report…";
-  return "Still working — this run is taking longer than usual.";
-}
-function startRegenClock(){
-  regenStartedAt=Date.now();
-  setRegenUi(true);
-  const tick=()=>{
-    const seconds=Math.max(0,Math.floor((Date.now()-regenStartedAt)/1000));
-    regenElapsed.textContent="Elapsed "+seconds+"s";
-    regenStage.textContent=regenStageFor(seconds);
-    regen.textContent="Recalculating… "+seconds+"s";
-  };
-  tick();regenTimer=setInterval(tick,1000);
-}
-function stopRegenClock(success){
-  const seconds=Math.max(0,Math.floor((Date.now()-regenStartedAt)/1000));
-  if(regenTimer){clearInterval(regenTimer);regenTimer=null}
-  regen.textContent="Regenerate";
-  if(success){
-    regenStage.textContent="Complete";
-    regenElapsed.textContent="Finished in "+seconds+"s";
-    setTimeout(()=>setRegenUi(false),3500);
-  }else setRegenUi(false);
-}
+function applySearch(){const term=search.value.trim().toLowerCase();[...rows.rows].forEach(r=>r.style.display=!term||r.textContent.toLowerCase().includes(term)?"":"none")}
+search.addEventListener("input",applySearch);
 async function load(){
-  regen.disabled=true;
-  const hadStudy=Boolean(currentStudy);
-  statusText.textContent=hadStudy?"Recalculating from current Building Intelligence evidence…":"Generating a first-pass study from current evidence…";
-  if(!hadStudy){roomSummary.innerHTML="";studyEl.innerHTML=""}
-  startRegenClock();
-  const controller=new AbortController();
-  const hardTimeout=setTimeout(()=>controller.abort(),180000);
-  try{
-    const r=await fetch("/api/buildings/${building.id}/cost-seg",{method:"POST",signal:controller.signal});
-    const data=await r.json();
-    if(!r.ok)throw new Error(data.error||"Generation failed.");
-    statusText.textContent="Updated from current Building Intelligence evidence.";
-    render(data.study);
-    stopRegenClock(true);
-  }catch(e){
-    const timedOut=e&&e.name==="AbortError";
-    statusText.textContent=timedOut?"Recalculation timed out after 3 minutes.":"The screening study could not be generated.";
-    if(!hadStudy)studyEl.innerHTML="<div class='error'>"+esc(timedOut?"The request exceeded 3 minutes and was stopped. Try Regenerate again.":(e&&e.message?e.message:"Unknown error"))+"</div>";
-    stopRegenClock(false);
-  }finally{
-    clearTimeout(hardTimeout);
-    regen.disabled=false;
-  }
+ regen.disabled=true;statusText.textContent=currentStudy?"Recalculating study…":"Generating study…";
+ const started=Date.now(),timer=setInterval(()=>{const seconds=Math.floor((Date.now()-started)/1000);reportProgress.textContent="Working · "+seconds+"s elapsed"+(seconds>50?" · This run is taking longer than usual.":"")},1000);
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),180000);
+ try{
+  try{const er=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store",signal:controller.signal});if(!er.ok)throw Error();const e=await er.json();evidenceItems=e.visualInventory?.consolidatedInventory?.length?e.visualInventory.consolidatedInventory:(e.visualInventory?.items||[])}catch{reportProgress.textContent="Evidence links unavailable; loading study."}
+  const r=await fetch("/api/buildings/${building.id}/cost-seg",{method:"POST",signal:controller.signal});const d=await r.json();if(!r.ok)throw Error(d.error||"Generation failed.");render(d.study);statusText.textContent="Study updated.";
+ }catch(e){statusText.textContent=e.name==="AbortError"?"Recalculation timed out after 3 minutes. Try Regenerate again.":"Could not generate study: "+e.message}
+ finally{clearInterval(timer);clearTimeout(timeout);reportProgress.textContent="";regen.disabled=false}
 }
-function csvCell(v){const s=String(v==null?"":v);return '"'+s.replace(/"/g,'""')+'"'}
+function csvCell(v){const s=String(v??"");return '"'+s.replace(/"/g,'""')+'"'}
 csv.onclick=()=>{
-  if(!currentStudy)return;
-  const rows=[["Section","Room / Area","Room Dimensions","Component","Quantity / Extent","Evidence Basis","Replacement Cost Low","Replacement Cost High","Proposed Class","Confidence %"]];
-  (currentStudy.sections||[]).forEach(s=>(s.items||[]).forEach(i=>rows.push([s.title||"",i.room||"Whole Building / Unassigned",i.roomDimensions||"",i.component||"",i.quantity||"",i.evidenceBasis||"",i.replacementCostLow??"",i.replacementCostHigh??"",i.proposedClass||"",i.confidence??""])));
-  const head=rows.shift();rows.sort((a,b)=>String(a[1]).localeCompare(String(b[1]))||String(a[3]).localeCompare(String(b[3])));rows.unshift(head);
-  const blob=new Blob([rows.map(r=>r.map(csvCell).join(",")).join("\\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="${building.slug}-cost-seg-screening.csv";a.click();URL.revokeObjectURL(a.href);
+ if(!currentStudy)return;
+ const data=[["Section","Room / Area","Dimensions","Component","Quantity / Extent","Evidence Basis","Replacement Cost Low","Replacement Cost High","Proposed Class","Confidence %","Evidence Sweeps"],...displayedItems.map(i=>[i.section||"Observed inventory",i.room||"Whole Building / Unassigned",i.roomDimensions||"",i.component||"",i.quantity??"",i.evidenceBasis||"",i.replacementCostLow??"",i.replacementCostHigh??"",i.proposedClass||"Awaiting estimate",i.confidence??"",[...new Set((i.sourceEvidence?[i.sourceEvidence]:evidenceFor(i)).flatMap(e=>e.evidenceSweepIds||[]))].join("; ")])];
+ const blob=new Blob([data.map(r=>r.map(csvCell).join(",")).join("\\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="${building.slug}-cost-seg-screening.csv";a.click();URL.revokeObjectURL(a.href);
 };
-async function inflateZipBlob(file){
-  const buf=await file.arrayBuffer(),dv=new DataView(buf),u8=new Uint8Array(buf);
-  let eocd=-1;
-  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-65557);i--){if(dv.getUint32(i,true)===0x06054b50){eocd=i;break}}
-  if(eocd<0)throw new Error("ZIP central directory not found.");
-  const count=dv.getUint16(eocd+10,true),centralOffset=dv.getUint32(eocd+16,true);
-  let p=centralOffset; const out=[];
-  for(let n=0;n<count;n++){
-    if(dv.getUint32(p,true)!==0x02014b50)throw new Error("Unsupported ZIP directory structure.");
-    const method=dv.getUint16(p+10,true),compSize=dv.getUint32(p+20,true),uncompSize=dv.getUint32(p+24,true);
-    const nameLen=dv.getUint16(p+28,true),extraLen=dv.getUint16(p+30,true),commentLen=dv.getUint16(p+32,true),localOffset=dv.getUint32(p+42,true);
-    const name=new TextDecoder().decode(u8.slice(p+46,p+46+nameLen));
-    p+=46+nameLen+extraLen+commentLen;
-    if(!name||name.endsWith("/"))continue;
-    const base=name.split("/").pop()||name;
-    if(!/\.(obj|mtl|jpg|jpeg|png|webp)$/i.test(base))continue;
-    if(dv.getUint32(localOffset,true)!==0x04034b50)throw new Error("ZIP local file header is invalid.");
-    const localNameLen=dv.getUint16(localOffset+26,true),localExtraLen=dv.getUint16(localOffset+28,true);
-    const start=localOffset+30+localNameLen+localExtraLen,end=start+compSize;
-    const chunk=u8.slice(start,end);
-    let bytes;
-    if(method===0){bytes=chunk}
-    else if(method===8){
-      if(typeof DecompressionStream==="undefined")throw new Error("This browser cannot decompress ZIP files. Upload the unzipped MatterPak files instead.");
-      const ds=new DecompressionStream("deflate-raw");
-      bytes=new Uint8Array(await new Response(new Blob([chunk]).stream().pipeThrough(ds)).arrayBuffer());
-    }else throw new Error("ZIP compression method "+method+" is not supported.");
-    if(uncompSize&&bytes.length!==uncompSize){/* size mismatch can occur with some archives; continue conservatively */}
-    const type=/\.png$/i.test(base)?"image/png":/\.webp$/i.test(base)?"image/webp":/\.(jpg|jpeg)$/i.test(base)?"image/jpeg":"text/plain";
-    out.push(new File([bytes],base,{type}));
-  }
-  if(!out.length)throw new Error("No OBJ/MTL/texture files were found inside the ZIP.");
-  return out;
+printBtn.onclick=()=>window.print();regen.onclick=load;
+const panel=document.getElementById("evidenceViewer"),model=document.getElementById("evidenceModel"),viewerStatus=document.getElementById("viewerStatus"),sdkKey=${JSON.stringify(sdkKey)};
+let sdkPromise=null,selection=0;
+async function openEvidence(sweep){
+ const version=++selection;panel.hidden=false;panel.scrollIntoView({behavior:"smooth",block:"start"});viewerStatus.textContent="Opening evidence location…";
+ if(!sdkKey){viewerStatus.textContent="Model navigation is unavailable because the SDK key is missing.";return}
+ try{
+  if(!sdkPromise){model.src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey="+encodeURIComponent(sdkKey);sdkPromise=(async()=>{const mod=await import("https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js?applicationKey="+encodeURIComponent(sdkKey));const sdk=await mod.connect(model);await sdk.App.state.waitUntil(s=>s.phase===sdk.App.Phase.PLAYING);return sdk})().catch(e=>{sdkPromise=null;throw e})}
+  const sdk=await sdkPromise;if(version!==selection)return;
+  await sdk.Sweep.moveTo(sweep,{rotation:{x:0,y:0},transition:sdk.Sweep.Transition.INSTANT,transitionTime:0});if(version===selection)viewerStatus.textContent="Evidence sweep: "+sweep;
+ }catch(e){if(version===selection)viewerStatus.textContent="Could not open evidence location: "+e.message}
 }
-async function expandMatterPakFiles(files){
-  const expanded=[];
-  for(const file of files){
-    if(/\.zip$/i.test(file.name)){
-      uploadState.textContent="Decompressing "+file.name+"…";
-      const extracted=await inflateZipBlob(file);
-      expanded.push(...extracted);
-    }else expanded.push(file);
-  }
-  return expanded;
-}
-uploadObj.onclick=async()=>{
-  const selected=[...(objFile.files||[])];
-  if(!selected.length){uploadState.textContent="Choose a MatterPak ZIP or one or more MatterPak files first.";return}
-  uploadObj.disabled=true;
-  try{
-    const files=await expandMatterPakFiles(selected);
-    let uploaded=0;
-    for(const file of files){
-      if(!/\.(obj|mtl|jpg|jpeg|png|webp)$/i.test(file.name))throw new Error("Unsupported extracted file: "+file.name);
-      uploadState.textContent="Uploading "+file.name+" ("+(uploaded+1)+"/"+files.length+")…";
-      const r=await fetch("/api/buildings/${building.id}/geometry",{method:"POST",headers:{"x-file-name":encodeURIComponent(file.name),"content-type":file.type||"application/octet-stream"},body:file});
-      const data=await r.json();if(!r.ok)throw new Error(data.error||("Upload failed: "+file.name));uploaded++;
-    }
-    const hasObj=files.some(file=>/\.obj$/i.test(file.name));
-    uploadState.textContent="Uploaded "+uploaded+" MatterPak file"+(uploaded===1?"":"s")+(hasObj?". Running geometry analysis…":".");
-    if(hasObj){
-      const ar=await fetch("/api/buildings/${building.id}/geometry/analyze",{method:"POST"});
-      const ad=await ar.json();
-      if(!ar.ok)throw new Error(ad.error||"Geometry analysis failed after upload.");
-      uploadState.textContent="MatterPak uploaded and geometry analysis complete.";
-    }
-    await loadEvidence();
-  }catch(e){uploadState.textContent="Upload failed: "+(e&&e.message?e.message:String(e))}finally{uploadObj.disabled=false}
-};
-analyzeObj.onclick=async()=>{
-  analyzeObj.disabled=true;uploadState.textContent="Analyzing OBJ geometry…";
-  try{const r=await fetch("/api/buildings/${building.id}/geometry/analyze",{method:"POST"});const data=await r.json();if(!r.ok)throw new Error(data.error||"Analysis failed.");uploadState.textContent="Geometry analysis complete.";await loadEvidence()}
-  catch(e){uploadState.textContent="Analysis failed: "+(e&&e.message?e.message:String(e))}finally{analyzeObj.disabled=false}
-};
-let printDetails=[];
-window.addEventListener("beforeprint",()=>{
-  printDetails=[...document.querySelectorAll(".print-inventory")].map(el=>({el,open:el.open}));
-  printDetails.forEach(item=>item.el.open=true);
-});
-window.addEventListener("afterprint",()=>{printDetails.forEach(item=>item.el.open=item.open);printDetails=[]});
-printBtn.onclick=()=>window.print();
-let autoAnalysisAttempted=false;
-async function loadEvidence(){
-  try{
-    let r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});let data=await r.json();
-    const needsGeometryRefresh=data.geometry&&data.geometry.objPresent&&(!data.geometryAnalysis||data.geometryAnalysis.algorithmVersion!=="wall-slice-v2.4-envelope-takeoff");
-    if(needsGeometryRefresh&&!autoAnalysisAttempted){
-      autoAnalysisAttempted=true;
-      reportProgress.textContent=data.geometryAnalysis?"Upgrading floor-plan reconstruction from stored MatterPak…":"OBJ found · deriving geometry evidence…";
-      const ar=await fetch("/api/buildings/${building.id}/geometry/analyze",{method:"POST"});
-      if(ar.ok){r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});data=await r.json();}
-    }
-    const comp=data.completeness||null,geo=data.geometry||{},ga=data.geometryAnalysis||null,vi=data.visualInventory||null,items=vi&&Array.isArray(vi.consolidatedInventory)&&vi.consolidatedInventory.length?vi.consolidatedInventory:(vi&&Array.isArray(vi.items)?vi.items:[]);
-    document.getElementById("panoPct").textContent=comp?comp.percent+"%":"Unknown";
-    document.getElementById("panoCount").textContent=comp?(comp.processed+" / "+comp.expected):((vi&&vi.processedSweepCount)||0)+" / ?";
-    document.getElementById("panoMissing").textContent=comp?String(comp.missing):"Unknown";
-    if(comp&&comp.missing>0){resumePanos.style.display="inline-block";resumePanos.textContent="Resume panos ("+comp.missing+" remaining)"}else{resumePanos.style.display="none"}
-    const analyzedCount=vi&&Array.isArray(vi.analyzedSweepIds)?vi.analyzedSweepIds.length:0;
-    reportProgress.textContent=(comp?(comp.processed+"/"+comp.expected+" panos captured · "+analyzedCount+" analyzed"):"Pano completeness unknown")+" · "+(geo.objPresent?"OBJ ✓":"OBJ missing")+" · "+(ga?("geometry ✓"+(ga.detectedFloorCount?(" · "+ga.detectedFloorCount+" floors"):"")):"geometry pending");
-    document.getElementById("objStatus").textContent=geo.objPresent?"Present":"Missing";document.getElementById("objStatus").className=geo.objPresent?"good":"bad";document.getElementById("objName").textContent=geo.objFileName||"Geometry source";
-    document.getElementById("analysisStatus").textContent=ga?"Ready":"Not run";document.getElementById("analysisStatus").className=ga?"good":"bad";
-    document.getElementById("volumeValue").textContent=ga&&ga.modelEnvelopeVolumeFt3?num(ga.modelEnvelopeVolumeFt3)+" ft³":"—";
-    document.getElementById("objEvidenceStatus").textContent=geo.objPresent?(ga?"Measured geometry ready":"OBJ present; analysis pending"):"No OBJ";
-    document.getElementById("objEvidenceFile").textContent=geo.objFileName||"—";
-    document.getElementById("objMesh").textContent=ga?(num(ga.vertexCount)+" v / "+num(ga.faceCount)+" f"):"—";
-    document.getElementById("objExtents").textContent=ga&&ga.extentsFeet?(ga.extentsFeet.length+" × "+ga.extentsFeet.width+" × "+ga.extentsFeet.height+" ft"):"—";
-    const floorPlans=ga&&Array.isArray(ga.floorPlans)?ga.floorPlans:[];
-    const firstFloorArea=floorPlans.length?floorPlans[0].areaFt2:null;
-    document.getElementById("objFootprint").textContent=firstFloorArea?(num(firstFloorArea)+" sq ft · floor 1"):ga&&ga.footprintHullAreaFt2?(num(ga.footprintHullAreaFt2)+" sq ft"):"—";
-    document.getElementById("objVolume").textContent=ga&&ga.modelEnvelopeVolumeFt3?(num(ga.modelEnvelopeVolumeFt3)+" ft³"):"—";
-    const et=ga&&ga.envelopeTakeoff?ga.envelopeTakeoff:null;
-    document.getElementById("objMaterials").textContent=ga&&ga.materialUsageCount!=null?num(ga.materialUsageCount):"—";
-    document.getElementById("objMtl").textContent=ga&&ga.supportFiles?num((ga.supportFiles.mtlFiles||[]).length):"—";
-    document.getElementById("objTextures").textContent=ga&&ga.supportFiles?num((ga.supportFiles.textureFiles||[]).length):"—";
-    document.getElementById("objLimitations").textContent=ga&&Array.isArray(ga.limitations)
-      ? ga.limitations.join(" · ")+(et?(" · Envelope takeoff: "+num(et.exteriorPerimeterFt)+" lf perimeter · "+num(et.grossExteriorWallAreaFt2)+" sf gross wall · "+num(et.roofAreaFt2)+" sf roof · "+(et.doorLikeOpeningCount||0)+" door-like / "+(et.windowLikeOpeningCount||0)+" window-like opening candidates."):"")
-      :"OBJ evidence will populate after geometry analysis.";
-    const geometryArea=ga&&(ga.grossFloorAreaEstimateFt2||ga.footprintHullAreaFt2);
-    if(geometryArea){
-      document.getElementById("buildingArea").textContent=num(geometryArea)+" sq ft";
-      const source=ga.algorithmVersion==="wall-slice-v2"?"MatterPak wall-slice reconstruction":(ga.grossFloorAreaEstimateFt2?"OBJ footprint × floor count screening":"OBJ footprint screening");
-      const published=${publishedSqFt ? publishedSqFt : "null"};
-      if(published){
-        const variance=((Number(geometryArea)-published)/published)*100;
-        document.getElementById("buildingAreaSource").textContent=source+" · published "+num(published)+" sq ft · variance "+(variance>=0?"+":"")+variance.toFixed(1)+"%";
-      }else document.getElementById("buildingAreaSource").textContent=source;
-    }else{
-      document.getElementById("buildingArea").textContent="Analysis pending";
-      document.getElementById("buildingAreaSource").textContent=${publishedSqFt ? '"Published comparison: "+publishedSqFt.toLocaleString("en-US")+" sq ft"' : '"Run geometry analysis"'};
-    }
-    const warning=document.getElementById("geometryWarning");
-    if(geo.objPresent){warning.innerHTML="<strong>Geometry evidence:</strong> "+esc(geo.objFileName||"OBJ")+" is stored in R2. "+(ga?"Derived geometry analysis is ready.":"Run Analyze OBJ to generate dimensions, volume, and plan preview.")}
-    else{warning.innerHTML="<strong>Geometry gap:</strong> No OBJ is stored in R2 yet. Upload one before treating dimensions as measured geometry."}
-    const fp=document.getElementById("floorPlanSection");
-    if(data.floorPlanUrl){document.getElementById("floorPlanImg").src=data.floorPlanUrl+"?t="+Date.now();fp.style.display="block"}else fp.style.display="none";
-    const manifest=data.assetManifest||{totalObjects:0,panoramaCount:0,categories:{}};
-    document.getElementById("assetCount").textContent=manifest.totalObjects+" stored assets";
-    const cats=manifest.categories||{};
-    const groups=[
-      ["Panoramas",cats.panoramas||[]],
-      ["Geometry",cats.geometry||[]],
-      ["Textures / images",cats.textures||[]],
-      ["Documents",cats.documents||[]],
-      ["Derived analysis",cats.analysis||[]],
-      ["Other",cats.other||[]]
-    ];
-    document.getElementById("assetSummary").innerHTML=groups.filter(g=>g[1].length).map(g=>"<span class='pill' style='display:inline-block;margin:3px 5px 3px 0'>"+esc(g[0])+": "+g[1].length+"</span>").join("")||"<span class='muted'>No R2 evidence assets found.</span>";
-    const assetRows=[];
-    groups.forEach(g=>g[1].forEach(a=>assetRows.push("<tr><td><strong>"+esc(g[0])+"</strong></td><td>"+esc(a.name||"")+"</td><td data-sort='"+esc(a.size||0)+"'>"+bytes(a.size||0)+"</td><td>"+esc(a.key||"")+"</td></tr>")));
-    document.getElementById("assetRows").innerHTML=assetRows.join("");
-    document.getElementById("evidenceCount").textContent=items.length+" consolidated inventory records";
-    const sorted=[...items].sort((a,b)=>String(a.room||"Whole Building / Unassigned").localeCompare(String(b.room||"Whole Building / Unassigned"))||String(a.visibleName||a.category||"").localeCompare(String(b.visibleName||b.category||"")));
-    document.getElementById("evidenceRows").innerHTML=sorted.map(item=>{
-      const crew=item.geometryCrewBreakdown?Object.entries(item.geometryCrewBreakdown).map(([k,v])=>esc(k)+": "+esc(v)).join(" · "):"";
-      const range=Array.isArray(item.geometryLengthRangeFeet)?esc(item.geometryLengthRangeFeet[0])+"–"+esc(item.geometryLengthRangeFeet[1])+" ft":"";
-      const spatial=item.geometryCandidateCount!=null
-        ? "<strong>"+esc(item.geometryCandidateCount)+" OBJ candidate"+(Number(item.geometryCandidateCount)===1?"":"s")+"</strong><div class='muted'>"+esc(item.geometryReconciliationStatus||"")+" "+range+(crew?" · "+crew:"")+"</div>"
-        : "<span class='muted'>No object-level geometry match</span>";
-      return "<tr><td class='room'>"+esc(item.room||"Whole Building / Unassigned")+"</td><td><strong>"+esc(item.visibleName||item.category||"Observed asset")+"</strong>"+(item.inventoryId?"<div class='muted'>"+esc(item.inventoryId)+"</div>":"")+"</td><td>"+esc(item.category||"")+(item.countMethod?"<div class='muted'>"+esc(item.countMethod)+"</div>":"")+"</td><td data-sort='"+esc(item.quantity??0)+"'>"+esc(item.quantity??"—")+"</td><td>"+spatial+"</td><td data-sort='"+esc(Math.round(Number(item.confidence||0)*100))+"'>"+Math.round(Number(item.confidence||0)*100)+"%</td><td>"+sweepLinks(item.evidenceSweepIds||[])+"</td></tr>";
-    }).join("");
-    if(inventorySearch&&!inventorySearch.dataset.bound){
-      inventorySearch.dataset.bound="1";
-      inventorySearch.addEventListener("input",()=>{
-        const q=inventorySearch.value.trim().toLowerCase();
-        const rows=[...document.querySelectorAll("#evidenceRows tr")];
-        let visible=0;
-        rows.forEach(row=>{
-          const match=!q||String(row.textContent||"").toLowerCase().includes(q);
-          row.style.display=match?"":"none";
-          if(match)visible++;
-        });
-        document.getElementById("evidenceCount").textContent=q?visible+" of "+rows.length+" records":rows.length+" consolidated inventory records";
-      });
-    }
-    if(inventorySearch&&inventorySearch.value)inventorySearch.dispatchEvent(new Event("input"));
-    makeSortable(document);
-  }catch(e){document.getElementById("geometryWarning").textContent="Evidence status could not be loaded."}
-}
-regen.addEventListener("click",load);(async()=>{await loadEvidence();await load();})();
+rows.addEventListener("click",event=>{const button=event.target.closest("button[data-sweep]");if(button)openEvidence(button.dataset.sweep)});
+document.getElementById("closeViewer").onclick=()=>{selection++;panel.hidden=true};
+load();
 </script></body></html>`;
 }
 
@@ -857,7 +621,7 @@ function evidenceLocationHtml(building: Building, sdkKey: string) {
   const key = JSON.stringify(sdkKey || "");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Evidence location · ${building.name}</title><style>
 body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:650px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}.muted{color:#666d69}.pill{display:inline-block;font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button{border:0;border-radius:999px;padding:11px 15px;font-weight:850;background:#111618;color:#fff;cursor:pointer}input{flex:1;min-width:280px;border:1px solid #d8d3ca;border-radius:12px;padding:11px 12px;font:inherit}
-</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · evidence location</div><h1 style="margin-bottom:6px">${building.name}</h1><p id="status" class="muted">Opening the referenced Matterport sweep…</p></div><a href="/${building.slug}/cost-seg">Back to cost seg</a></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div></main><script type="module">
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · evidence location</div><h1 style="margin-bottom:6px">${building.name}</h1><p id="status" class="muted">Building evidence and capture locations.</p></div><a href="/${building.slug}/cost-seg">Back to cost seg</a></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><section class="card" id="floorPlanSection" hidden><h2>Evidence-derived floor plan</h2><img id="floorPlanImg" alt="Geometry-derived floor plan" style="width:100%;height:auto"><p class="muted">Automated screening plan from stored geometry.</p></section><section class="card"><h2>Evidence library</h2><p id="assetStatus" class="muted" role="status">Loading stored evidence…</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Type</th><th>File / asset</th><th>Size</th><th>Storage path</th></tr></thead><tbody id="assetRows"></tbody></table></div><a href="/${building.slug}/ingest">Upload or update evidence →</a></section></main><script type="module">
 const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
 const params=new URLSearchParams(location.search),sweep=params.get("sweep")||"";
 const sdkKey=${key};
@@ -865,7 +629,7 @@ const iframe=document.getElementById("mp"),status=document.getElementById("statu
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function setStatus(s){status.textContent=s}
 async function openSweep(){
-  if(!sweep){setStatus("No sweep ID was supplied.");return}
+  if(!sweep){setStatus("Explore the capture, floor plan, and evidence files below.");return}
   if(!sdkKey){setStatus("Matterport SDK key is not configured in the Worker runtime.");return}
   try{
     const nextSrc="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey="+encodeURIComponent(sdkKey);
@@ -877,7 +641,18 @@ async function openSweep(){
     setStatus("Evidence sweep opened: "+sweep);
   }catch(e){setStatus("Could not open this sweep: "+(e&&e.message?e.message:String(e)))}
 }
-openSweep();
+const esc=v=>String(v??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+async function loadLibrary(){
+ try{
+  const r=await fetch("/api/buildings/${building.id}/evidence",{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d.error||"Evidence unavailable");
+  if(d.floorPlanUrl){document.getElementById("floorPlanImg").src=d.floorPlanUrl;document.getElementById("floorPlanSection").hidden=false}
+  const manifest=d.assetManifest||{},categories=manifest.categories||{};
+  const items=Object.entries(categories).flatMap(([type,assets])=>(Array.isArray(assets)?assets:[]).map(a=>({...a,type})));
+  document.getElementById("assetRows").innerHTML=items.map(a=>"<tr><td>"+esc(a.type)+"</td><td>"+esc(a.name)+"</td><td>"+esc(a.size??0)+" bytes</td><td style='overflow-wrap:anywhere'>"+esc(a.key)+"</td></tr>").join("");
+  document.getElementById("assetStatus").textContent=items.length?items.length+" stored evidence files":"No stored evidence files yet.";
+ }catch(e){document.getElementById("assetStatus").textContent="Could not load evidence: "+e.message}
+}
+openSweep();loadLibrary();
 </script></body></html>`;
 }
 
@@ -1716,11 +1491,11 @@ const appWorker = {
     }
 
     if (url.pathname === "/crc/cost-seg" || url.pathname === "/crc/cost-segregation") {
-      return new Response(generatedCostSegHtml(BUILDINGS["BLDG-001"]), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return new Response(generatedCostSegHtml(BUILDINGS["BLDG-001"], matterportSdkKey(env)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     if (url.pathname === "/bell/cost-seg" || url.pathname === "/bell/cost-segregation") {
-      return new Response(generatedCostSegHtml(BUILDINGS["BLDG-002"]), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return new Response(generatedCostSegHtml(BUILDINGS["BLDG-002"], matterportSdkKey(env)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     if (url.pathname === "/vues/cost-seg" || url.pathname === "/vues/cost-segregation") {
@@ -1741,4 +1516,5 @@ const appWorker = {
 };
 
 export default appWorker;
+
 
