@@ -1662,6 +1662,14 @@ GEOMETRY: ${JSON.stringify({sourceObjKey:geometry?.sourceObjKey,analyzedAt:geome
       }
     }
 
+    if (geometryApiMatch && request.method === "GET") {
+      const building = BUILDINGS[geometryApiMatch[1]];
+      if (!building) return json({ error: "Building not found." }, 404);
+      const analysis = await loadGeometryAnalysis(building, env);
+      if (!analysis) return json({ error: "No saved geometry analysis. Analyze the uploaded OBJ first." }, 404);
+      return json({ sourceObjKey: analysis.sourceObjKey, analyzedAt: analysis.analyzedAt, algorithmVersion: analysis.algorithmVersion, envelopeTakeoff: analysis.envelopeTakeoff || null });
+    }
+
     if (geometryApiMatch && request.method === "POST") {
       const building = BUILDINGS[geometryApiMatch[1]];
       if (!building) return json({ error: "Building not found." }, 404);
