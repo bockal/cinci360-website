@@ -808,7 +808,7 @@ async function loadEvidence(){
     makeSortable(document);
   }catch(e){document.getElementById("geometryWarning").textContent="Evidence status could not be loaded."}
 }
-regen.addEventListener("click",load);loadEvidence();load();
+regen.addEventListener("click",load);(async()=>{await loadEvidence();await load();})();
 </script></body></html>`;
 }
 
