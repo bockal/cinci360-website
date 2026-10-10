@@ -211,7 +211,7 @@ function outputText(payload: any) {
     .join("\n");
 }
 
-async function reasonAboutBuilding(building: Building, question: string, env: Env) {
+async function reasonAboutBuilding(building: Building, question: string, env: Env, measurementContext: any = null) {
   const model = env.OPENAI_GBI_MODEL || "gpt-6-luna";
   const persistedVisual = await loadPersistedVisualEvidence(building, env);
   const persistedGeometry = await loadPersistedGeometryEvidence(building, env);
@@ -238,6 +238,9 @@ Do not fabricate exact dimensions, hidden conditions, code compliance, ages, cos
 
 Building evidence:
 ${JSON.stringify(combinedEvidence)}
+
+Current user-created Matterport measurements (MEASURED; session context only):
+${measurementContext ? JSON.stringify(measurementContext) : "None supplied"}
 
 User question:
 ${question}
@@ -1209,18 +1212,120 @@ function indexHtml() {
 </style></head><body><main class="shell"><header><div class="brand">Cinci360 Intelligence</div><div>3 live demos</div></header><section class="hero"><p class="eyebrow">Reality capture evolved</p><h1>Ask the building.</h1><p>One capture can do more than market or document a space. Cinci360 turns digital twins into persistent intelligence for facilities, event venues, rentals, and transactions.</p></section><section class="grid">${cards}</section></main></body></html>`;
 }
 
-function buildingHtml(building: Building) {
+function buildingHtml(building: Building, env: Env) {
+  const sdkKey = matterportSdkKey(env);
+  const sdkKeyJson = JSON.stringify(sdkKey);
   const facts = building.facts.map(item => `<div><strong>${item.label}</strong><span>${item.value}</span></div>`).join("");
   const signals = building.signals.map(item => `<div class="metric"><strong>${item.value}</strong><span>${item.label}</span></div>`).join("");
   const prompts = building.prompts.map(prompt => `<button type="button">${prompt}</button>`).join("");
   const gaps = ((building.evidence.knownGaps as string[] | undefined) ?? []).slice(0, 3).map(gap => `<div><strong>Gap</strong><span>${gap}</span></div>`).join("");
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111618"><title>Cinci360 Intelligence · ${building.name}</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1eee7;color:#111618}.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:24px 0 56px}header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 20px}.brand{font-weight:850}.brand a{color:inherit;text-decoration:none}.building-id{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#6d726f}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:22px;align-items:end;margin:16px 0 22px}.eyebrow,.kicker{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin:0 0 8px}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,96px);font-weight:400;letter-spacing:-.055em;line-height:.9;margin:0}.hero-copy{font-size:17px;line-height:1.55;color:#4f5552;margin:0 0 6px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.badge{border:1px solid #d4d0c7;background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700}.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(360px,.6fr);gap:18px}.card{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px}.card-head h2{font-size:20px;margin:0}.live{font-size:12px;font-weight:750;border:1px solid #d7d2c9;border-radius:999px;padding:7px 10px}.viewer{aspect-ratio:16/10;background:#111}.viewer iframe{display:block;width:100%;height:100%;border:0}.strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #ece8df}.strip>div{padding:14px 16px}.strip>div+div{border-left:1px solid #ece8df}.strip strong{display:block;font-size:13px}.strip span{font-size:12px;color:#6a706d}.assistant{display:flex;flex-direction:column;min-height:680px}.messages{flex:1;padding:14px;background:#f6f4ef}.message{border:1px solid #e2ded5;background:#fff;border-radius:15px;padding:13px 14px;line-height:1.5;white-space:pre-wrap}.message+.message{margin-top:10px}.ask{padding:12px;border-top:1px solid #e2ded5;display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center}.ask textarea{font:inherit;border:1px solid #d8d4ca;border-radius:13px;padding:10px 12px;resize:none;min-width:0}.ask button{border:0;background:#111618;color:#fff;border-radius:999px;font-weight:800;min-height:46px;padding:0 15px}.mic{width:46px;padding:0!important;font-size:20px}.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 13px}.suggestions button{border:1px solid #d9d4cb;background:#fff;border-radius:999px;padding:7px 10px;font-weight:700;font-size:12px;color:#111618}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.panel h3{font-size:20px;margin:0 0 12px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#f6f4ef;border-radius:12px;padding:12px}.metric strong{display:block;font-size:18px}.metric span{font-size:12px;color:#676d6a}.evidence{display:grid;gap:8px}.evidence div{border-left:3px solid #111618;padding:8px 0 8px 10px}.evidence strong{display:block;font-size:13px}.evidence span{font-size:12px;color:#6b716e}.note{margin-top:18px;font-size:12px;color:#6b716e}@media(max-width:1050px){.hero,.main{grid-template-columns:1fr}.assistant{min-height:540px}}@media(max-width:680px){.shell{width:calc(100% - 20px);padding-top:16px}.grid{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.strip>div+div{border-left:0;border-top:1px solid #ece8df}.ask{grid-template-columns:auto 1fr}.ask .submit{grid-column:1/-1}.viewer{aspect-ratio:4/3}}
-</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><div class="building-id">${building.id} · ${building.subtitle}</div></header><section class="hero"><div><p class="eyebrow">${building.name}</p><h1>Ask the building.</h1></div><div><p class="hero-copy">${building.intro}</p><div class="badges">${building.badges.map(badge => `<span class="badge">${badge}</span>`).join("")}</div></div></section><section class="main"><article class="card"><div class="card-head"><div><p class="kicker">Live digital twin</p><h2>${building.name}</h2></div><span class="live">${building.useCase}</span></div><div class="viewer"><iframe src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0" title="${building.name} Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div><div class="strip">${facts}</div></article><aside class="card assistant"><div class="card-head"><div><p class="kicker">Building assistant</p><h2>Intelligence</h2></div><span class="live">Probability-aware</span></div><div class="messages"><div class="message">Ask the questions a real buyer, planner, guest, or facility manager would ask before making a decision. I will separate what is measured, observed, inferred, and still missing.</div><div class="message" id="answer">Choose one of the high-value questions below or ask your own.</div></div><div class="ask"><button class="mic" type="button" aria-label="Voice coming soon">🎙</button><textarea id="q" rows="3" placeholder="Ask this building…"></textarea><button class="submit" id="ask" type="button">Ask GBI</button></div><div class="suggestions">${prompts}</div></aside></section><section class="grid"><article class="panel"><p class="kicker">Building signals</p><h3>What the current record already knows</h3><div class="metrics">${signals}</div></article><article class="panel"><p class="kicker">Evidence status</p><h3>What still improves confidence</h3><div class="evidence">${gaps || '<div><strong>Ready</strong><span>No major evidence gaps listed.</span></div>'}</div><p class="note">As MatterPak geometry, panorama analysis, documents, and future scans are attached, answers can move from inferred to observed or measured.</p></article></section><div class="actions" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><a href="/${building.slug}/ingest" style="display:inline-block;background:#e7e3da;color:#111618;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Build / update evidence →</a><a href="/${building.slug}/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Open Cost Segregation Intelligence →</a></div><p class="note">${building.id} · Matterport ${building.matterportSid}</p></main><script>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1eee7;color:#111618}.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:24px 0 56px}header{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 20px}.brand{font-weight:850}.brand a{color:inherit;text-decoration:none}.building-id{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#6d726f}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:22px;align-items:end;margin:16px 0 22px}.eyebrow,.kicker{font-size:12px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin:0 0 8px}.hero h1{font-family:Georgia,serif;font-size:clamp(48px,7vw,96px);font-weight:400;letter-spacing:-.055em;line-height:.9;margin:0}.hero-copy{font-size:17px;line-height:1.55;color:#4f5552;margin:0 0 6px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.badge{border:1px solid #d4d0c7;background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700}.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(360px,.6fr);gap:18px}.card{background:#fff;border:1px solid #d7d2c9;border-radius:20px;overflow:hidden}.card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px}.card-head h2{font-size:20px;margin:0}.live{font-size:12px;font-weight:750;border:1px solid #d7d2c9;border-radius:999px;padding:7px 10px}.viewer-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.measure-btn{border:1px solid #d7d2c9;background:#fff;color:#111618;border-radius:999px;padding:8px 11px;font-weight:800;cursor:pointer}.measure-btn.active{background:#111618;color:#fff}.measure-btn:disabled{opacity:.5;cursor:not-allowed}.measure-panel{padding:11px 16px;border-top:1px solid #ece8df;background:#faf9f6}.measure-status{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;flex-wrap:wrap}.measure-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.measure-chip{border:1px solid #d7d2c9;background:#fff;border-radius:999px;padding:6px 9px;font-size:11px}.viewer{aspect-ratio:16/10;background:#111}.viewer iframe{display:block;width:100%;height:100%;border:0}.strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #ece8df}.strip>div{padding:14px 16px}.strip>div+div{border-left:1px solid #ece8df}.strip strong{display:block;font-size:13px}.strip span{font-size:12px;color:#6a706d}.assistant{display:flex;flex-direction:column;min-height:680px}.messages{flex:1;padding:14px;background:#f6f4ef}.message{border:1px solid #e2ded5;background:#fff;border-radius:15px;padding:13px 14px;line-height:1.5;white-space:pre-wrap}.message+.message{margin-top:10px}.ask{padding:12px;border-top:1px solid #e2ded5;display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center}.ask textarea{font:inherit;border:1px solid #d8d4ca;border-radius:13px;padding:10px 12px;resize:none;min-width:0}.ask button{border:0;background:#111618;color:#fff;border-radius:999px;font-weight:800;min-height:46px;padding:0 15px}.mic{width:46px;padding:0!important;font-size:20px}.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 13px}.suggestions button{border:1px solid #d9d4cb;background:#fff;border-radius:999px;padding:7px 10px;font-weight:700;font-size:12px;color:#111618}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel{background:#fff;border:1px solid #d7d2c9;border-radius:18px;padding:18px}.panel h3{font-size:20px;margin:0 0 12px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#f6f4ef;border-radius:12px;padding:12px}.metric strong{display:block;font-size:18px}.metric span{font-size:12px;color:#676d6a}.evidence{display:grid;gap:8px}.evidence div{border-left:3px solid #111618;padding:8px 0 8px 10px}.evidence strong{display:block;font-size:13px}.evidence span{font-size:12px;color:#6b716e}.note{margin-top:18px;font-size:12px;color:#6b716e}@media(max-width:1050px){.hero,.main{grid-template-columns:1fr}.assistant{min-height:540px}}@media(max-width:680px){.shell{width:calc(100% - 20px);padding-top:16px}.grid{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.strip>div+div{border-left:0;border-top:1px solid #ece8df}.ask{grid-template-columns:auto 1fr}.ask .submit{grid-column:1/-1}.viewer{aspect-ratio:4/3}}
+</style></head><body><main class="shell"><header><div class="brand"><a href="/">Cinci360 Intelligence</a></div><div class="building-id">${building.id} · ${building.subtitle}</div></header><section class="hero"><div><p class="eyebrow">${building.name}</p><h1>Ask the building.</h1></div><div><p class="hero-copy">${building.intro}</p><div class="badges">${building.badges.map(badge => `<span class="badge">${badge}</span>`).join("")}</div></div></section><section class="main"><article class="card"><div class="card-head"><div><p class="kicker">Live digital twin</p><h2>${building.name}</h2></div><div class="viewer-tools"><span class="live">${building.useCase}</span><button id="measureToggle" class="measure-btn" type="button">Measure space</button><button id="measureClear" class="measure-btn" type="button" disabled>Clear</button></div></div><div class="viewer"><iframe id="buildingMp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" title="${building.name} Matterport digital twin" allow="autoplay; fullscreen; web-share; xr-spatial-tracking" allowfullscreen></iframe></div><div class="measure-panel"><div class="measure-status"><strong id="measureStatus">Connecting measurement tools…</strong><span>Measurements are automatically available to GBI questions.</span></div><div id="measureList" class="measure-list"></div></div><div class="strip">${facts}</div></article><aside class="card assistant"><div class="card-head"><div><p class="kicker">Building assistant</p><h2>Intelligence</h2></div><span class="live">Probability-aware</span></div><div class="messages"><div class="message">Ask the questions a real buyer, planner, guest, or facility manager would ask before making a decision. I will separate what is measured, observed, inferred, and still missing.</div><div class="message" id="answer">Choose one of the high-value questions below or ask your own.</div></div><div class="ask"><button class="mic" type="button" aria-label="Voice coming soon">🎙</button><textarea id="q" rows="3" placeholder="Ask this building…"></textarea><button class="submit" id="ask" type="button">Ask GBI</button></div><div class="suggestions">${prompts}</div></aside></section><section class="grid"><article class="panel"><p class="kicker">Building signals</p><h3>What the current record already knows</h3><div class="metrics">${signals}</div></article><article class="panel"><p class="kicker">Evidence status</p><h3>What still improves confidence</h3><div class="evidence">${gaps || '<div><strong>Ready</strong><span>No major evidence gaps listed.</span></div>'}</div><p class="note">As MatterPak geometry, panorama analysis, documents, and future scans are attached, answers can move from inferred to observed or measured.</p></article></section><div class="actions" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><a href="/${building.slug}/ingest" style="display:inline-block;background:#e7e3da;color:#111618;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Build / update evidence →</a><a href="/${building.slug}/cost-seg" style="display:inline-block;background:#111618;color:#fff;text-decoration:none;border-radius:999px;padding:12px 16px;font-weight:800;font-size:13px">Open Cost Segregation Intelligence →</a></div><p class="note">${building.id} · Matterport ${building.matterportSid}</p></main><script type="module">
+const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
+const sdkKey=${sdkKeyJson};
 const q=document.getElementById("q"),answer=document.getElementById("answer"),ask=document.getElementById("ask");
+const iframe=document.getElementById("buildingMp"),measureToggle=document.getElementById("measureToggle"),measureClear=document.getElementById("measureClear"),measureStatus=document.getElementById("measureStatus"),measureList=document.getElementById("measureList");
+let mpSdk=null,measurementMode=false,currentMeasurements=[];
+const feet=m=>m*3.280839895;
+function pointsOf(item){
+  if(Array.isArray(item?.points))return item.points;
+  if(item?.start&&item?.end)return [item.start,item.end];
+  return [];
+}
+function distanceM(points){
+  let d=0;
+  for(let i=1;i<points.length;i++){
+    const a=points[i-1],b=points[i];
+    d+=Math.hypot(Number(b.x)-Number(a.x),Number(b.y)-Number(a.y),Number(b.z)-Number(a.z));
+  }
+  return d;
+}
+function measurementArray(collection){
+  if(!collection)return [];
+  if(Array.isArray(collection))return collection;
+  if(collection instanceof Map)return [...collection.values()];
+  if(typeof collection==="object"){
+    if(typeof collection.values==="function"){try{return [...collection.values()]}catch{}}
+    return Object.values(collection).filter(v=>v&&typeof v==="object");
+  }
+  return [];
+}
+function normalizeMeasurements(collection){
+  return measurementArray(collection).map((item,index)=>{
+    const points=pointsOf(item).filter(p=>p&&[Number(p.x),Number(p.y),Number(p.z)].every(Number.isFinite));
+    const lengthM=distanceM(points);
+    return {
+      id:String(item?.sid||item?.id||("measurement-"+(index+1))),
+      label:String(item?.label||("Measurement "+(index+1))),
+      type:String(item?.type||"3d"),
+      lengthMeters:Math.round(lengthM*1000)/1000,
+      lengthFeet:Math.round(feet(lengthM)*100)/100,
+      points:points.map(p=>({x:Number(p.x),y:Number(p.y),z:Number(p.z)}))
+    };
+  }).filter(x=>x.points.length>=2&&x.lengthMeters>0);
+}
+function renderMeasurements(){
+  measureClear.disabled=!currentMeasurements.length;
+  measureStatus.textContent=currentMeasurements.length
+    ? currentMeasurements.length+" measured dimension"+(currentMeasurements.length===1?"":"s")+" ready for questions"
+    : (measurementMode?"Measurement mode active — click points in the model.":"Measurement tools ready.");
+  measureList.innerHTML=currentMeasurements.map((m,i)=>"<span class='measure-chip'><strong>"+(m.label||("Measurement "+(i+1)))+"</strong> · "+m.lengthFeet.toFixed(2)+" ft ("+m.lengthMeters.toFixed(2)+" m)</span>").join("");
+}
+function syncMeasurements(collection){
+  currentMeasurements=normalizeMeasurements(collection);
+  renderMeasurements();
+}
+async function connectMeasurements(){
+  if(!sdkKey){measureStatus.textContent="Matterport measurement tools unavailable: SDK key missing.";measureToggle.disabled=true;return}
+  try{
+    const mod=await import(SDK_BOOTSTRAP+"?applicationKey="+encodeURIComponent(sdkKey));
+    mpSdk=await mod.connect(iframe);
+    await mpSdk.App.state.waitUntil(s=>s.phase===mpSdk.App.Phase.PLAYING);
+    if(mpSdk.Measurements?.data?.subscribe){
+      mpSdk.Measurements.data.subscribe({
+        onAdded:(i,item,collection)=>syncMeasurements(collection),
+        onRemoved:(i,item,collection)=>syncMeasurements(collection),
+        onUpdated:(i,item,collection)=>syncMeasurements(collection),
+        onCollectionUpdated:collection=>syncMeasurements(collection)
+      });
+    }
+    measureStatus.textContent="Measurement tools ready.";
+    renderMeasurements();
+  }catch(e){
+    measureStatus.textContent="Could not connect measurement tools.";
+    measureToggle.disabled=true;
+  }
+}
+measureToggle.addEventListener("click",async()=>{
+  if(!mpSdk)return;
+  try{
+    measurementMode=!measurementMode;
+    await mpSdk.Measurements.toggleMode(measurementMode);
+    measureToggle.classList.toggle("active",measurementMode);
+    measureToggle.textContent=measurementMode?"Finish measuring":"Measure space";
+    renderMeasurements();
+  }catch(e){measureStatus.textContent="Measurement mode could not be changed."}
+});
+measureClear.addEventListener("click",async()=>{
+  if(!mpSdk)return;
+  try{
+    const raw=measurementArray(mpSdk.Measurements?.data);
+    if(raw.length)await mpSdk.Measurements.remove(...raw);
+    currentMeasurements=[];renderMeasurements();
+  }catch(e){measureStatus.textContent="Could not clear measurements."}
+});
 document.querySelectorAll(".suggestions button").forEach(b=>b.addEventListener("click",()=>{q.value=b.textContent||"";q.focus()}));
-ask.addEventListener("click",async()=>{const question=q.value.trim();if(!question)return;answer.textContent="Checking building evidence…";try{const r=await fetch("/api/buildings/${building.id}/ask",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({question})});const data=await r.json();answer.textContent=data.answer||data.error||"No answer returned."}catch{answer.textContent="The building service could not be reached."}});
+ask.addEventListener("click",async()=>{
+  const question=q.value.trim();if(!question)return;
+  answer.textContent=currentMeasurements.length?"Checking building evidence + your measurements…":"Checking building evidence…";
+  try{
+    const r=await fetch("/api/buildings/${building.id}/ask",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({question,measurementContext:currentMeasurements})});
+    const data=await r.json();answer.textContent=data.answer||data.error||"No answer returned.";
+  }catch{answer.textContent="The building service could not be reached."}
+});
+connectMeasurements();
 </script></body></html>`;
 }
 
@@ -1412,13 +1517,13 @@ const appWorker = {
       }
 
       if (apiMatch[2] === "ask" && request.method === "POST") {
-        const body = await request.json().catch(() => null) as { question?: string } | null;
+        const body = await request.json().catch(() => null) as { question?: string; measurementContext?: any } | null;
         const question = body?.question?.trim();
         if (!question) return json({ error: "Ask a building question." }, 400);
         if (!env.OPENAI_API_KEY) return json({ answer: `${building.name} is connected, but the reasoning service has not been configured for this deployment yet.` });
 
         try {
-          return json({ answer: await reasonAboutBuilding(building, question, env) });
+          return json({ answer: await reasonAboutBuilding(building, question, env, body?.measurementContext || null) });
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : "The reasoning service could not answer that question." }, 502);
         }
@@ -1493,7 +1598,7 @@ const appWorker = {
 
     const building = findBuilding(url.pathname);
     if (building) {
-      return new Response(buildingHtml(building), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return new Response(buildingHtml(building, env), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
 
     return new Response("Not found", { status: 404 });
