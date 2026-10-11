@@ -1675,7 +1675,8 @@ GEOMETRY: ${JSON.stringify({sourceObjKey:geometry?.sourceObjKey,analyzedAt:geome
 
       const key = `buildings/${building.id}/geometry/${safeName}`;
       const lower = safeName.toLowerCase();
-      const contentType = lower.endsWith(".obj") || lower.endsWith(".mtl") ? "text/plain; charset=utf-8"\n        : lower.endsWith(".ply") ? "application/octet-stream"
+      const contentType = lower.endsWith(".obj") || lower.endsWith(".mtl") ? "text/plain; charset=utf-8"
+        : lower.endsWith(".ply") ? "application/octet-stream"
         : lower.endsWith(".zip") ? "application/zip"
         : lower.endsWith(".png") ? "image/png"
         : lower.endsWith(".webp") ? "image/webp"
