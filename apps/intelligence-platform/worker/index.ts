@@ -688,7 +688,7 @@ function ingestionHtml(building: Building, sdkKey: string) {
   const key = JSON.stringify(sdkKey || "");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinci360 · Visual ingestion · ${building.name}</title><style>
 body{font-family:Inter,system-ui,sans-serif;background:#f1eee7;color:#111618;margin:0}.shell{max-width:1180px;margin:auto;padding:24px}.head{display:flex;justify-content:space-between;gap:20px;align-items:center}.card{background:#fff;border:1px solid #d8d3ca;border-radius:18px;padding:18px;margin:14px 0}.viewer{height:520px;background:#111;border-radius:14px;overflow:hidden}.viewer iframe{width:100%;height:100%;border:0}button{border:0;border-radius:999px;padding:12px 16px;font-weight:850;background:#111618;color:#fff;cursor:pointer}button:disabled{opacity:.5}.progress{height:12px;background:#e5e1d9;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:#111618;width:0}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:360px;overflow:auto}.pill{font-size:12px;border:1px solid #d8d3ca;border-radius:999px;padding:7px 10px;background:#fff}.muted{color:#666d69}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.step{background:#fff;border:1px solid #d8d3ca;border-radius:16px;padding:14px}.step span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#777}.step strong{display:block;font-size:20px;margin-top:6px}.step small{display:block;color:#6b716e;margin-top:5px}.floorplan{display:none}.floorplan img{width:100%;height:auto;max-height:none;object-fit:contain;border:1px solid #ddd7cc;border-radius:12px;background:#fff}@media(max-width:850px){.workflow{grid-template-columns:1fr 1fr}}
-</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload MatterPak .obj</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload the MatterPak geometry package as part of this same workflow. Include the OBJ plus MTL and texture images when available, then analyze the OBJ.</p><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button id="uploadObj" type="button">Upload MatterPak ZIP / files</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div class="card"><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div>${clientUploadCard(building)}</main><script type="module">
+</style></head><body><main class="shell"><div class="head"><div><div class="pill">${building.id} · ingestion</div><h1>${building.name}</h1><p class="muted">Capture Matterport sweeps, analyze visible building evidence, and persist the result to Cloudflare R2.</p></div></div><div class="workflow"><div class="step"><span>1 · Visual extraction</span><strong id="wfPanos">Checking…</strong><small id="wfPanoSub">Matterport panoramas</small></div><div class="step"><span>2 · OBJ geometry</span><strong id="wfObj">Checking…</strong><small id="wfObjSub">Upload .obj or .ply</small></div><div class="step"><span>3 · Geometry analysis</span><strong id="wfAnalysis">Checking…</strong><small id="wfAnalysisSub">Dimensions + area + volume</small></div><div class="step"><span>4 · Floor-plan preview</span><strong id="wfPlan">Checking…</strong><small>Top-down OBJ screening</small></div></div><div class="card"><div class="viewer"><iframe id="mp" src="https://my.matterport.com/show/?m=${building.matterportSid}&play=1&qs=1&help=0&applicationKey=${encodeURIComponent(sdkKey)}" allow="autoplay; fullscreen; web-share; xr-spatial-tracking"></iframe></div></div><div class="card"><h2 style="margin-top:0">Building Intelligence geometry</h2><p class="muted">Upload OBJ meshes or PLY point clouds as building geometry evidence. Include MTL and texture images alongside an OBJ when available. OBJ geometry analysis remains separate; PLY files are stored for comparison.</p><div class="actions"><input id="objFile" type="file" multiple accept=".zip,.obj,.ply,.mtl,.jpg,.jpeg,.png,.webp,application/zip,text/plain,image/*"><button id="uploadObj" type="button">Upload geometry files</button><button id="analyzeObj" type="button">Analyze geometry</button></div><p id="geoStatus" class="muted">Checking geometry status…</p></div><div class="card"><div class="actions"><button id="run">Start visual ingestion</button><button id="stop" disabled>Stop</button></div><p id="status">Ready.</p><div class="progress"><span id="bar"></span></div><div id="log" class="mono"></div></div>${clientUploadCard(building)}</main><script type="module">
 const SDK_BOOTSTRAP="https://api.matterport.com/sdk/bootstrap/3.0.0-0-g0517b8d76c/sdk.es6.js";
 const sdkKey=${key};
 const iframe=document.getElementById("mp"),run=document.getElementById("run"),stop=document.getElementById("stop"),status=document.getElementById("status"),bar=document.getElementById("bar"),log=document.getElementById("log"),objFile=document.getElementById("objFile"),uploadObj=document.getElementById("uploadObj"),analyzeObj=document.getElementById("analyzeObj"),geoStatus=document.getElementById("geoStatus");
@@ -728,7 +728,7 @@ async function refreshWorkflow(){
       run.textContent="Visual ingestion complete";run.disabled=true;status.textContent="All "+comp.expected+" panoramas are captured and analyzed.";
     }
     document.getElementById("wfObj").textContent=geo.objPresent?"Present":"Missing";
-    document.getElementById("wfObjSub").textContent=geo.objFileName||"Upload MatterPak .obj";
+    document.getElementById("wfObjSub").textContent=geo.objFileName||"Upload .obj or .ply";
     document.getElementById("wfAnalysis").textContent=ga?"Ready":"Not run";
     document.getElementById("wfAnalysisSub").textContent=ga?(Math.round(ga.footprintHullAreaFt2||0).toLocaleString()+" ft² footprint screening · "+Math.round(ga.modelEnvelopeVolumeFt3||0).toLocaleString()+" ft³ envelope"):"Dimensions + area + volume";
     document.getElementById("wfPlan").textContent=d.floorPlanUrl?"Ready":"Not generated";
@@ -738,18 +738,18 @@ async function refreshWorkflow(){
 }
 uploadObj.onclick=async()=>{
   const selected=[...(objFile.files||[])];
-  if(!selected.length){geoStatus.textContent="Choose a MatterPak ZIP or one or more MatterPak files first.";return}
+  if(!selected.length){geoStatus.textContent="Choose an OBJ, PLY, ZIP, or supporting geometry file first.";return}
   uploadObj.disabled=true;
   try{
     const files=await expandMatterPakIngestion(selected);
     let uploaded=0;
     for(const file of files){
-      if(!/\.(obj|mtl|jpg|jpeg|png|webp)$/i.test(file.name))throw new Error("Unsupported extracted file: "+file.name);
+      if(!/\.(obj|ply|mtl|jpg|jpeg|png|webp)$/i.test(file.name))throw new Error("Unsupported extracted file: "+file.name);
       geoStatus.textContent="Uploading "+file.name+" ("+(uploaded+1)+"/"+files.length+")…";
       const r=await fetch("/api/buildings/${building.id}/geometry",{method:"POST",headers:{"x-file-name":encodeURIComponent(file.name),"content-type":file.type||"application/octet-stream"},body:file});
       const d=await r.json();if(!r.ok)throw new Error(d.error||("Upload failed: "+file.name));uploaded++;
     }
-    geoStatus.textContent="Uploaded "+uploaded+" MatterPak file"+(uploaded===1?"":"s")+". Run geometry analysis next.";
+    geoStatus.textContent="Uploaded "+uploaded+" geometry file"+(uploaded===1?"":"s")+". Run geometry analysis next.";
     await refreshWorkflow();
   }catch(e){geoStatus.textContent="Upload failed: "+(e&&e.message?e.message:String(e))}finally{uploadObj.disabled=false}
 };
@@ -772,7 +772,7 @@ async function inflateZipForIngestion(file){
     const method=dv.getUint16(p+10,true),compSize=dv.getUint32(p+20,true),nameLen=dv.getUint16(p+28,true),extraLen=dv.getUint16(p+30,true),commentLen=dv.getUint16(p+32,true),localOffset=dv.getUint32(p+42,true);
     const name=new TextDecoder().decode(u8.slice(p+46,p+46+nameLen)); p+=46+nameLen+extraLen+commentLen;
     if(!name||name.endsWith("/"))continue;
-    const base=name.split("/").pop()||name;if(!/\.(obj|mtl|jpg|jpeg|png|webp)$/i.test(base))continue;
+    const base=name.split("/").pop()||name;if(!/\.(obj|ply|mtl|jpg|jpeg|png|webp)$/i.test(base))continue;
     const localNameLen=dv.getUint16(localOffset+26,true),localExtraLen=dv.getUint16(localOffset+28,true),start=localOffset+30+localNameLen+localExtraLen,end=start+compSize;
     const chunk=u8.slice(start,end); let bytes;
     if(method===0)bytes=chunk;
@@ -784,7 +784,7 @@ async function inflateZipForIngestion(file){
     const type=/\.png$/i.test(base)?"image/png":/\.webp$/i.test(base)?"image/webp":/\.(jpg|jpeg)$/i.test(base)?"image/jpeg":"text/plain";
     out.push(new File([bytes],base,{type}));
   }
-  if(!out.length)throw new Error("No OBJ/MTL/texture files were found inside the ZIP.");
+  if(!out.length)throw new Error("No supported geometry or texture files were found inside the ZIP.");
   return out;
 }
 async function expandMatterPakIngestion(files){
@@ -1669,13 +1669,13 @@ GEOMETRY: ${JSON.stringify({sourceObjKey:geometry?.sourceObjKey,analyzedAt:geome
 
       const rawName = decodeURIComponent(request.headers.get("x-file-name") || "building.obj").trim();
       const safeName = rawName.replace(/[^A-Za-z0-9._ -]/g, "_").replace(/\s+/g, "-").slice(0, 180);
-      const allowed = /\.(obj|mtl|jpg|jpeg|png|webp|zip)$/i.test(safeName);
-      if (!allowed) return json({ error: "Geometry upload supports MatterPak .zip archives plus .obj, .mtl, .jpg, .jpeg, .png, and .webp files." }, 400);
+      const allowed = /\.(obj|ply|mtl|jpg|jpeg|png|webp|zip)$/i.test(safeName);
+      if (!allowed) return json({ error: "Geometry upload supports .obj, .ply, .zip, .mtl, .jpg, .jpeg, .png, and .webp files." }, 400);
       if (!request.body) return json({ error: "File body is missing." }, 400);
 
       const key = `buildings/${building.id}/geometry/${safeName}`;
       const lower = safeName.toLowerCase();
-      const contentType = lower.endsWith(".obj") || lower.endsWith(".mtl") ? "text/plain; charset=utf-8"
+      const contentType = lower.endsWith(".obj") || lower.endsWith(".mtl") ? "text/plain; charset=utf-8"\n        : lower.endsWith(".ply") ? "application/octet-stream"
         : lower.endsWith(".zip") ? "application/zip"
         : lower.endsWith(".png") ? "image/png"
         : lower.endsWith(".webp") ? "image/webp"
