@@ -7,7 +7,7 @@ import "./site-chrome.css";
 
 const serviceNav = [
   ["Floor Plans", "/floor-plans"],
-  ["Scan2BIM", "/scan-to-bim-revit-cad"],
+  ["Scan to Engineering", "/scan-to-bim-revit-cad"],
   ["Due Diligence", "/due-diligence"],
   ["IT Services", "/it-services"],
 ] as const;
@@ -70,12 +70,12 @@ export function SiteFooter() {
     <div className="compact-footer-main">
       <div>
         <strong>Cinci360 · Reality Capture &amp; Building Intelligence</strong>
-        <p>3D laser scanning · Existing-condition surveys · As-built drawings · Scan-to-BIM / Revit · Digital twins</p>
+        <p>3D laser scanning · Existing-condition surveys · As-built drawings · Scan to engineering · BIM / Revit · Digital twins</p>
         <span>Woman-owned · Cincinnati-based · Nationwide service · City of Cincinnati Vendor Code: VS1000024091 · SAM.gov UEI: L5HPKGE34S21</span>
       </div>
       <nav aria-label="Footer navigation">
         <Link href="/3d-laser-scanning-cincinnati">Laser Scanning</Link>
-        <Link href="/scan-to-bim-revit-cad">Scan-to-BIM</Link>
+        <Link href="/scan-to-bim-revit-cad">Scan to Engineering</Link>
         <Link href="/due-diligence">Due Diligence</Link>
         <Link href="/intelligence-portal">Building Intelligence</Link>
         <Link className="footer-project-cta" href="/#contact">Request a Survey</Link>
