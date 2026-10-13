@@ -125,12 +125,17 @@ export function AnalyticsEvents() {
 
     const onFormSubmit = () => {
       formSubmitted = true;
-      trackEvent("lead_form_submit", {
+      const leadParameters = {
         form_id: leadFormId,
         completed_field_count: completedFields.size,
         cta_source: sessionStorage.getItem("cinci360_last_cta") || "direct",
         ...acquisitionParameters(),
-      });
+      };
+      trackEvent("lead_form_submit", { ...leadParameters, transport_type: "beacon" });
+      if (sessionStorage.getItem("cinci360_lead_recorded") !== "1") {
+        sessionStorage.setItem("cinci360_lead_recorded", "1");
+        trackEvent("generate_lead", { ...leadParameters, transport_type: "beacon" });
+      }
     };
 
     const onPageHide = () => {
