@@ -58,7 +58,7 @@ export function SiteHeader() {
       </div>
       <Link href="/projects/estee-lauder-plant" onClick={closeNav}>Case Studies</Link>
       <Link href="/podcast" onClick={closeNav}><span aria-hidden="true">🎙</span> From the Field</Link>
-      <span className="global-intelligence-link" aria-label="Building Intelligence Platform — Coming Soon">Building Intelligence · Coming Soon</span>
+      <a className="global-intelligence-link" href="https://app.cinci360.com">Building Intelligence</a>
       <Link className="global-mobile-cta" href="/#contact" onClick={closeNav}>Start a project</Link>
     </nav>
     <Link className="global-header-cta" href="/#contact">Start a project</Link>
@@ -69,9 +69,8 @@ export function SiteFooter() {
   return <footer className="global-footer compact-footer">
     <div className="compact-footer-main">
       <div>
-        <strong>Cinci360 · Reality Capture &amp; Building Intelligence</strong>
-        <p>3D laser scanning · Existing-condition surveys · As-built drawings · Scan to engineering · BIM / Revit · Digital twins</p>
-        <span>Woman-owned · Cincinnati-based · Nationwide service · City of Cincinnati Vendor Code: VS1000024091 · SAM.gov UEI: L5HPKGE34S21</span>
+        <strong>Cinci360</strong>
+        <p>Women-owned Scan to Engineering services.</p>
       </div>
       <nav aria-label="Footer navigation">
         <Link href="/3d-laser-scanning-cincinnati">Laser Scanning</Link>
