@@ -58,7 +58,7 @@ export function SiteHeader() {
       </div>
       <Link href="/projects/estee-lauder-plant" onClick={closeNav}>Case Studies</Link>
       <Link href="/podcast" onClick={closeNav}><span aria-hidden="true">🎙</span> From the Field</Link>
-      <Link className="global-intelligence-link" href="/intelligence-portal" onClick={closeNav}>Intelligence Portal</Link>
+      <span className="global-intelligence-link" aria-label="Building Intelligence Platform — Coming Soon">Building Intelligence · Coming Soon</span>
       <Link className="global-mobile-cta" href="/#contact" onClick={closeNav}>Start a project</Link>
     </nav>
     <Link className="global-header-cta" href="/#contact">Start a project</Link>
@@ -77,7 +77,7 @@ export function SiteFooter() {
         <Link href="/3d-laser-scanning-cincinnati">Laser Scanning</Link>
         <Link href="/scan-to-bim-revit-cad">Scan to Engineering</Link>
         <Link href="/due-diligence">Due Diligence</Link>
-        <Link href="/intelligence-portal">Building Intelligence</Link>
+        <span aria-label="Building Intelligence Platform — Coming Soon">Building Intelligence · Coming Soon</span>
         <Link className="footer-project-cta" href="/#contact">Request a Survey</Link>
       </nav>
       <nav className="compact-footer-social" aria-label="Social links">
