@@ -69,14 +69,12 @@ export function SiteFooter() {
   return <footer className="global-footer compact-footer">
     <div className="compact-footer-main">
       <div>
-        <strong>Cinci360</strong>
-        <p>Women-owned Scan to Engineering services.</p>
+        <strong>Cinci360 · Women-owned</strong>
       </div>
       <nav aria-label="Footer navigation">
         <Link href="/3d-laser-scanning-cincinnati">Laser Scanning</Link>
         <Link href="/scan-to-bim-revit-cad">Scan to Engineering</Link>
         <Link href="/due-diligence">Due Diligence</Link>
-        <span aria-label="Building Intelligence Platform — Coming Soon">Building Intelligence · Coming Soon</span>
         <Link className="footer-project-cta" href="/#contact">Request a Survey</Link>
       </nav>
       <nav className="compact-footer-social" aria-label="Social links">
