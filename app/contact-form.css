@@ -6,6 +6,39 @@
   overflow: hidden !important;
 }
 
+.home-workflow-poster > .home-quote-entry {
+  position: absolute;
+  z-index: 3;
+  top: 28px;
+  left: 5vw;
+  width: min(640px, 90vw);
+  padding: clamp(20px, 3vw, 36px);
+  background: rgba(244, 241, 234, .97);
+  color: #171b1e;
+  border-left: 3px solid var(--gold);
+}
+.home-quote-entry h2 {
+  margin: 12px 0;
+  font-family: Georgia, serif;
+  font-size: clamp(25px, 2.8vw, 42px);
+  line-height: 1.12;
+  font-weight: 400;
+}
+.home-quote-entry > p:not(.eyebrow) { max-width: 530px; line-height: 1.55; font-size: 14px; }
+.home-quote-entry small { display: block; margin-top: 16px; font-size: 12px; }
+.home-quote-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 18px; }
+.home-quote-actions > a:last-child { font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.home-quote-actions a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+@media (max-width: 900px) {
+  .home-workflow-poster { min-height: 590px; }
+}
+@media (max-width: 560px) {
+  .home-workflow-poster > .home-quote-entry { top: 20px; }
+  .home-quote-entry .eyebrow { font-size: 9px; letter-spacing: .08em; }
+  .home-quote-entry h2 br { display: none; }
+  .home-quote-actions { align-items: flex-start; flex-direction: column; }
+}
+
 .contact-confirmation {
   align-self: center;
   border-top: 2px solid var(--gold);

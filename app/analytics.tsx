@@ -63,7 +63,7 @@ function classifyLink(anchor: HTMLAnchorElement): TrackedEvent | null {
   if (/google\.com\/maps/i.test(href)) return ["review_profile_click", shared];
   if (/\.(pdf|dwg|dxf|rvt|ifc|e57|zip)(?:[?#]|$)/i.test(href)) return ["file_download", { ...shared, file_extension: href.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase() }];
   if (href === "#contact" || href.endsWith("/#contact")) return ["contact_cta_click", { ...shared, cta_destination: "project_inquiry" }];
-  if (/^\/(3d-laser-scanning|scan-to-bim|it-services)/.test(href)) return ["service_interest", { ...shared, service_path: href }];
+  if (/^\/(3d-laser-scanning|scan-to-bim|floor-plans|due-diligence|it-services)/.test(href)) return ["service_interest", { ...shared, service_path: href }];
   if (/^\/projects\//.test(href)) return ["case_study_click", { ...shared, project_path: href }];
   if (/^https?:\/\//.test(href) && !/^(https?:\/\/)?(www\.)?cinci360\.com/i.test(href)) return ["outbound_click", shared];
   if (href.startsWith("#") || href.startsWith("/")) return ["navigation_click", { ...shared, navigation_target: href }];
@@ -132,10 +132,8 @@ export function AnalyticsEvents() {
         ...acquisitionParameters(),
       };
       trackEvent("lead_form_submit", { ...leadParameters, transport_type: "beacon" });
-      if (sessionStorage.getItem("cinci360_lead_recorded") !== "1") {
-        sessionStorage.setItem("cinci360_lead_recorded", "1");
-        trackEvent("generate_lead", { ...leadParameters, transport_type: "beacon" });
-      }
+      // Submission is an attempt; the provider's success return confirms it.
+      sessionStorage.setItem("cinci360_lead_pending", "1");
     };
 
     const onPageHide = () => {
@@ -195,10 +193,11 @@ export function AnalyticsEvents() {
       }, seconds * 1000));
     }
 
-    if (params.get("sent") === "1" && sessionStorage.getItem("cinci360_lead_recorded") !== "1") {
-      sessionStorage.setItem("cinci360_lead_recorded", "1");
+    if (params.get("sent") === "1" && sessionStorage.getItem("cinci360_lead_pending") === "1") {
+      sessionStorage.removeItem("cinci360_lead_pending");
       trackEvent("generate_lead", {
         form_id: leadFormId,
+        confirmation_method: "formsubmit_return",
         cta_source: sessionStorage.getItem("cinci360_last_cta") || "direct",
         ...acquisitionParameters(),
       });
