@@ -35,7 +35,6 @@ function HeaderContact({ mobile = false, onClick }: { mobile?: boolean; onClick?
     <Link className="global-header-cta" href="/#contact" onClick={onClick}>Start a project</Link>
     <a className="header-whatsapp" href="https://wa.me/qr/YPZUSO4MFOSQO1?s=r" target="_blank" rel="noopener noreferrer" aria-label="Chat with Cinci360 on WhatsApp" onClick={onClick}>
       <img src="/images/whatsapp-qr.svg" width="64" height="64" alt="Cinci360 WhatsApp QR code"/>
-      <span>WhatsApp</span>
     </a>
   </div>;
 }
