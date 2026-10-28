@@ -5,11 +5,12 @@ import { useState } from "react";
 import AnimatedBrand from "./animated-brand";
 import "./site-chrome.css";
 
-const serviceNav = [
+const primaryNav = [
   ["Floor Plans", "/floor-plans"],
   ["Scan to Engineering", "/scan-to-bim-revit-cad"],
   ["Due Diligence", "/due-diligence"],
   ["IT Services", "/it-services"],
+  ["From the Field", "/podcast"],
 ] as const;
 
 const socialLinks = [
@@ -31,34 +32,16 @@ function SocialIcon({ icon }: { icon: (typeof socialLinks)[number][2] }) {
 
 export function SiteHeader() {
   const [open,setOpen]=useState(false);
-  const [servicesOpen,setServicesOpen]=useState(false);
 
   const closeNav = () => {
     setOpen(false);
-    setServicesOpen(false);
   };
 
   return <header className="global-header">
     <AnimatedBrand/>
     <button className={open?"global-menu-button open":"global-menu-button"} aria-label="Toggle site navigation" aria-expanded={open} onClick={()=>setOpen(!open)}><span/><span/></button>
     <nav className={open?"global-nav open":"global-nav"} aria-label="Primary navigation">
-      <div className={servicesOpen?"global-nav-group open":"global-nav-group"}>
-        <button
-          type="button"
-          className="global-nav-trigger"
-          aria-expanded={servicesOpen}
-          onClick={()=>setServicesOpen(!servicesOpen)}
-          onMouseEnter={()=>setServicesOpen(true)}
-        >
-          Services <span aria-hidden="true">▾</span>
-        </button>
-        <div className="global-nav-menu" onMouseLeave={()=>setServicesOpen(false)}>
-          {serviceNav.map(([label,href])=><Link key={href} href={href} onClick={closeNav}>{label}</Link>)}
-        </div>
-      </div>
-      <Link href="/projects/estee-lauder-plant" onClick={closeNav}>Case Studies</Link>
-      <Link href="/podcast" onClick={closeNav}><span aria-hidden="true">🎙</span> From the Field</Link>
-      <a className="global-intelligence-link" href="https://app.cinci360.com">Building Intelligence</a>
+      {primaryNav.map(([label,href])=><Link key={href} href={href} onClick={closeNav}>{label}</Link>)}
       <Link className="global-mobile-cta" href="/#contact" onClick={closeNav}>Start a project</Link>
     </nav>
     <Link className="global-header-cta" href="/#contact">Start a project</Link>
