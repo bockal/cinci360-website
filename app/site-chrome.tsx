@@ -30,6 +30,16 @@ function SocialIcon({ icon }: { icon: (typeof socialLinks)[number][2] }) {
   return <span aria-hidden="true">{icon}</span>;
 }
 
+function HeaderContact({ mobile = false, onClick }: { mobile?: boolean; onClick?: () => void }) {
+  return <div className={mobile ? "header-contact header-contact-mobile" : "header-contact"}>
+    <Link className="global-header-cta" href="/#contact" onClick={onClick}>Start a project</Link>
+    <a className="header-whatsapp" href="https://wa.me/qr/YPZUSO4MFOSQO1?s=r" target="_blank" rel="noopener noreferrer" aria-label="Chat with Cinci360 on WhatsApp" onClick={onClick}>
+      <img src="/images/whatsapp-qr.svg" width="64" height="64" alt="Cinci360 WhatsApp QR code"/>
+      <span>WhatsApp</span>
+    </a>
+  </div>;
+}
+
 export function SiteHeader() {
   const [open,setOpen]=useState(false);
 
@@ -42,9 +52,9 @@ export function SiteHeader() {
     <button className={open?"global-menu-button open":"global-menu-button"} aria-label="Toggle site navigation" aria-expanded={open} onClick={()=>setOpen(!open)}><span/><span/></button>
     <nav className={open?"global-nav open":"global-nav"} aria-label="Primary navigation">
       {primaryNav.map(([label,href])=><Link key={href} href={href} onClick={closeNav}>{label}</Link>)}
-      <Link className="global-mobile-cta" href="/#contact" onClick={closeNav}>Start a project</Link>
+      <HeaderContact mobile onClick={closeNav}/>
     </nav>
-    <Link className="global-header-cta" href="/#contact">Start a project</Link>
+    <HeaderContact/>
   </header>;
 }
 
